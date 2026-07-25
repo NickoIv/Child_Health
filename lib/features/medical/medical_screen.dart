@@ -1,17 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:printing/printing.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../models/medical_record.dart';
 import '../../providers.dart';
+import '../reports/medical_report.dart';
+import '../reports/report_data.dart';
 import '../shared/widgets.dart';
 
-/// Medical card: diagnoses, prescriptions and lab results, per 2.5.
-class MedicalScreen extends ConsumerWidget {
+/// Medical card: diagnoses, prescriptions, lab results and the PDF summary
+/// for the doctor, per 2.5.
+class MedicalScreen extends ConsumerStatefulWidget {
   const MedicalScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MedicalScreen> createState() => _MedicalScreenState();
+}
+
+class _MedicalScreenState extends ConsumerState<MedicalScreen> {
+  bool _building = false;
+
+  @override
+  Widget build(BuildContext context) {
     final child = ref.watch(selectedChildProvider);
     if (child == null) return const NoChildPlaceholder();
 
@@ -35,6 +46,8 @@ class MedicalScreen extends ConsumerWidget {
 
     return PageBody(
       children: [
+        _ReportCard(building: _building, onGenerate: _generateReport),
+        const SizedBox(height: 16),
         if (records.isEmpty)
           const SectionCard(
             title: 'Медицинские записи',
@@ -51,6 +64,81 @@ class MedicalScreen extends ConsumerWidget {
           ],
         const _PendingFeatures(),
       ],
+    );
+  }
+
+  Future<void> _generateReport() async {
+    final child = ref.read(selectedChildProvider);
+    if (child == null || _building) return;
+
+    setState(() => _building = true);
+    try {
+      final data = buildReportData(
+        child: child,
+        logs: ref.read(logsProvider).value ?? const [],
+        records: ref.read(medicalRecordsProvider).value ?? const [],
+        reminders: ref.read(remindersProvider).value ?? const [],
+      );
+      final bytes = await buildMedicalReport(data);
+
+      // sharePdf rather than layoutPdf: on the web this hands the browser a
+      // download, which is what a parent wants before an appointment. A print
+      // preview would be an extra step between them and the file.
+      await Printing.sharePdf(
+        bytes: bytes,
+        filename: 'Отчёт_${child.name}_${_fileDate(data.generatedAt)}.pdf',
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Не удалось сформировать отчёт: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _building = false);
+    }
+  }
+
+  static String _fileDate(DateTime d) =>
+      '${d.year}-${d.month.toString().padLeft(2, '0')}-'
+      '${d.day.toString().padLeft(2, '0')}';
+}
+
+class _ReportCard extends StatelessWidget {
+  const _ReportCard({required this.building, required this.onGenerate});
+
+  final bool building;
+  final Future<void> Function() onGenerate;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SectionCard(
+      title: 'Отчёт для врача',
+      icon: Icons.picture_as_pdf_outlined,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Сводка на одном листе: антропометрия с оценкой по нормам ВОЗ, '
+            'статистика болезней, анализы с отклонениями, статус вакцинации '
+            'и вехи развития.',
+            style: theme.textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 14),
+          FilledButton.icon(
+            onPressed: building ? null : onGenerate,
+            icon: building
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.download),
+            label: Text(building ? 'Формирую…' : 'Скачать PDF'),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -198,9 +286,10 @@ class _PendingFeatures extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           for (final line in const [
-            'Загрузка сканов и фото бланков — нужен Firebase Storage',
-            'Генерация сводного PDF-отчёта для врача — нужен пакет pdf',
             'Ручной ввод новых медицинских записей',
+            'Прикрепление сканов бланков к медицинской записи '
+                '(в дневнике фото уже работают)',
+            'Push-уведомления о приёме лекарств и визитах',
           ])
             Padding(
               padding: const EdgeInsets.only(bottom: 8),

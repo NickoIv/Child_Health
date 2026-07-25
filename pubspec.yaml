@@ -50,6 +50,8 @@ dependencies:
   http: ^1.6.0
   image: ^4.9.1
   image_picker: ^1.2.3
+  pdf: ^3.13.0
+  printing: ^5.15.0
 
 dev_dependencies:
   flutter_test:
@@ -73,10 +75,12 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
-  # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
-  #   - images/a_dot_ham.jpeg
+  assets:
+    # Bundled rather than fetched at runtime: the PDF report must work
+    # offline, and the built-in PDF fonts (Helvetica and friends) have no
+    # Cyrillic glyphs at all — a Russian report would come out blank.
+    - assets/fonts/Roboto-Regular.ttf
+    - assets/fonts/Roboto-Bold.ttf
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
