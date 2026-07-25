@@ -1,10 +1,13 @@
-# Полная пересборка и публикация приложения.
+# Full rebuild and publish.
 #
-# Адрес ИИ-прокси задаётся на этапе сборки через --dart-define, поэтому его
-# легко забыть — и тогда помощник молча окажется отключён в продакшене.
-# Скрипт существует, чтобы этого не случилось.
+# The AI proxy URL is a build-time --dart-define, which is exactly the kind of
+# flag that gets forgotten on a manual rebuild — and forgetting it silently
+# ships the assistant switched off. This script exists so that cannot happen.
 #
-# Запуск:  .\deploy.ps1
+# Deliberately ASCII-only: Windows PowerShell 5.1 reads a .ps1 without a BOM
+# as ANSI, which mangles Cyrillic and breaks parsing before the first command.
+#
+# Usage:  .\deploy.ps1
 
 $ErrorActionPreference = 'Stop'
 
@@ -15,21 +18,21 @@ $aiProxy = 'https://child-health-ai.nickru777.workers.dev'
 
 Set-Location $PSScriptRoot
 
-Write-Host '--- Анализ ---' -ForegroundColor Cyan
+Write-Host '--- analyze ---' -ForegroundColor Cyan
 flutter analyze
-if ($LASTEXITCODE -ne 0) { throw 'flutter analyze нашёл проблемы' }
+if ($LASTEXITCODE -ne 0) { throw 'flutter analyze reported problems' }
 
-Write-Host '--- Тесты ---' -ForegroundColor Cyan
+Write-Host '--- test ---' -ForegroundColor Cyan
 flutter test
-if ($LASTEXITCODE -ne 0) { throw 'тесты не прошли' }
+if ($LASTEXITCODE -ne 0) { throw 'tests failed' }
 
-Write-Host '--- Сборка web ---' -ForegroundColor Cyan
+Write-Host '--- build web ---' -ForegroundColor Cyan
 flutter build web --release --dart-define=AI_PROXY_URL=$aiProxy
-if ($LASTEXITCODE -ne 0) { throw 'сборка не удалась' }
+if ($LASTEXITCODE -ne 0) { throw 'build failed' }
 
-Write-Host '--- Публикация ---' -ForegroundColor Cyan
+Write-Host '--- deploy hosting ---' -ForegroundColor Cyan
 & "$env:APPDATA\npm\firebase.cmd" deploy --only hosting --non-interactive
-if ($LASTEXITCODE -ne 0) { throw 'деплой не удался' }
+if ($LASTEXITCODE -ne 0) { throw 'hosting deploy failed' }
 
 Write-Host ''
-Write-Host 'Готово: https://child-health-tracker-7aad1.web.app' -ForegroundColor Green
+Write-Host 'Done: https://child-health-tracker-7aad1.web.app' -ForegroundColor Green

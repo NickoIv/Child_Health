@@ -190,6 +190,55 @@ void main() {
       expect(reply.reason, contains('Слишком много запросов'));
     });
 
+    test('a transient 502 is retried once and then succeeds', () async {
+      // A freshly deployed Worker answers 502 for a few seconds while the new
+      // version propagates. Observed live, not hypothetical.
+      var attempt = 0;
+      final client = MockClient((request) async {
+        attempt++;
+        final payload = attempt == 1
+            ? {'error': 'upstream'}
+            : {'text': 'Ответ со второй попытки.'};
+        return http.Response.bytes(
+          utf8.encode(jsonEncode(payload)),
+          attempt == 1 ? 502 : 200,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        );
+      });
+
+      final service = GeminiAssistantService(
+        client: client,
+        endpoint: _endpoint,
+      );
+      final reply =
+          await service.ask(question: 'прикорм') as AssistantAnswer;
+
+      expect(attempt, 2);
+      expect(reply.text, 'Ответ со второй попытки.');
+    });
+
+    test('a persistent 502 gives up after one retry', () async {
+      var attempt = 0;
+      final client = MockClient((request) async {
+        attempt++;
+        return http.Response.bytes(
+          utf8.encode(jsonEncode({'error': 'upstream'})),
+          502,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        );
+      });
+
+      final service = GeminiAssistantService(
+        client: client,
+        endpoint: _endpoint,
+      );
+      final reply =
+          await service.ask(question: 'прикорм') as AssistantUnavailable;
+
+      expect(attempt, 2, reason: 'exactly one retry, not a loop');
+      expect(reply.reason, contains('недоступен'));
+    });
+
     test('a server error does not leak the raw status text', () async {
       final spy = _Spy();
       final service = GeminiAssistantService(

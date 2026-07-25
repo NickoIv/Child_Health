@@ -3,8 +3,9 @@ main = "worker.js"
 compatibility_date = "2026-07-01"
 
 [vars]
-# Model served from the Gemini free tier. Override without redeploying code.
-GEMINI_MODEL = "gemini-2.5-flash"
+# Alias rather than a pinned version: Google retires model names without
+# notice. Check what a key may actually call with GET /models on the Worker.
+GEMINI_MODEL = "gemini-flash-latest"
 
 # Lock this to the hosting domain once deployed, so the free quota cannot be
 # spent from someone else's page. "*" is fine only while testing locally.

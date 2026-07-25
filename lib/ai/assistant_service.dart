@@ -170,22 +170,26 @@ class GeminiAssistantService implements AssistantService {
     }
 
     final context = retrieveFor(trimmed, ageMonths: ageMonths);
+    final body = jsonEncode({
+      'system': systemPrompt,
+      'prompt': buildUserPrompt(
+        question: trimmed,
+        knowledgeBlock: context.promptBlock,
+        childContext: childContext,
+      ),
+    });
 
     try {
-      final response = await _client
-          .post(
-            Uri.parse(_endpoint),
-            headers: const {'Content-Type': 'application/json'},
-            body: jsonEncode({
-              'system': systemPrompt,
-              'prompt': buildUserPrompt(
-                question: trimmed,
-                knowledgeBlock: context.promptBlock,
-                childContext: childContext,
-              ),
-            }),
-          )
-          .timeout(AiConfig.timeout);
+      var response = await _post(body);
+
+      // A freshly deployed Worker answers 502 for a few seconds while the new
+      // version propagates across the edge, and upstream hiccups look the
+      // same. One quiet retry turns that into a slightly slower answer
+      // instead of an error message the parent has to interpret.
+      if (response.statusCode == 502) {
+        await Future<void>.delayed(const Duration(seconds: 2));
+        response = await _post(body);
+      }
 
       if (response.statusCode == 429) {
         return const AssistantUnavailable(
@@ -210,6 +214,14 @@ class GeminiAssistantService implements AssistantService {
       return AssistantUnavailable('Не удалось получить ответ: $e');
     }
   }
+
+  Future<http.Response> _post(String body) => _client
+      .post(
+        Uri.parse(_endpoint),
+        headers: const {'Content-Type': 'application/json'},
+        body: body,
+      )
+      .timeout(AiConfig.timeout);
 }
 
 /// Used when the build has no proxy configured, and in tests.

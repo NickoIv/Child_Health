@@ -13,7 +13,14 @@
  *   npx wrangler deploy
  */
 
-const DEFAULT_MODEL = 'gemini-2.5-flash';
+// An alias, not a pinned name, on purpose. Google retires model names without
+// notice — gemini-2.5-flash started returning 404 "no longer available to new
+// users" the same day this was wired up, and a pinned name means a dead
+// assistant until someone notices. The alias always resolves to the current
+// Flash model. Trade-off accepted: behaviour can shift under us, but the
+// answers are tightly constrained by the system prompt and the retrieved
+// articles, and a silently broken assistant is the worse failure.
+const DEFAULT_MODEL = 'gemini-flash-latest';
 const MAX_PROMPT_CHARS = 24000;
 const MAX_QUESTION_CHARS = 500;
 
@@ -24,11 +31,31 @@ export default {
     if (request.method === 'OPTIONS') {
       return new Response(null, { status: 204, headers: cors });
     }
-    if (request.method !== 'POST') {
-      return json({ error: 'Only POST is accepted' }, 405, cors);
-    }
     if (!env.GEMINI_API_KEY) {
       return json({ error: 'GEMINI_API_KEY is not configured' }, 500, cors);
+    }
+
+    // Diagnostic: which models this key may actually call. Google retires
+    // model names without warning — "no longer available to new users" is a
+    // 404 that looks like a broken deployment. Keeping this makes the next
+    // retirement a one-minute fix instead of an investigation.
+    if (request.method === 'GET' && new URL(request.url).pathname === '/models') {
+      const list = await fetch(
+        'https://generativelanguage.googleapis.com/v1beta/models',
+        { headers: { 'x-goog-api-key': env.GEMINI_API_KEY } },
+      );
+      if (!list.ok) {
+        return json({ error: `List failed: ${list.status}` }, 502, cors);
+      }
+      const data = await list.json();
+      const usable = (data.models || [])
+        .filter((m) => (m.supportedGenerationMethods || []).includes('generateContent'))
+        .map((m) => m.name.replace('models/', ''));
+      return json({ configured: env.GEMINI_MODEL || DEFAULT_MODEL, usable }, 200, cors);
+    }
+
+    if (request.method !== 'POST') {
+      return json({ error: 'Only POST is accepted' }, 405, cors);
     }
 
     let body;
@@ -58,7 +85,16 @@ export default {
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
       generationConfig: {
         temperature: 0.2, // factual recall, not creativity
-        maxOutputTokens: 700,
+        // Generous on purpose. Current Flash models reason before answering
+        // and those hidden tokens come out of the same budget — at 700 the
+        // visible reply was being cut off mid-sentence.
+        //
+        // Turning reasoning off would be tidier, but thinkingConfig is
+        // rejected with 400 INVALID_ARGUMENT by the model this alias resolves
+        // to, and guessing at the replacement field name is how you get an
+        // assistant that breaks again next quarter. A larger budget fixes the
+        // truncation without depending on a parameter that keeps moving.
+        maxOutputTokens: 2048,
         topP: 0.9,
       },
     };
