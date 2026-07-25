@@ -19,9 +19,26 @@ class AppShell extends ConsumerWidget {
 
   static const _primaryCount = 4;
 
+  /// Index of the destination the current location belongs to.
+  ///
+  /// Detail routes nest under their section (`/assistant/article/fever`), so
+  /// an exact match is not enough — the longest matching prefix wins, and the
+  /// root path is compared exactly so it does not swallow everything.
   int get _index {
-    final i = appDestinations.indexWhere((d) => d.path == location);
-    return i == -1 ? 0 : i;
+    final exact = appDestinations.indexWhere((d) => d.path == location);
+    if (exact != -1) return exact;
+
+    var best = 0;
+    var bestLength = 0;
+    for (var i = 0; i < appDestinations.length; i++) {
+      final path = appDestinations[i].path;
+      if (path == '/') continue;
+      if (location.startsWith('$path/') && path.length > bestLength) {
+        best = i;
+        bestLength = path.length;
+      }
+    }
+    return best;
   }
 
   @override

@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/assistant/article_screen.dart';
+import '../../features/assistant/assistant_screen.dart';
+import '../../features/assistant/triage_screen.dart';
 import '../../features/auth/login_screen.dart';
 import '../../features/children/children_screen.dart';
 import '../../features/dashboard/dashboard_screen.dart';
@@ -39,6 +42,13 @@ const appDestinations = <AppDestination>[
     icon: Icons.dashboard_outlined,
     selectedIcon: Icons.dashboard,
     builder: DashboardScreen.new,
+  ),
+  AppDestination(
+    path: '/assistant',
+    label: 'Помощник',
+    icon: Icons.lightbulb_outline,
+    selectedIcon: Icons.lightbulb,
+    builder: AssistantScreen.new,
   ),
   AppDestination(
     path: '/diary',
@@ -86,6 +96,20 @@ const appDestinations = <AppDestination>[
 
 const loginPath = '/login';
 
+final _assistantRoutes = <RouteBase>[
+  GoRoute(
+    path: 'triage',
+    pageBuilder: (context, state) =>
+        const NoTransitionPage(child: TriageScreen()),
+  ),
+  GoRoute(
+    path: 'article/:id',
+    pageBuilder: (context, state) => NoTransitionPage(
+      child: ArticleScreen(articleId: state.pathParameters['id'] ?? ''),
+    ),
+  ),
+];
+
 /// Router rebuilt against the current auth repository.
 ///
 /// The redirect is the only gate on the app: every destination below is
@@ -119,6 +143,9 @@ final routerProvider = Provider<GoRouter>((ref) {
               path: d.path,
               pageBuilder: (context, state) =>
                   NoTransitionPage(child: d.builder()),
+              // Detail views live under their section so the browser URL
+              // stays meaningful and shareable.
+              routes: d.path == '/assistant' ? _assistantRoutes : const [],
             ),
         ],
       ),

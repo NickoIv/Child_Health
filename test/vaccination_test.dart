@@ -3,19 +3,19 @@ import 'package:child_health_tracker/models/child.dart';
 import 'package:child_health_tracker/models/reminder.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-Child _childBorn(DateTime birth) => Child(
+Child _childBorn(DateTime birth, {Gender gender = Gender.male}) => Child(
   id: 'c1',
   parentUid: 'p1',
   name: 'Тест',
   birthDate: birth,
-  gender: Gender.male,
+  gender: gender,
 );
 
 void main() {
   group('buildVaccinationPlan', () {
-    test('produces one reminder per slot in the national schedule', () {
+    test('covers the whole schedule for a girl', () {
       final plan = buildVaccinationPlan(
-        _childBorn(DateTime(2026, 1, 1)),
+        _childBorn(DateTime(2026, 1, 1), gender: Gender.female),
         now: DateTime(2026, 7, 25),
       );
       expect(plan, hasLength(nationalVaccinationSchedule.length));
@@ -23,10 +23,25 @@ void main() {
       expect(plan.every((r) => r.childId == 'c1'), isTrue);
     });
 
+    test('omits the HPV doses for a boy', () {
+      // The Kazakhstan schedule offers ВПЧ to girls only.
+      final boys = buildVaccinationPlan(
+        _childBorn(DateTime(2026, 1, 1)),
+        now: DateTime(2026, 7, 25),
+      );
+      final girls = buildVaccinationPlan(
+        _childBorn(DateTime(2026, 1, 1), gender: Gender.female),
+        now: DateTime(2026, 7, 25),
+      );
+      expect(boys.where((r) => r.title.contains('ВПЧ')), isEmpty);
+      expect(girls.where((r) => r.title.contains('ВПЧ')), hasLength(2));
+      expect(boys.length, girls.length - 2);
+    });
+
     test('schedules each dose relative to the birth date', () {
       final birth = DateTime(2026, 1, 1);
       final plan = buildVaccinationPlan(
-        _childBorn(birth),
+        _childBorn(birth, gender: Gender.female),
         now: DateTime(2026, 1, 2),
       );
       for (var i = 0; i < plan.length; i++) {
@@ -37,14 +52,28 @@ void main() {
       }
     });
 
+    test('includes the Kazakhstan-specific entries', () {
+      final plan = buildVaccinationPlan(
+        _childBorn(DateTime(2026, 1, 1), gender: Gender.female),
+        now: DateTime(2026, 7, 25),
+      );
+      final titles = plan.map((r) => r.title).join(' | ');
+      // Hepatitis A is in the Kazakhstan calendar but not the Russian one —
+      // a plain check that the right schedule is wired in.
+      expect(titles, contains('Гепатит A'));
+      expect(titles, contains('БЦЖ'));
+      expect(titles, contains('Пентавакцина'));
+      expect(titles, contains('ККП'));
+      expect(titles, contains('АДС-М'));
+    });
+
     test('marks long-past doses completed and future ones pending', () {
-      // A one-year-old: everything due in the first months is well past.
       final now = DateTime(2026, 7, 25);
       final plan = buildVaccinationPlan(
         _childBorn(DateTime(2025, 7, 25)),
         now: now,
       );
-      final newborn = plan.firstWhere((r) => r.title.contains('БЦЖ-М'));
+      final newborn = plan.firstWhere((r) => r.title.contains('БЦЖ'));
       final schoolAge = plan.firstWhere((r) => r.title.contains('АДС-М'));
       expect(newborn.isCompleted, isTrue);
       expect(schoolAge.isCompleted, isFalse);
@@ -52,14 +81,25 @@ void main() {
 
     test('a dose inside the grace period stays pending', () {
       final now = DateTime(2026, 7, 25);
-      // Born 10 days ago: the day-5 dose is overdue but within the 30-day
+      // Born 10 days ago: the day-3 dose is overdue but within the 30-day
       // grace period, so it must not be auto-marked as done.
       final plan = buildVaccinationPlan(
         _childBorn(now.subtract(const Duration(days: 10))),
         now: now,
       );
-      final bcg = plan.firstWhere((r) => r.title.contains('БЦЖ-М'));
+      final bcg = plan.firstWhere((r) => r.title.contains('БЦЖ'));
       expect(bcg.isCompleted, isFalse);
+    });
+
+    test('carries the schedule as the source in the details', () {
+      final plan = buildVaccinationPlan(
+        _childBorn(DateTime(2026, 1, 1)),
+        now: DateTime(2026, 7, 25),
+      );
+      expect(
+        plan.every((r) => r.details.contains('Календарь прививок РК')),
+        isTrue,
+      );
     });
   });
 
