@@ -27,6 +27,9 @@ import 'dart:math' as math;
 
 import '../../models/child.dart';
 
+/// Highest age the reference tables cover, in months.
+const referenceMaxMonth = 60;
+
 /// One row of the WHO reference: age in months plus the L, M, S coefficients.
 class LmsPoint {
   const LmsPoint(this.month, this.l, this.m, this.s);
@@ -58,7 +61,11 @@ LmsPoint? lmsFor(GrowthMetric metric, Gender gender, int ageMonths) {
   };
   if (table.isEmpty) return null;
   if (ageMonths <= table.first.month) return table.first;
-  if (ageMonths >= table.last.month) return table.last;
+  // Past the end of the table there is no reference to compare against.
+  // Returning the last row instead would silently score a ten-year-old
+  // against the norms for a five-year-old and present it as a real verdict.
+  if (ageMonths > table.last.month) return null;
+  if (ageMonths == table.last.month) return table.last;
 
   for (var i = 0; i < table.length - 1; i++) {
     final a = table[i];

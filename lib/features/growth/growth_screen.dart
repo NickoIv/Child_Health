@@ -25,6 +25,24 @@ class _GrowthScreenState extends ConsumerState<GrowthScreen> {
     final child = ref.watch(selectedChildProvider);
     if (child == null) return const NoChildPlaceholder();
 
+    // Measurements are derived from the log stream, so a failed query would
+    // otherwise show up here as "no measurements" rather than as an error.
+    final logsAsync = ref.watch(logsProvider);
+    if (logsAsync.hasError) {
+      return PageBody(
+        children: [
+          SectionCard(
+            title: 'Динамика показателей',
+            icon: Icons.show_chart_outlined,
+            child: ErrorState(
+              error: logsAsync.error!,
+              onRetry: () => ref.invalidate(logsProvider),
+            ),
+          ),
+        ],
+      );
+    }
+
     final measurements = ref.watch(measurementsProvider);
     final points = _pointsFor(child, measurements, _metric);
 
@@ -105,9 +123,11 @@ class _GrowthChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // Extend the reference curves a little past the last measurement so the
-    // child's line does not end flush against the right edge.
-    final maxMonth = (points.last.month + 3).clamp(6, 60);
+    // The axis must always cover the child's own data. Capping it at the
+    // reference range would push every measurement past 5 years off-screen,
+    // leaving an empty chart. The WHO curves simply stop where the tables do.
+    final lastMonth = points.last.month;
+    final maxMonth = lastMonth + 3 < 6 ? 6 : lastMonth + 3;
 
     final median = <FlSpot>[];
     final lower = <FlSpot>[];
@@ -228,17 +248,30 @@ class _GrowthChart extends StatelessWidget {
               color: theme.colorScheme.primary,
               label: child.name,
             ),
-            _LegendDot(
-              color: theme.colorScheme.outline,
-              label: 'медиана ВОЗ',
-            ),
-            _LegendDot(
-              color: theme.colorScheme.outlineVariant,
-              label: 'коридор ±2 SD',
-              dashed: true,
-            ),
+            // Only advertise the reference when it is actually on the chart.
+            if (median.isNotEmpty)
+              _LegendDot(
+                color: theme.colorScheme.outline,
+                label: 'медиана ВОЗ',
+              ),
+            if (lower.isNotEmpty)
+              _LegendDot(
+                color: theme.colorScheme.outlineVariant,
+                label: 'коридор ±2 SD',
+                dashed: true,
+              ),
           ],
         ),
+        if (lastMonth > referenceMaxMonth) ...[
+          const SizedBox(height: 8),
+          Text(
+            'Нормы ВОЗ определены до 5 лет, поэтому справочные кривые '
+            'обрываются на 60 месяцах.',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
       ],
     );
   }

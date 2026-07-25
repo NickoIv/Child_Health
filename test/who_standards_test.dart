@@ -19,9 +19,26 @@ void main() {
       expect(at15, closeTo((at12 + at18) / 2, 1e-6));
     });
 
-    test('clamps below and above the covered range', () {
+    test('clamps below the covered range', () {
       expect(lmsFor(GrowthMetric.weight, Gender.male, -5)!.month, 0);
-      expect(lmsFor(GrowthMetric.weight, Gender.male, 200)!.month, 60);
+      expect(lmsFor(GrowthMetric.weight, Gender.male, 0)!.month, 0);
+    });
+
+    test('returns the last row exactly at the end of the range', () {
+      expect(
+        lmsFor(GrowthMetric.weight, Gender.male, referenceMaxMonth)!.month,
+        referenceMaxMonth,
+      );
+    });
+
+    test('refuses to extrapolate past the end of the tables', () {
+      // Returning the 60-month row here would score a school-age child
+      // against toddler norms and present it as a real verdict.
+      expect(lmsFor(GrowthMetric.weight, Gender.male, 61), isNull);
+      expect(lmsFor(GrowthMetric.height, Gender.female, 200), isNull);
+      expect(zScore(GrowthMetric.weight, Gender.male, 120, 30), isNull);
+      expect(medianFor(GrowthMetric.height, Gender.male, 120), isNull);
+      expect(valueAtZ(GrowthMetric.weight, Gender.female, 120, 0), isNull);
     });
   });
 
