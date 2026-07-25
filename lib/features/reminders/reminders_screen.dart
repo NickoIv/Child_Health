@@ -22,7 +22,23 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
     final child = ref.watch(selectedChildProvider);
     if (child == null) return const NoChildPlaceholder();
 
-    final all = ref.watch(remindersProvider).value ?? const <Reminder>[];
+    final remindersAsync = ref.watch(remindersProvider);
+    if (remindersAsync.hasError) {
+      return PageBody(
+        children: [
+          SectionCard(
+            title: 'Напоминания',
+            icon: Icons.notifications_outlined,
+            child: ErrorState(
+              error: remindersAsync.error!,
+              onRetry: () => ref.invalidate(remindersProvider),
+            ),
+          ),
+        ],
+      );
+    }
+
+    final all = remindersAsync.value ?? const <Reminder>[];
     final visible = _showCompleted
         ? all
         : all.where((r) => !r.isCompleted).toList();

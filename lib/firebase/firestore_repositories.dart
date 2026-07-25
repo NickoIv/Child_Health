@@ -41,14 +41,18 @@ class FirestoreChildRepository extends _Base implements ChildRepository {
 
   @override
   Stream<List<Child>> watchChildren(String parentUid) {
-    return scoped(Collections.children)
-        .orderBy('birth_date')
-        .snapshots()
-        .map(
-          (snap) => snap.docs
-              .map((d) => Child.fromMap(d.id, d.data()))
-              .toList(),
-        );
+    // Sorted in Dart rather than with orderBy on purpose. A parent has a
+    // handful of children, so the cost is nil — and this is the very first
+    // query a new account runs. Ordering server-side would make it need a
+    // composite index, and the app would greet every new user with an error
+    // for the minutes that index spends building.
+    return scoped(Collections.children).snapshots().map((snap) {
+      final children = snap.docs
+          .map((d) => Child.fromMap(d.id, d.data()))
+          .toList();
+      children.sort((a, b) => a.birthDate.compareTo(b.birthDate));
+      return children;
+    });
   }
 
   @override

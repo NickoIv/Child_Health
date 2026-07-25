@@ -155,6 +155,89 @@ class EmptyState extends StatelessWidget {
   }
 }
 
+/// Turns a backend failure into something a parent can act on.
+///
+/// Firestore reports problems as English exception dumps with a console URL
+/// in them; showing that raw is no help to anyone.
+String friendlyError(Object error) {
+  final text = error.toString();
+  if (text.contains('failed-precondition') && text.contains('index')) {
+    return 'База данных достраивает индексы. Это занимает несколько минут '
+        'после первого развёртывания — обновите страницу чуть позже.';
+  }
+  if (text.contains('permission-denied')) {
+    return 'Нет доступа к этим данным. Попробуйте выйти и войти заново.';
+  }
+  if (text.contains('unavailable') || text.contains('network')) {
+    return 'Нет связи с сервером. Изменения сохранятся локально и '
+        'синхронизируются, когда соединение вернётся.';
+  }
+  if (text.contains('unauthenticated')) {
+    return 'Сессия истекла. Войдите в учётную запись заново.';
+  }
+  return 'Не удалось загрузить данные. Попробуйте обновить страницу.';
+}
+
+/// Error panel with the human-readable message up front and the raw text
+/// tucked away for when it has to be reported.
+class ErrorState extends StatelessWidget {
+  const ErrorState({required this.error, this.onRetry, super.key});
+
+  final Object error;
+  final VoidCallback? onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24),
+      child: Column(
+        children: [
+          Icon(
+            Icons.cloud_off_outlined,
+            size: 40,
+            color: theme.colorScheme.error,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            friendlyError(error),
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyMedium,
+          ),
+          if (onRetry != null) ...[
+            const SizedBox(height: 16),
+            FilledButton.tonalIcon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Повторить'),
+            ),
+          ],
+          const SizedBox(height: 12),
+          ExpansionTile(
+            title: Text(
+              'Техническая информация',
+              style: theme.textTheme.labelSmall,
+            ),
+            shape: const Border(),
+            collapsedShape: const Border(),
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: SelectableText(
+                  error.toString(),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// Shown by every screen when no child profile exists yet.
 class NoChildPlaceholder extends StatelessWidget {
   const NoChildPlaceholder({super.key});

@@ -1,14 +1,6 @@
 {
   "indexes": [
     {
-      "collectionGroup": "children",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "parent_uid", "order": "ASCENDING" },
-        { "fieldPath": "birth_date", "order": "ASCENDING" }
-      ]
-    },
-    {
       "collectionGroup": "development_logs",
       "queryScope": "COLLECTION",
       "fields": [

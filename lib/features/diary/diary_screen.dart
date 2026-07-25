@@ -21,7 +21,23 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen> {
     final child = ref.watch(selectedChildProvider);
     if (child == null) return const NoChildPlaceholder();
 
-    final logs = ref.watch(logsProvider).value ?? const <DevelopmentLog>[];
+    final logsAsync = ref.watch(logsProvider);
+    if (logsAsync.hasError) {
+      return PageBody(
+        children: [
+          SectionCard(
+            title: 'Лента событий',
+            icon: Icons.auto_stories_outlined,
+            child: ErrorState(
+              error: logsAsync.error!,
+              onRetry: () => ref.invalidate(logsProvider),
+            ),
+          ),
+        ],
+      );
+    }
+
+    final logs = logsAsync.value ?? const <DevelopmentLog>[];
     final visible = _filter == null
         ? logs
         : logs.where((l) => l.type == _filter).toList();

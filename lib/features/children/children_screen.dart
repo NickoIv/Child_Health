@@ -17,7 +17,18 @@ class ChildrenScreen extends ConsumerWidget {
     return Scaffold(
       body: children.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Ошибка загрузки: $e')),
+        error: (e, _) => PageBody(
+          children: [
+            SectionCard(
+              title: 'Профили детей',
+              icon: Icons.family_restroom_outlined,
+              child: ErrorState(
+                error: e,
+                onRetry: () => ref.invalidate(childrenProvider),
+              ),
+            ),
+          ],
+        ),
         data: (list) => PageBody(
           children: [
             if (list.isEmpty)

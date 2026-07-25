@@ -15,8 +15,23 @@ class MedicalScreen extends ConsumerWidget {
     final child = ref.watch(selectedChildProvider);
     if (child == null) return const NoChildPlaceholder();
 
-    final records =
-        ref.watch(medicalRecordsProvider).value ?? const <MedicalRecord>[];
+    final recordsAsync = ref.watch(medicalRecordsProvider);
+    if (recordsAsync.hasError) {
+      return PageBody(
+        children: [
+          SectionCard(
+            title: 'Медицинские записи',
+            icon: Icons.medical_information_outlined,
+            child: ErrorState(
+              error: recordsAsync.error!,
+              onRetry: () => ref.invalidate(medicalRecordsProvider),
+            ),
+          ),
+        ],
+      );
+    }
+
+    final records = recordsAsync.value ?? const <MedicalRecord>[];
 
     return PageBody(
       children: [
