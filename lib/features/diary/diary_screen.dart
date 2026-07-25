@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/theme/app_theme.dart';
 import '../../models/development_log.dart';
 import '../../providers.dart';
 import '../shared/widgets.dart';
@@ -174,6 +175,11 @@ class _LogTile extends StatelessWidget {
                   spacing: 8,
                   runSpacing: 4,
                   children: [
+                    if (metrics.temperatureC != null)
+                      _Pill(
+                        '${metrics.temperatureC} °C',
+                        highlight: metrics.hasFever,
+                      ),
                     if (metrics.weightKg != null)
                       _Pill('${metrics.weightKg} кг'),
                     if (metrics.heightCm != null)
@@ -213,9 +219,13 @@ class _LogTile extends StatelessWidget {
 }
 
 class _Pill extends StatelessWidget {
-  const _Pill(this.text);
+  const _Pill(this.text, {this.highlight = false});
 
   final String text;
+
+  /// Draws attention to a value that matters clinically — a fever reading
+  /// should be findable while scrolling, not read.
+  final bool highlight;
 
   @override
   Widget build(BuildContext context) {
@@ -223,10 +233,18 @@ class _Pill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
+        color: highlight
+            ? StatusColors.alert.withValues(alpha: 0.16)
+            : theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(6),
       ),
-      child: Text(text, style: theme.textTheme.labelSmall),
+      child: Text(
+        text,
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: highlight ? StatusColors.alert : null,
+          fontWeight: highlight ? FontWeight.w700 : null,
+        ),
+      ),
     );
   }
 }
@@ -248,6 +266,7 @@ class _LogFormDialogState extends State<_LogFormDialog> {
   final _weight = TextEditingController();
   final _height = TextEditingController();
   final _head = TextEditingController();
+  final _temperature = TextEditingController();
 
   LogType _type = LogType.note;
   Severity _severity = Severity.mild;
@@ -261,6 +280,7 @@ class _LogFormDialogState extends State<_LogFormDialog> {
     _weight.dispose();
     _height.dispose();
     _head.dispose();
+    _temperature.dispose();
     super.dispose();
   }
 
@@ -327,6 +347,8 @@ class _LogFormDialogState extends State<_LogFormDialog> {
                   _numberField(_head, 'Окружность головы, см'),
                 ],
                 if (_type == LogType.illness) ...[
+                  const SizedBox(height: 12),
+                  _numberField(_temperature, 'Температура, °C'),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<Severity>(
                     initialValue: _severity,
@@ -399,13 +421,15 @@ class _LogFormDialogState extends State<_LogFormDialog> {
       type: _type,
       title: _title.text.trim(),
       description: _description.text.trim(),
-      metrics: _type == LogType.measurement
-          ? Metrics(
-              weightKg: _parse(_weight),
-              heightCm: _parse(_height),
-              headCircumferenceCm: _parse(_head),
-            )
-          : const Metrics(),
+      metrics: switch (_type) {
+        LogType.measurement => Metrics(
+          weightKg: _parse(_weight),
+          heightCm: _parse(_height),
+          headCircumferenceCm: _parse(_head),
+        ),
+        LogType.illness => Metrics(temperatureC: _parse(_temperature)),
+        _ => const Metrics(),
+      },
       tags: _tags.text
           .split(',')
           .map((t) => t.trim())

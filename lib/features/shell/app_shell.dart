@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/router/app_router.dart';
+import '../../core/theme/theme_mode.dart';
 import '../../models/child.dart';
 import '../../providers.dart';
 
@@ -160,7 +161,15 @@ class _AccountMenu extends ConsumerWidget {
       tooltip: 'Учётная запись',
       icon: const Icon(Icons.account_circle_outlined),
       onSelected: (value) {
-        if (value == 'signOut') ref.read(authRepositoryProvider).signOut();
+        if (value == 'signOut') {
+          ref.read(authRepositoryProvider).signOut();
+          return;
+        }
+        final theme = ThemePreference.values.firstWhere(
+          (t) => t.name == value,
+          orElse: () => ThemePreference.auto,
+        );
+        ref.read(themePreferenceProvider.notifier).set(theme);
       },
       itemBuilder: (context) => [
         PopupMenuItem(
@@ -170,6 +179,13 @@ class _AccountMenu extends ConsumerWidget {
             style: Theme.of(context).textTheme.bodySmall,
           ),
         ),
+        const PopupMenuDivider(),
+        for (final t in ThemePreference.values)
+          CheckedPopupMenuItem(
+            value: t.name,
+            checked: ref.watch(themePreferenceProvider) == t,
+            child: Text(t.hint.isEmpty ? t.label : '${t.label} · ${t.hint}'),
+          ),
         const PopupMenuDivider(),
         const PopupMenuItem(
           value: 'signOut',

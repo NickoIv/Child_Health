@@ -45,6 +45,7 @@ class Metrics {
     this.weightKg,
     this.headCircumferenceCm,
     this.chestCircumferenceCm,
+    this.temperatureC,
   });
 
   final double? heightCm;
@@ -52,17 +53,27 @@ class Metrics {
   final double? headCircumferenceCm;
   final double? chestCircumferenceCm;
 
+  /// Body temperature in Celsius. Lives here rather than in a separate model
+  /// because it is measured the same way as everything else — a number at a
+  /// moment in time — and belongs on the same timeline.
+  final double? temperatureC;
+
   bool get isEmpty =>
       heightCm == null &&
       weightKg == null &&
       headCircumferenceCm == null &&
-      chestCircumferenceCm == null;
+      chestCircumferenceCm == null &&
+      temperatureC == null;
+
+  /// The WHO threshold for fever, used to colour the entry.
+  bool get hasFever => (temperatureC ?? 0) >= 38.0;
 
   Map<String, dynamic> toMap() => {
     if (heightCm != null) 'height_cm': heightCm,
     if (weightKg != null) 'weight_kg': weightKg,
     if (headCircumferenceCm != null) 'head_cm': headCircumferenceCm,
     if (chestCircumferenceCm != null) 'chest_cm': chestCircumferenceCm,
+    if (temperatureC != null) 'temperature_c': temperatureC,
   };
 
   factory Metrics.fromMap(Map<String, dynamic>? map) {
@@ -72,6 +83,7 @@ class Metrics {
       weightKg: parseDouble(map['weight_kg']),
       headCircumferenceCm: parseDouble(map['head_cm']),
       chestCircumferenceCm: parseDouble(map['chest_cm']),
+      temperatureC: parseDouble(map['temperature_c']),
     );
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// The widgets a parent can place on the home screen, per requirement 2.7.
 enum DashboardWidgetKind {
+  now('Сейчас', Icons.bolt_outlined),
   summary('Сводка о ребёнке', Icons.child_care_outlined),
   growth('Рост и вес', Icons.show_chart_outlined),
   vaccinations('Ближайшие прививки', Icons.vaccines_outlined),

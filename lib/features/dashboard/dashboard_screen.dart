@@ -11,6 +11,7 @@ import '../../models/reminder.dart';
 import '../../providers.dart';
 import '../shared/widgets.dart';
 import 'dashboard_config.dart';
+import 'now_card.dart';
 
 /// Configurable home screen, per requirement 2.7.
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -59,6 +60,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   Widget _widgetFor(DashboardWidgetKind kind, Child child) =>
       switch (kind) {
+        DashboardWidgetKind.now => NowCard(child: child),
         DashboardWidgetKind.summary => _SummaryCard(child: child),
         DashboardWidgetKind.growth => _GrowthCard(child: child),
         DashboardWidgetKind.vaccinations => const _VaccinationCard(),

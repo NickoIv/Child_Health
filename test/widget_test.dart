@@ -49,6 +49,54 @@ void main() {
     }
   });
 
+  group('quick temperature entry', () {
+    testWidgets('opens from the dashboard in one tap', (tester) async {
+      await pumpApp(tester);
+
+      await tester.tap(find.widgetWithText(InkWell, 'Температура'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('37.0 °C'), findsOneWidget);
+    });
+
+    testWidgets('stepping up crosses into fever and warns', (tester) async {
+      await pumpApp(tester);
+      await tester.tap(find.widgetWithText(InkWell, 'Температура'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Это лихорадка'), findsNothing);
+
+      // 37.0 -> 38.0 is ten taps of +0.1; the rounding must not drift.
+      for (var i = 0; i < 10; i++) {
+        await tester.tap(find.byIcon(Icons.add));
+        await tester.pump();
+      }
+
+      expect(find.text('38.0 °C'), findsOneWidget);
+      expect(find.textContaining('Это лихорадка'), findsOneWidget);
+    });
+
+    testWidgets('saving a fever writes an illness entry to the diary', (
+      tester,
+    ) async {
+      await pumpApp(tester);
+      await tester.tap(find.widgetWithText(InkWell, 'Температура'));
+      await tester.pumpAndSettle();
+
+      for (var i = 0; i < 15; i++) {
+        await tester.tap(find.byIcon(Icons.add));
+        await tester.pump();
+      }
+      await tester.tap(find.widgetWithText(FilledButton, 'Записать'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.auto_stories_outlined).first);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Температура 38.5 °C'), findsOneWidget);
+    });
+  });
+
   testWidgets('navigating to the diary shows the entry feed', (tester) async {
     await pumpApp(tester);
 

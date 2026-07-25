@@ -108,11 +108,43 @@ void main() {
       expect(restored.isCompleted, isFalse);
     });
 
+    test('temperature survives the round trip', () {
+      final original = DevelopmentLog(
+        id: 'l2',
+        childId: 'c1',
+        date: DateTime(2026, 7, 25),
+        type: LogType.illness,
+        title: 'Температура 38.7 °C',
+        metrics: const Metrics(temperatureC: 38.7),
+      );
+      final restored = DevelopmentLog.fromMap('l2', original.toMap());
+      expect(restored.metrics.temperatureC, 38.7);
+      expect(restored.metrics.isEmpty, isFalse);
+    });
+
     test('unknown enum codes fall back instead of throwing', () {
       final log = DevelopmentLog.fromMap('x', {'type': 'nonsense'});
       expect(log.type, LogType.note);
       final child = Child.fromMap('x', {'gender': 'nonsense'});
       expect(child.gender, Gender.male);
+    });
+  });
+
+  group('Metrics.hasFever', () {
+    test('uses the WHO threshold of 38.0', () {
+      expect(const Metrics(temperatureC: 37.9).hasFever, isFalse);
+      expect(const Metrics(temperatureC: 38.0).hasFever, isTrue);
+      expect(const Metrics(temperatureC: 39.5).hasFever, isTrue);
+    });
+
+    test('an unmeasured temperature is not a fever', () {
+      expect(const Metrics().hasFever, isFalse);
+      expect(const Metrics(weightKg: 9).hasFever, isFalse);
+    });
+
+    test('isEmpty accounts for temperature', () {
+      expect(const Metrics().isEmpty, isTrue);
+      expect(const Metrics(temperatureC: 37.0).isEmpty, isFalse);
     });
   });
 
