@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/auth/login_screen.dart';
 import '../../features/children/children_screen.dart';
 import '../../features/dashboard/dashboard_screen.dart';
 import '../../features/diary/diary_screen.dart';
@@ -9,6 +13,7 @@ import '../../features/illness/illness_screen.dart';
 import '../../features/medical/medical_screen.dart';
 import '../../features/reminders/reminders_screen.dart';
 import '../../features/shell/app_shell.dart';
+import '../../providers.dart';
 
 /// One destination of the primary navigation.
 class AppDestination {
@@ -79,19 +84,61 @@ const appDestinations = <AppDestination>[
   ),
 ];
 
-final appRouter = GoRouter(
-  routes: [
-    ShellRoute(
-      builder: (context, state, child) =>
-          AppShell(location: state.uri.path, child: child),
-      routes: [
-        for (final d in appDestinations)
-          GoRoute(
-            path: d.path,
-            pageBuilder: (context, state) =>
-                NoTransitionPage(child: d.builder()),
-          ),
-      ],
-    ),
-  ],
-);
+const loginPath = '/login';
+
+/// Router rebuilt against the current auth repository.
+///
+/// The redirect is the only gate on the app: every destination below is
+/// unreachable while signed out, and `/login` is unreachable once signed in.
+final routerProvider = Provider<GoRouter>((ref) {
+  final auth = ref.watch(authRepositoryProvider);
+  final refresh = _AuthRefresh(auth.authStateChanges());
+  ref.onDispose(refresh.dispose);
+
+  return GoRouter(
+    initialLocation: '/',
+    refreshListenable: refresh,
+    redirect: (context, state) {
+      final signedIn = auth.currentUser != null;
+      final atLogin = state.matchedLocation == loginPath;
+      if (!signedIn) return atLogin ? null : loginPath;
+      return atLogin ? '/' : null;
+    },
+    routes: [
+      GoRoute(
+        path: loginPath,
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: LoginScreen()),
+      ),
+      ShellRoute(
+        builder: (context, state, child) =>
+            AppShell(location: state.uri.path, child: child),
+        routes: [
+          for (final d in appDestinations)
+            GoRoute(
+              path: d.path,
+              pageBuilder: (context, state) =>
+                  NoTransitionPage(child: d.builder()),
+            ),
+        ],
+      ),
+    ],
+  );
+});
+
+/// Bridges the auth stream to the [Listenable] go_router expects, so a sign-in
+/// or sign-out re-runs the redirect.
+class _AuthRefresh extends ChangeNotifier {
+  _AuthRefresh(Stream<Object?> stream) {
+    notifyListeners();
+    _sub = stream.asBroadcastStream().listen((_) => notifyListeners());
+  }
+
+  late final StreamSubscription<Object?> _sub;
+
+  @override
+  void dispose() {
+    _sub.cancel();
+    super.dispose();
+  }
+}

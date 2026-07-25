@@ -1,0 +1,40 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "children",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "parent_uid", "order": "ASCENDING" },
+        { "fieldPath": "birth_date", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "development_logs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "parent_uid", "order": "ASCENDING" },
+        { "fieldPath": "child_id", "order": "ASCENDING" },
+        { "fieldPath": "date", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "medical_records",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "parent_uid", "order": "ASCENDING" },
+        { "fieldPath": "child_id", "order": "ASCENDING" },
+        { "fieldPath": "date", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "reminders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "parent_uid", "order": "ASCENDING" },
+        { "fieldPath": "child_id", "order": "ASCENDING" },
+        { "fieldPath": "scheduled_time", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

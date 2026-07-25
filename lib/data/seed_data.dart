@@ -129,7 +129,7 @@ SeedData buildSeedData(String parentUid) {
   ];
 
   final reminders = <Reminder>[
-    ...buildVaccinationPlan(child, now: today).map(_withId),
+    ...buildVaccinationPlan(child, now: today).map((r) => r.copyWithId(_uuid.v4())),
     Reminder(
       id: _uuid.v4(),
       childId: child.id,
@@ -156,17 +156,6 @@ SeedData buildSeedData(String parentUid) {
     reminders: reminders,
   );
 }
-
-Reminder _withId(Reminder r) => Reminder(
-  id: _uuid.v4(),
-  childId: r.childId,
-  type: r.type,
-  title: r.title,
-  scheduledTime: r.scheduledTime,
-  recurrence: r.recurrence,
-  isCompleted: r.isCompleted,
-  details: r.details,
-);
 
 /// Measurements roughly following the WHO median, with a little noise so the
 /// chart does not look synthetic.

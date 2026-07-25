@@ -30,7 +30,12 @@ class AppShell extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(appDestinations[_index].label),
-        actions: const [_ChildSwitcher(), SizedBox(width: 12)],
+        actions: const [
+          _ChildSwitcher(),
+          SizedBox(width: 4),
+          _AccountMenu(),
+          SizedBox(width: 8),
+        ],
       ),
       body: isWide
           ? Row(
@@ -123,6 +128,41 @@ class _BottomBar extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _AccountMenu extends ConsumerWidget {
+  const _AccountMenu();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(authStateProvider).value;
+    if (user == null) return const SizedBox.shrink();
+    return PopupMenuButton<String>(
+      tooltip: 'Учётная запись',
+      icon: const Icon(Icons.account_circle_outlined),
+      onSelected: (value) {
+        if (value == 'signOut') ref.read(authRepositoryProvider).signOut();
+      },
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          enabled: false,
+          child: Text(
+            user.email,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ),
+        const PopupMenuDivider(),
+        const PopupMenuItem(
+          value: 'signOut',
+          child: ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(Icons.logout),
+            title: Text('Выйти'),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'data/auth_repository.dart';
 import 'data/memory_repository.dart';
 import 'data/repositories.dart';
 import 'models/child.dart';
@@ -7,12 +8,23 @@ import 'models/development_log.dart';
 import 'models/medical_record.dart';
 import 'models/reminder.dart';
 
-/// Uid of the signed-in parent.
-///
-/// Hard-coded until Firebase Auth is configured. Once it is, this becomes a
-/// provider watching `FirebaseAuth.instance.authStateChanges()`, and nothing
-/// downstream has to change.
-final currentUidProvider = Provider<String>((ref) => 'demo-parent');
+// --- Authentication -------------------------------------------------------
+// The defaults here are the offline demo stack: an always-signed-in user on
+// an in-memory store. `main.dart` overrides them with the Firebase versions.
+// Tests get the demo stack for free and never touch the network.
+
+final authRepositoryProvider = Provider<AuthRepository>(
+  (ref) => DemoAuthRepository(),
+);
+
+final authStateProvider = StreamProvider<AuthUser?>(
+  (ref) => ref.watch(authRepositoryProvider).authStateChanges(),
+);
+
+/// Uid of the signed-in parent, empty while signed out.
+final currentUidProvider = Provider<String>((ref) {
+  return ref.watch(authStateProvider).value?.uid ?? '';
+});
 
 final memoryDatabaseProvider = Provider<MemoryDatabase>((ref) {
   final db = MemoryDatabase.seeded(ref.watch(currentUidProvider));

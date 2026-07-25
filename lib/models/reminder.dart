@@ -85,6 +85,18 @@ class Reminder {
     );
   }
 
+  /// Same reminder under a storage-assigned id.
+  Reminder copyWithId(String newId) => Reminder(
+    id: newId,
+    childId: childId,
+    type: type,
+    title: title,
+    scheduledTime: scheduledTime,
+    recurrence: recurrence,
+    isCompleted: isCompleted,
+    details: details,
+  );
+
   Map<String, dynamic> toMap() => {
     'child_id': childId,
     'type': type.code,

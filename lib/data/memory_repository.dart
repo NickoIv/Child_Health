@@ -141,7 +141,7 @@ class MemoryDevelopmentLogRepository implements DevelopmentLogRepository {
 
   @override
   Future<DevelopmentLog> add(DevelopmentLog log) async {
-    final saved = log.id.isEmpty ? _withId(log) : log;
+    final saved = log.id.isEmpty ? log.copyWithId(_uuid.v4()) : log;
     _db.logs.mutate((items) => items.add(saved));
     return saved;
   }
@@ -158,19 +158,6 @@ class MemoryDevelopmentLogRepository implements DevelopmentLogRepository {
   Future<void> delete(String logId) async {
     _db.logs.mutate((items) => items.removeWhere((l) => l.id == logId));
   }
-
-  DevelopmentLog _withId(DevelopmentLog log) => DevelopmentLog(
-    id: _uuid.v4(),
-    childId: log.childId,
-    date: log.date,
-    type: log.type,
-    title: log.title,
-    description: log.description,
-    metrics: log.metrics,
-    photos: log.photos,
-    tags: log.tags,
-    severity: log.severity,
-  );
 }
 
 class MemoryMedicalRecordRepository implements MedicalRecordRepository {
@@ -184,18 +171,7 @@ class MemoryMedicalRecordRepository implements MedicalRecordRepository {
 
   @override
   Future<MedicalRecord> add(MedicalRecord record) async {
-    final saved = record.id.isEmpty
-        ? MedicalRecord(
-            id: _uuid.v4(),
-            childId: record.childId,
-            date: record.date,
-            diagnosis: record.diagnosis,
-            prescriptions: record.prescriptions,
-            labResults: record.labResults,
-            files: record.files,
-            doctor: record.doctor,
-          )
-        : record;
+    final saved = record.id.isEmpty ? record.copyWithId(_uuid.v4()) : record;
     _db.records.mutate((items) => items.add(saved));
     return saved;
   }
@@ -217,18 +193,8 @@ class MemoryReminderRepository implements ReminderRepository {
 
   @override
   Future<Reminder> add(Reminder reminder) async {
-    final saved = reminder.id.isEmpty
-        ? Reminder(
-            id: _uuid.v4(),
-            childId: reminder.childId,
-            type: reminder.type,
-            title: reminder.title,
-            scheduledTime: reminder.scheduledTime,
-            recurrence: reminder.recurrence,
-            isCompleted: reminder.isCompleted,
-            details: reminder.details,
-          )
-        : reminder;
+    final saved =
+        reminder.id.isEmpty ? reminder.copyWithId(_uuid.v4()) : reminder;
     _db.reminders.mutate((items) => items.add(saved));
     return saved;
   }

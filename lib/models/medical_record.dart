@@ -99,6 +99,18 @@ class MedicalRecord {
     );
   }
 
+  /// Same record under a storage-assigned id.
+  MedicalRecord copyWithId(String newId) => MedicalRecord(
+    id: newId,
+    childId: childId,
+    date: date,
+    diagnosis: diagnosis,
+    prescriptions: prescriptions,
+    labResults: labResults,
+    files: files,
+    doctor: doctor,
+  );
+
   Map<String, dynamic> toMap() => {
     'child_id': childId,
     'date': date.toIso8601String(),

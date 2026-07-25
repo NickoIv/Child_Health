@@ -49,3 +49,10 @@ app.*.map.json
 
 # Local tool settings
 /.claude/settings.local.json
+
+# Firebase CLI working files.
+# firebase.json, .firebaserc, the rules and the indexes ARE versioned — they
+# are configuration, and the project id in them is already public.
+/.firebase/
+firebase-debug.log
+firestore-debug.log

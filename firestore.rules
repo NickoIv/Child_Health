@@ -1,0 +1,74 @@
+rules_version = '2';
+
+// Security rules for «Календарь развития и здоровья ребёнка».
+//
+// Requirement 3.2 of the specification: strict isolation — a parent reaches
+// only their own data and their own children's data. Every document therefore
+// carries `parent_uid`, and every rule is a comparison against the caller's
+// uid. No collection is readable without authentication.
+//
+// Deploy with: firebase deploy --only firestore:rules
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // The caller owns the document already stored at this path.
+    function ownsExisting() {
+      return signedIn() && resource.data.parent_uid == request.auth.uid;
+    }
+
+    // The document being written claims the caller as its owner. Checked on
+    // create and update so a client cannot hand its data to someone else, or
+    // quietly re-parent a record it does not own.
+    function ownsIncoming() {
+      return signedIn() && request.resource.data.parent_uid == request.auth.uid;
+    }
+
+    function isChildOwned() {
+      return ownsExisting() && ownsIncoming();
+    }
+
+    // Parent profile: readable and writable only by its owner. The document id
+    // is the uid, so no parent_uid field is needed here.
+    match /users/{uid} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+
+    match /children/{childId} {
+      allow read: if ownsExisting();
+      allow create: if ownsIncoming();
+      allow update: if isChildOwned();
+      allow delete: if ownsExisting();
+    }
+
+    match /development_logs/{logId} {
+      allow read: if ownsExisting();
+      allow create: if ownsIncoming();
+      allow update: if isChildOwned();
+      allow delete: if ownsExisting();
+    }
+
+    match /medical_records/{recordId} {
+      allow read: if ownsExisting();
+      allow create: if ownsIncoming();
+      allow update: if isChildOwned();
+      allow delete: if ownsExisting();
+    }
+
+    match /reminders/{reminderId} {
+      allow read: if ownsExisting();
+      allow create: if ownsIncoming();
+      allow update: if isChildOwned();
+      allow delete: if ownsExisting();
+    }
+
+    // Anything not matched above is denied. Adding a collection means adding
+    // a rule for it — silence here is a refusal, not an oversight.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

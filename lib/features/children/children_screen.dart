@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/vaccination/national_calendar.dart';
 import '../../models/child.dart';
 import '../../providers.dart';
 import '../shared/widgets.dart';
@@ -104,6 +105,14 @@ class ChildrenScreen extends ConsumerWidget {
           birthDate: result.birthDate,
           gender: result.gender,
         );
+
+    // Requirement 2.6: the immunisation plan is generated automatically from
+    // the national schedule as soon as a profile exists.
+    final reminders = ref.read(reminderRepositoryProvider);
+    for (final dose in buildVaccinationPlan(created)) {
+      await reminders.add(dose);
+    }
+
     ref.read(selectedChildIdProvider.notifier).select(created.id);
   }
 }

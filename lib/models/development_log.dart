@@ -127,6 +127,21 @@ class DevelopmentLog {
     );
   }
 
+  /// Same entry under a storage-assigned id. Drafts are created with an empty
+  /// id and get a real one once the repository has written them.
+  DevelopmentLog copyWithId(String newId) => DevelopmentLog(
+    id: newId,
+    childId: childId,
+    date: date,
+    type: type,
+    title: title,
+    description: description,
+    metrics: metrics,
+    photos: photos,
+    tags: tags,
+    severity: severity,
+  );
+
   Map<String, dynamic> toMap() => {
     'child_id': childId,
     'date': date.toIso8601String(),
