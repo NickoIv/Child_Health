@@ -154,6 +154,34 @@ void main() {
       expect(searchArticles('квантовая механика'), isEmpty);
     });
 
+    test('finds the topics a parent actually searches for', () {
+      // The words on the left are what gets typed at 3am; the ids on the
+      // right are what must come back. A base that cannot be searched in
+      // the parent's own words is a base nobody reads.
+      const expectations = {
+        'ветрянка': 'chickenpox',
+        'болит ухо': 'otitis',
+        'закисли глазки': 'conjunctivitis',
+        'лающий кашель': 'croup',
+        'приучить к горшку': 'potty-training',
+        'истерика': 'tantrums',
+        'не говорит': 'speech',
+        'уплотнение в груди': 'mastitis',
+        'не радуюсь ребенку': 'postpartum-mood',
+        'адаптация': 'kindergarten',
+        'проглотил': 'home-safety',
+        'температура без симптомов': 'roseola',
+      };
+      expectations.forEach((query, id) {
+        final ids = searchArticles(query).map((a) => a.id).take(3);
+        expect(
+          ids,
+          contains(id),
+          reason: '«$query» should surface "$id", got ${ids.toList()}',
+        );
+      });
+    });
+
     test('ignores single-character noise', () {
       expect(searchArticles('а'), isEmpty);
     });
