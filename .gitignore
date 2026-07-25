@@ -46,3 +46,6 @@ app.*.map.json
 
 # Project documents (contain personal data) - kept locally only
 /docs/
+
+# Local tool settings
+/.claude/settings.local.json
