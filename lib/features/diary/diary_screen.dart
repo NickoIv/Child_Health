@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
+import '../../core/photos/compression.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/development_log.dart';
 import '../../providers.dart';
+import '../shared/photo_widgets.dart';
 import '../shared/widgets.dart';
 
 /// Chronological feed of diary entries with filtering by type, per 2.2.
@@ -191,6 +194,10 @@ class _LogTile extends StatelessWidget {
                   ],
                 ),
               ],
+              if (log.photos.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                PhotoStrip(photoIds: log.photos),
+              ],
               if (log.tags.isNotEmpty) ...[
                 const SizedBox(height: 8),
                 Wrap(
@@ -216,6 +223,84 @@ class _LogTile extends StatelessWidget {
     LogType.illness => Icons.sick_outlined,
     LogType.note => Icons.notes,
   };
+}
+
+class _PhotoPicker extends StatelessWidget {
+  const _PhotoPicker({
+    required this.photoIds,
+    required this.uploading,
+    required this.error,
+    required this.onAdd,
+    required this.onRemove,
+  });
+
+  final List<String> photoIds;
+  final bool uploading;
+  final String? error;
+  final VoidCallback onAdd;
+  final ValueChanged<String> onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text('Фотографии', style: theme.textTheme.labelLarge),
+            const Spacer(),
+            if (uploading)
+              const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            else
+              TextButton.icon(
+                onPressed: onAdd,
+                icon: const Icon(Icons.add_a_photo_outlined, size: 18),
+                label: const Text('Добавить'),
+              ),
+          ],
+        ),
+        if (photoIds.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final id in photoIds)
+                Stack(
+                  children: [
+                    PhotoThumb(photoId: id, size: 64),
+                    Positioned(
+                      right: -6,
+                      top: -6,
+                      child: IconButton(
+                        iconSize: 18,
+                        tooltip: 'Удалить',
+                        onPressed: () => onRemove(id),
+                        icon: const Icon(Icons.cancel),
+                      ),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+        ],
+        if (error != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            error!,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.error,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
 }
 
 class _Pill extends StatelessWidget {
@@ -249,16 +334,20 @@ class _Pill extends StatelessWidget {
   }
 }
 
-class _LogFormDialog extends StatefulWidget {
+class _LogFormDialog extends ConsumerStatefulWidget {
   const _LogFormDialog({required this.childId});
 
   final String childId;
 
   @override
-  State<_LogFormDialog> createState() => _LogFormDialogState();
+  ConsumerState<_LogFormDialog> createState() => _LogFormDialogState();
 }
 
-class _LogFormDialogState extends State<_LogFormDialog> {
+class _LogFormDialogState extends ConsumerState<_LogFormDialog> {
+  final _photoIds = <String>[];
+  bool _uploading = false;
+  String? _photoError;
+
   final _formKey = GlobalKey<FormState>();
   final _title = TextEditingController();
   final _description = TextEditingController();
@@ -369,6 +458,14 @@ class _LogFormDialogState extends State<_LogFormDialog> {
                     hintText: 'моторика, речь',
                   ),
                 ),
+                const SizedBox(height: 16),
+                _PhotoPicker(
+                  photoIds: _photoIds,
+                  uploading: _uploading,
+                  error: _photoError,
+                  onAdd: _pickPhotos,
+                  onRemove: _removePhoto,
+                ),
               ],
             ),
           ),
@@ -412,6 +509,48 @@ class _LogFormDialogState extends State<_LogFormDialog> {
   double? _parse(TextEditingController c) =>
       double.tryParse(c.text.replaceAll(',', '.'));
 
+  /// Uploads immediately on pick rather than on save.
+  ///
+  /// Compression takes a moment on a large photo, and doing it while the
+  /// parent is still typing hides that latency. The cost is an orphaned photo
+  /// document if the form is then cancelled — cheap, and cleanable later.
+  Future<void> _pickPhotos() async {
+    final picker = ImagePicker();
+    final files = await picker.pickMultiImage(imageQuality: 90);
+    if (files.isEmpty) return;
+
+    setState(() {
+      _uploading = true;
+      _photoError = null;
+    });
+
+    final repository = ref.read(photoRepositoryProvider);
+    for (final file in files) {
+      try {
+        final bytes = await file.readAsBytes();
+        final photo = await repository.upload(
+          childId: widget.childId,
+          bytes: bytes,
+        );
+        if (!mounted) return;
+        setState(() => _photoIds.add(photo.id));
+      } on PhotoTooLargeException catch (e) {
+        if (mounted) setState(() => _photoError = e.message);
+      } catch (e) {
+        if (mounted) {
+          setState(() => _photoError = 'Не удалось загрузить фото: $e');
+        }
+      }
+    }
+
+    if (mounted) setState(() => _uploading = false);
+  }
+
+  Future<void> _removePhoto(String id) async {
+    await ref.read(photoRepositoryProvider).delete(id);
+    if (mounted) setState(() => _photoIds.remove(id));
+  }
+
   void _submit() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final log = DevelopmentLog(
@@ -430,6 +569,7 @@ class _LogFormDialogState extends State<_LogFormDialog> {
         LogType.illness => Metrics(temperatureC: _parse(_temperature)),
         _ => const Metrics(),
       },
+      photos: List.of(_photoIds),
       tags: _tags.text
           .split(',')
           .map((t) => t.trim())

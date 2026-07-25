@@ -1,9 +1,14 @@
+import 'dart:typed_data';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../core/photos/compression.dart';
+import '../data/photo_repository.dart';
 import '../data/repositories.dart';
 import '../models/child.dart';
 import '../models/development_log.dart';
 import '../models/medical_record.dart';
+import '../models/photo.dart';
 import '../models/reminder.dart';
 
 /// Collection names, matching section 4 of the specification.
@@ -13,6 +18,7 @@ abstract final class Collections {
   static const logs = 'development_logs';
   static const records = 'medical_records';
   static const reminders = 'reminders';
+  static const photos = 'photos';
 }
 
 /// Every document carries the owning parent's uid, not just the child id.
@@ -162,6 +168,46 @@ class FirestoreMedicalRecordRepository extends _Base
   @override
   Future<void> delete(String recordId) =>
       db.collection(Collections.records).doc(recordId).delete();
+}
+
+class FirestorePhotoRepository extends _Base implements PhotoRepository {
+  const FirestorePhotoRepository(super.db, super.parentUid);
+
+  @override
+  Future<Photo> upload({
+    required String childId,
+    required Uint8List bytes,
+    String caption = '',
+  }) async {
+    // Compression happens before the write, not after: an image that will not
+    // fit must fail here with an explanation, rather than as a rejected
+    // document the user cannot interpret.
+    final prepared = preparePhoto(bytes);
+    final doc = db.collection(Collections.photos).doc();
+    final photo = Photo(
+      id: doc.id,
+      childId: childId,
+      base64Data: prepared.base64Data,
+      width: prepared.width,
+      height: prepared.height,
+      createdAt: DateTime.now(),
+      caption: caption,
+    );
+    await doc.set({...photo.toMap(), _parentUid: parentUid});
+    return photo;
+  }
+
+  @override
+  Future<Photo?> byId(String photoId) async {
+    final snap = await db.collection(Collections.photos).doc(photoId).get();
+    final data = snap.data();
+    if (data == null) return null;
+    return Photo.fromMap(snap.id, data);
+  }
+
+  @override
+  Future<void> delete(String photoId) =>
+      db.collection(Collections.photos).doc(photoId).delete();
 }
 
 class FirestoreReminderRepository extends _Base

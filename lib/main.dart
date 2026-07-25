@@ -56,6 +56,12 @@ Future<void> main() async {
             ref.watch(currentUidProvider),
           ),
         ),
+        photoRepositoryProvider.overrideWith(
+          (ref) => FirestorePhotoRepository(
+            FirebaseFirestore.instance,
+            ref.watch(currentUidProvider),
+          ),
+        ),
       ],
       child: const ChildHealthApp(),
     ),

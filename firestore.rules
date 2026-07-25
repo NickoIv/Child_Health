@@ -65,6 +65,19 @@ service cloud.firestore {
       allow delete: if ownsExisting();
     }
 
+    // Photos and scans. Stored here rather than in Firebase Storage, which
+    // needs the paid Blaze plan; the images are compressed client-side and
+    // held as base64. Immutable once written — a photo is never edited, so
+    // update is denied outright and a change means delete plus re-upload.
+    match /photos/{photoId} {
+      allow read: if ownsExisting();
+      allow create: if ownsIncoming()
+                    && request.resource.data.data is string
+                    && request.resource.data.data.size() < 1000000;
+      allow update: if false;
+      allow delete: if ownsExisting();
+    }
+
     // Anything not matched above is denied. Adding a collection means adding
     // a rule for it — silence here is a refusal, not an oversight.
     match /{document=**} {

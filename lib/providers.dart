@@ -4,10 +4,12 @@ import 'ai/ai_config.dart';
 import 'ai/assistant_service.dart';
 import 'data/auth_repository.dart';
 import 'data/memory_repository.dart';
+import 'data/photo_repository.dart';
 import 'data/repositories.dart';
 import 'models/child.dart';
 import 'models/development_log.dart';
 import 'models/medical_record.dart';
+import 'models/photo.dart';
 import 'models/reminder.dart';
 
 // --- Authentication -------------------------------------------------------
@@ -53,6 +55,20 @@ final medicalRepositoryProvider = Provider<MedicalRecordRepository>(
 final reminderRepositoryProvider = Provider<ReminderRepository>(
   (ref) => MemoryReminderRepository(ref.watch(memoryDatabaseProvider)),
 );
+
+final photoRepositoryProvider = Provider<PhotoRepository>(
+  (ref) => MemoryPhotoRepository(),
+);
+
+/// One photo, fetched on demand.
+///
+/// A photo never changes after it is written, so this is a plain future
+/// rather than a stream — and `keepAlive` stops a scroll past a diary entry
+/// from re-downloading the same image over and over.
+final photoProvider = FutureProvider.family<Photo?, String>((ref, id) async {
+  ref.keepAlive();
+  return ref.watch(photoRepositoryProvider).byId(id);
+});
 
 // --- Queries --------------------------------------------------------------
 
