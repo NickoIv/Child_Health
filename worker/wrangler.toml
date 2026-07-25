@@ -1,0 +1,14 @@
+name = "child-health-ai"
+main = "worker.js"
+compatibility_date = "2026-07-01"
+
+[vars]
+# Model served from the Gemini free tier. Override without redeploying code.
+GEMINI_MODEL = "gemini-2.5-flash"
+
+# Lock this to the hosting domain once deployed, so the free quota cannot be
+# spent from someone else's page. "*" is fine only while testing locally.
+ALLOWED_ORIGIN = "https://child-health-tracker-7aad1.web.app"
+
+# GEMINI_API_KEY is NOT set here — it is a secret:
+#   npx wrangler secret put GEMINI_API_KEY

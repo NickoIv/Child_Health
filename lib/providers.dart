@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'ai/ai_config.dart';
+import 'ai/assistant_service.dart';
 import 'data/auth_repository.dart';
 import 'data/memory_repository.dart';
 import 'data/repositories.dart';
@@ -100,6 +102,16 @@ final remindersProvider = StreamProvider<List<Reminder>>((ref) {
   final child = ref.watch(selectedChildProvider);
   if (child == null) return Stream.value(const []);
   return ref.watch(reminderRepositoryProvider).watchReminders(child.id);
+});
+
+// --- Assistant ------------------------------------------------------------
+
+/// Falls back to the disabled implementation when no proxy URL was compiled
+/// in, so a build without AI degrades to an explanation instead of an error.
+final assistantServiceProvider = Provider<AssistantService>((ref) {
+  return AiConfig.isConfigured
+      ? GeminiAssistantService()
+      : const DisabledAssistantService();
 });
 
 // --- Derived views --------------------------------------------------------

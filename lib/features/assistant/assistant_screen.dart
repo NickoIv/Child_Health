@@ -44,6 +44,8 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
           _SearchResults(query: _query, results: results)
         else ...[
           const _RedFlagCard(),
+          const SizedBox(height: 12),
+          const _AskCard(),
           const SizedBox(height: 16),
           if (ageMonths != null) ...[
             _ForAgeCard(ageMonths: ageMonths, childName: child!.name),
@@ -164,6 +166,66 @@ class _RedFlagCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       'Несколько вопросов — и понятно, ждать или звонить 103',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Entry point to the conversational assistant.
+class _AskCard extends ConsumerWidget {
+  const _AskCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final configured = ref.watch(assistantServiceProvider).isConfigured;
+    return Card(
+      child: InkWell(
+        onTap: () => context.go('/assistant/chat'),
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Row(
+            children: [
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primaryContainer,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.forum_outlined,
+                  color: theme.colorScheme.onPrimaryContainer,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Спросить своими словами',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      configured
+                          ? 'Ответ по базе приложения, со ссылками на статьи'
+                          : 'ИИ пока не подключён — откройте, чтобы узнать как',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),

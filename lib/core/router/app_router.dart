@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/assistant/article_screen.dart';
 import '../../features/assistant/assistant_screen.dart';
+import '../../features/assistant/chat_screen.dart';
 import '../../features/assistant/triage_screen.dart';
 import '../../features/auth/login_screen.dart';
 import '../../features/children/children_screen.dart';
@@ -97,6 +98,11 @@ const appDestinations = <AppDestination>[
 const loginPath = '/login';
 
 final _assistantRoutes = <RouteBase>[
+  GoRoute(
+    path: 'chat',
+    pageBuilder: (context, state) =>
+        const NoTransitionPage(child: ChatScreen()),
+  ),
   GoRoute(
     path: 'triage',
     pageBuilder: (context, state) =>
