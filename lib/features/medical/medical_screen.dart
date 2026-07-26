@@ -7,7 +7,9 @@ import '../../models/medical_record.dart';
 import '../../providers.dart';
 import '../reports/medical_report.dart';
 import '../reports/report_data.dart';
+import '../shared/photo_widgets.dart';
 import '../shared/widgets.dart';
+import 'record_form.dart';
 
 /// Medical card: diagnoses, prescriptions, lab results and the PDF summary
 /// for the doctor, per 2.5.
@@ -44,27 +46,77 @@ class _MedicalScreenState extends ConsumerState<MedicalScreen> {
 
     final records = recordsAsync.value ?? const <MedicalRecord>[];
 
-    return PageBody(
-      children: [
-        _ReportCard(building: _building, onGenerate: _generateReport),
-        const SizedBox(height: 16),
-        if (records.isEmpty)
-          const SectionCard(
-            title: 'Медицинские записи',
-            icon: Icons.medical_information_outlined,
-            child: EmptyState(
-              icon: Icons.folder_open_outlined,
-              message: 'Медицинских записей пока нет',
-            ),
-          )
-        else
-          for (final r in records) ...[
-            _RecordCard(record: r),
-            const SizedBox(height: 16),
-          ],
-        const _PendingFeatures(),
-      ],
+    return Scaffold(
+      body: PageBody(
+        children: [
+          _ReportCard(building: _building, onGenerate: _generateReport),
+          const SizedBox(height: 16),
+          if (records.isEmpty)
+            const SectionCard(
+              title: 'Медицинские записи',
+              icon: Icons.medical_information_outlined,
+              child: EmptyState(
+                icon: Icons.folder_open_outlined,
+                message: 'Медицинских записей пока нет',
+                hint: 'Добавьте визит к врачу или результаты анализов',
+              ),
+            )
+          else
+            for (final r in records) ...[
+              _RecordCard(
+                record: r,
+                onDelete: () => _confirmDelete(r),
+              ),
+              const SizedBox(height: 16),
+            ],
+          const _PendingFeatures(),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _addRecord,
+        icon: const Icon(Icons.add),
+        label: const Text('Добавить запись'),
+      ),
     );
+  }
+
+  Future<void> _addRecord() async {
+    final child = ref.read(selectedChildProvider);
+    if (child == null) return;
+
+    final record = await showDialog<MedicalRecord>(
+      context: context,
+      builder: (_) => MedicalRecordForm(childId: child.id),
+    );
+    if (record == null) return;
+
+    await ref.read(medicalRepositoryProvider).add(record);
+  }
+
+  Future<void> _confirmDelete(MedicalRecord record) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Удалить запись?'),
+        content: Text(
+          'Запись «${record.diagnosis}» от ${shortDate.format(record.date)} '
+          'будет удалена вместе с результатами анализов. Действие необратимо.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Отмена'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Удалить'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed ?? false) {
+      await ref.read(medicalRepositoryProvider).delete(record.id);
+    }
   }
 
   Future<void> _generateReport() async {
@@ -144,9 +196,10 @@ class _ReportCard extends StatelessWidget {
 }
 
 class _RecordCard extends StatelessWidget {
-  const _RecordCard({required this.record});
+  const _RecordCard({required this.record, required this.onDelete});
 
   final MedicalRecord record;
+  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -154,9 +207,19 @@ class _RecordCard extends StatelessWidget {
     return SectionCard(
       title: record.diagnosis,
       icon: Icons.medical_information_outlined,
-      action: Text(
-        shortDate.format(record.date),
-        style: theme.textTheme.bodySmall,
+      action: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            shortDate.format(record.date),
+            style: theme.textTheme.bodySmall,
+          ),
+          IconButton(
+            tooltip: 'Удалить запись',
+            onPressed: onDelete,
+            icon: const Icon(Icons.delete_outline, size: 20),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -194,6 +257,12 @@ class _RecordCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             _LabTable(results: record.labResults),
+          ],
+          if (record.files.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Text('Сканы бланков', style: theme.textTheme.labelLarge),
+            const SizedBox(height: 8),
+            PhotoStrip(photoIds: record.files),
           ],
         ],
       ),
