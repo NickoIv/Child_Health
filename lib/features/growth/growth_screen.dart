@@ -409,9 +409,9 @@ class _LatestAssessment extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'Справочные таблицы сокращены и приведены для демонстрации. '
-            'Не используйте оценку для медицинских решений — '
-            'обратитесь к педиатру.',
+            'Расчёт по нормам ВОЗ для детей 0–5 лет. Перцентиль показывает '
+            'положение среди сверстников, а не диагноз: отклонение может быть '
+            'и особенностью конкретного ребёнка. Оценивает врач.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),

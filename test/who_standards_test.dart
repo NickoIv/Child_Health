@@ -10,13 +10,79 @@ void main() {
       expect(point!.m, closeTo(9.6479, 1e-4));
     });
 
-    test('interpolates between tabulated ages', () {
-      final at12 = lmsFor(GrowthMetric.weight, Gender.male, 12)!.m;
-      final at18 = lmsFor(GrowthMetric.weight, Gender.male, 18)!.m;
-      final at15 = lmsFor(GrowthMetric.weight, Gender.male, 15)!.m;
-      expect(at15, greaterThan(at12));
-      expect(at15, lessThan(at18));
-      expect(at15, closeTo((at12 + at18) / 2, 1e-6));
+    test('covers every month with its own published row', () {
+      // The tables are complete, so nothing is interpolated any more. An
+      // earlier version guessed month 15 as the midpoint of 12 and 18; the
+      // published value is not the midpoint, and that error propagated into
+      // every z-score computed at an unlisted age.
+      for (final metric in GrowthMetric.values) {
+        for (final gender in Gender.values) {
+          for (var month = 0; month <= referenceMaxMonth; month++) {
+            final point = lmsFor(metric, gender, month);
+            expect(
+              point,
+              isNotNull,
+              reason: '$metric $gender has no row for month $month',
+            );
+            expect(point!.month, month);
+          }
+        }
+      }
+    });
+
+    test('the median rises month over month', () {
+      for (final metric in GrowthMetric.values) {
+        for (final gender in Gender.values) {
+          for (var month = 1; month <= referenceMaxMonth; month++) {
+            final previous = lmsFor(metric, gender, month - 1)!.m;
+            final current = lmsFor(metric, gender, month)!.m;
+            expect(
+              current,
+              greaterThan(previous),
+              reason: '$metric $gender fell between $month and ${month - 1}',
+            );
+          }
+        }
+      }
+    });
+
+    test('matches values published by the WHO', () {
+      // Guards against a bad regeneration: these are spot values from the
+      // official standards.
+      expect(
+        lmsFor(GrowthMetric.weight, Gender.male, 12)!.m,
+        closeTo(9.6479, 0.0001),
+      );
+      expect(
+        lmsFor(GrowthMetric.weight, Gender.male, 0)!.m,
+        closeTo(3.3464, 0.0001),
+      );
+      expect(
+        lmsFor(GrowthMetric.weight, Gender.female, 0)!.m,
+        closeTo(3.2322, 0.0001),
+      );
+      expect(
+        lmsFor(GrowthMetric.height, Gender.male, 0)!.m,
+        closeTo(49.8842, 0.0001),
+      );
+      expect(
+        lmsFor(GrowthMetric.height, Gender.female, 0)!.m,
+        closeTo(49.1477, 0.0001),
+      );
+    });
+
+    test('L and S are plausible everywhere', () {
+      for (final metric in GrowthMetric.values) {
+        for (final gender in Gender.values) {
+          for (var month = 0; month <= referenceMaxMonth; month++) {
+            final p = lmsFor(metric, gender, month)!;
+            expect(p.m, greaterThan(0));
+            expect(p.s, greaterThan(0));
+            expect(p.s, lessThan(0.5));
+            expect(p.l.abs(), lessThan(3));
+          }
+        }
+      }
     });
 
     test('clamps below the covered range', () {
