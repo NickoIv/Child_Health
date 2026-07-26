@@ -34,6 +34,7 @@ class SectionCard extends StatelessWidget {
     required this.child,
     this.icon,
     this.action,
+    this.accentColor,
     super.key,
   });
 
@@ -42,9 +43,14 @@ class SectionCard extends StatelessWidget {
   final IconData? icon;
   final Widget? action;
 
+  /// Overrides the icon tint. Used where the card carries a status rather
+  /// than an identity.
+  final Color? accentColor;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final accent = accentColor ?? theme.colorScheme.primary;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -54,8 +60,17 @@ class SectionCard extends StatelessWidget {
             Row(
               children: [
                 if (icon != null) ...[
-                  Icon(icon, size: 20, color: theme.colorScheme.primary),
-                  const SizedBox(width: 10),
+                  // A tinted chip rather than a bare glyph: it gives each
+                  // card a recognisable identity when scrolling past.
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: accent.withValues(alpha: 0.13),
+                      borderRadius: BorderRadius.circular(11),
+                    ),
+                    child: Icon(icon, size: 18, color: accent),
+                  ),
+                  const SizedBox(width: 12),
                 ],
                 Expanded(
                   child: Text(title, style: theme.textTheme.titleMedium),
@@ -130,13 +145,26 @@ class EmptyState extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 32),
       child: Column(
         children: [
-          Icon(icon, size: 40, color: theme.colorScheme.outline),
-          const SizedBox(height: 12),
+          Container(
+            width: 68,
+            height: 68,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary.withValues(alpha: 0.08),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              size: 30,
+              color: theme.colorScheme.primary.withValues(alpha: 0.7),
+            ),
+          ),
+          const SizedBox(height: 14),
           Text(
             message,
             textAlign: TextAlign.center,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+            style: theme.textTheme.bodyLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: theme.colorScheme.onSurface,
             ),
           ),
           if (hint != null) ...[

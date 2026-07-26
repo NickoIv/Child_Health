@@ -287,13 +287,11 @@ class _SectionsCard extends StatelessWidget {
                 tilePadding: EdgeInsets.zero,
                 shape: const Border(),
                 collapsedShape: const Border(),
-                leading: Icon(
-                  _iconFor(section),
-                  color: section == KbSection.urgent
-                      ? StatusColors.alert
-                      : theme.colorScheme.primary,
+                leading: _SectionBadge(section: section),
+                title: Text(
+                  section.title,
+                  style: theme.textTheme.titleSmall,
                 ),
-                title: Text(section.title),
                 subtitle: Text(
                   section.subtitle,
                   style: theme.textTheme.bodySmall,
@@ -305,6 +303,42 @@ class _SectionsCard extends StatelessWidget {
               ),
         ],
       ),
+    );
+  }
+
+}
+
+/// Coloured chip identifying a section.
+///
+/// The hues come from the validated categorical order, assigned in sequence —
+/// the ordering is what keeps adjacent sections distinguishable to a
+/// colour-blind reader, so it is not rearranged for taste. Urgent is the
+/// exception: it takes the fixed alert colour, because it is a status and not
+/// one identity among eight.
+///
+/// Three of the light-mode hues sit below 3:1 against the surface. Each badge
+/// is always beside its section title, which is the relief the palette
+/// requires: colour never carries the meaning alone.
+class _SectionBadge extends StatelessWidget {
+  const _SectionBadge({required this.section});
+
+  final KbSection section;
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    final color = section == KbSection.urgent
+        ? StatusColors.alert
+        : VizPalette.slot(section.index - 1, brightness);
+
+    return Container(
+      width: 42,
+      height: 42,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(13),
+      ),
+      child: Icon(_iconFor(section), color: color, size: 21),
     );
   }
 

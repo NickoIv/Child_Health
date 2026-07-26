@@ -165,10 +165,16 @@ class _GrowthChart extends StatelessWidget {
               maxY: maxY + pad,
               gridData: FlGridData(
                 drawVerticalLine: true,
-                getDrawingHorizontalLine: (_) =>
-                    FlLine(color: theme.dividerColor, strokeWidth: 1),
-                getDrawingVerticalLine: (_) =>
-                    FlLine(color: theme.dividerColor, strokeWidth: 1),
+                // Recessive by design: the grid orients, it does not compete
+                // with the data.
+                getDrawingHorizontalLine: (_) => FlLine(
+                  color: VizPalette.grid(theme.brightness),
+                  strokeWidth: 1,
+                ),
+                getDrawingVerticalLine: (_) => FlLine(
+                  color: VizPalette.grid(theme.brightness),
+                  strokeWidth: 1,
+                ),
               ),
               borderData: FlBorderData(show: false),
               titlesData: FlTitlesData(
@@ -224,12 +230,17 @@ class _GrowthChart extends StatelessWidget {
                   spots: childSpots,
                   isCurved: true,
                   curveSmoothness: 0.2,
-                  color: theme.colorScheme.primary,
-                  barWidth: 3,
+                  // The one data series on this chart takes categorical slot
+                  // 1 — validated, and far from both the violet chrome and
+                  // the alert red, so it can never be mistaken for either.
+                  color: _seriesColor(theme),
+                  barWidth: 2.5,
                   dotData: FlDotData(
                     getDotPainter: (spot, _, _, _) => FlDotCirclePainter(
+                      // 8px across, with a surface ring so points stay
+                      // readable where they cross a reference curve.
                       radius: 4,
-                      color: theme.colorScheme.primary,
+                      color: _seriesColor(theme),
                       strokeWidth: 2,
                       strokeColor: theme.colorScheme.surface,
                     ),
@@ -244,19 +255,16 @@ class _GrowthChart extends StatelessWidget {
           spacing: 16,
           runSpacing: 6,
           children: [
-            _LegendDot(
-              color: theme.colorScheme.primary,
-              label: child.name,
-            ),
+            _LegendDot(color: _seriesColor(theme), label: child.name),
             // Only advertise the reference when it is actually on the chart.
             if (median.isNotEmpty)
-              _LegendDot(
-                color: theme.colorScheme.outline,
+              const _LegendDot(
+                color: VizPalette.muted,
                 label: 'медиана ВОЗ',
               ),
             if (lower.isNotEmpty)
               _LegendDot(
-                color: theme.colorScheme.outlineVariant,
+                color: VizPalette.axis(theme.brightness),
                 label: 'коридор ±2 SD',
                 dashed: true,
               ),
@@ -276,6 +284,12 @@ class _GrowthChart extends StatelessWidget {
     );
   }
 
+  static Color _seriesColor(ThemeData theme) =>
+      VizPalette.slot(0, theme.brightness);
+
+  /// The WHO curves are chart chrome, not a second series: they are the same
+  /// context in every chart and never change with the data. Drawing them in a
+  /// categorical hue would imply they are another child to compare against.
   LineChartBarData _referenceLine(
     List<FlSpot> spots,
     ThemeData theme, {
@@ -285,9 +299,9 @@ class _GrowthChart extends StatelessWidget {
       spots: spots,
       isCurved: true,
       color: dashed
-          ? theme.colorScheme.outlineVariant
-          : theme.colorScheme.outline,
-      barWidth: dashed ? 1.5 : 2,
+          ? VizPalette.axis(theme.brightness)
+          : VizPalette.muted,
+      barWidth: 1.5,
       dashArray: dashed ? const [6, 4] : null,
       dotData: const FlDotData(show: false),
     );

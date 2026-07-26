@@ -39,13 +39,21 @@ class NowCard extends ConsumerWidget {
         )
         .toList();
 
+    final onGradient = theme.colorScheme.onPrimary;
+
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          // The one warm, saturated surface in the app. It greets rather than
+          // reports, which is the whole reason a tired parent opens this at all.
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(20, 22, 20, 22),
+            decoration: BoxDecoration(
+              gradient: AppTheme.welcomeGradient(theme.colorScheme),
+            ),
+            child: Row(
               children: [
                 Expanded(
                   child: Column(
@@ -54,57 +62,78 @@ class NowCard extends ConsumerWidget {
                       Text(
                         _greeting(now),
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+                          color: onGradient.withValues(alpha: 0.85),
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        child.name,
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          color: onGradient,
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        child.name,
-                        style: theme.textTheme.headlineSmall,
-                      ),
-                      Text(
                         child.ageLabel,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+                          color: onGradient.withValues(alpha: 0.85),
                         ),
                       ),
                     ],
                   ),
                 ),
-                _StatusChip(sickToday: sickToday, temperature: lastTemperature),
+                _StatusChip(
+                  sickToday: sickToday,
+                  temperature: lastTemperature,
+                ),
               ],
             ),
+          ),
 
-            if (dueToday.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              for (final r in dueToday.take(3))
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
-                  child: Row(
-                    children: [
-                      Icon(
-                        r.type == ReminderType.vaccination
-                            ? Icons.vaccines_outlined
-                            : Icons.event_available_outlined,
-                        size: 18,
-                        color: theme.colorScheme.primary,
+          Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (dueToday.isNotEmpty) ...[
+                  for (final r in dueToday.take(3))
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(7),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primaryContainer,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(
+                              r.type == ReminderType.vaccination
+                                  ? Icons.vaccines_outlined
+                                  : Icons.event_available_outlined,
+                              size: 16,
+                              color: theme.colorScheme.onPrimaryContainer,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Сегодня: ${r.title}',
+                              style: theme.textTheme.bodyMedium,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          'Сегодня: ${r.title}',
-                          style: theme.textTheme.bodyMedium,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
-
-            const SizedBox(height: 20),
-            _QuickActions(child: child),
-          ],
-        ),
+                    ),
+                  const SizedBox(height: 8),
+                ],
+                _QuickActions(child: child),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -136,37 +165,44 @@ class _StatusChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final fever = (temperature ?? 0) >= 38.0;
-    final color = fever || sickToday
-        ? StatusColors.alert
-        : StatusColors.normal;
+    final concerning = fever || sickToday;
     final label = temperature != null
         ? '${temperature!.toStringAsFixed(1)} °C'
         : sickToday
         ? 'Болеет'
         : 'Здоров';
 
+    // Sits on the gradient, so the chip is a white card and the status colour
+    // is carried by the icon and the text inside it. A tinted chip on a
+    // saturated background would lose the distinction entirely.
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(12),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
+          Icon(
+            concerning ? Icons.thermostat : Icons.favorite,
+            size: 18,
+            color: concerning ? StatusColors.alert : StatusColors.normal,
+          ),
+          const SizedBox(height: 4),
           Text(
             label,
             style: theme.textTheme.titleMedium?.copyWith(
-              color: color,
+              color: concerning ? StatusColors.alert : StatusColors.normal,
               fontWeight: FontWeight.w700,
             ),
           ),
-          if (temperature != null)
-            Text(
-              'последняя',
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
+          Text(
+            temperature != null ? 'последняя' : 'сегодня',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
             ),
+          ),
         ],
       ),
     );
