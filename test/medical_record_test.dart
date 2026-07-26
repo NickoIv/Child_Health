@@ -135,6 +135,30 @@ void main() {
     expect(find.text('Осмотр без анализов'), findsOneWidget);
   });
 
+  testWidgets('the "not yet implemented" list does not lie', (tester) async {
+    // This regressed once: the list kept advertising manual entry and scan
+    // attachment as missing for two releases after both shipped, because it
+    // was written before the work rather than after it. A stale notice is
+    // worse than none — it tells a parent to stop looking for a feature that
+    // is right in front of them.
+    await openMedical(tester);
+
+    expect(
+      find.widgetWithText(FloatingActionButton, 'Добавить запись'),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('Ручной ввод'),
+      findsNothing,
+      reason: 'manual entry works — the FAB above opens the form',
+    );
+    expect(
+      find.textContaining('Прикрепление сканов'),
+      findsNothing,
+      reason: 'scans attach from the record form',
+    );
+  });
+
   testWidgets('deleting a record asks first and then removes it', (
     tester,
   ) async {

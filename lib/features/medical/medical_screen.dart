@@ -355,10 +355,13 @@ class _PendingFeatures extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Keep this list honest. It listed manual entry and scan
+          // attachment for two releases after both shipped, because it was
+          // written before the work rather than after it. A stale "not yet
+          // implemented" is worse than none: it tells a parent to stop
+          // looking for something that is right there.
           for (final line in const [
-            'Ручной ввод новых медицинских записей',
-            'Прикрепление сканов бланков к медицинской записи '
-                '(в дневнике фото уже работают)',
+            'Редактирование сохранённой записи — пока только добавление и удаление',
             'Push-уведомления о приёме лекарств и визитах',
           ])
             Padding(
