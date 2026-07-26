@@ -94,6 +94,7 @@ class _TypeSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
     return SectionCard(
       title: switch (type) {
         ReminderType.vaccination => 'Календарь прививок',
@@ -104,6 +105,11 @@ class _TypeSection extends StatelessWidget {
         ReminderType.vaccination => Icons.vaccines_outlined,
         ReminderType.medication => Icons.medication_outlined,
         ReminderType.appointment => Icons.event_available_outlined,
+      },
+      accentColor: switch (type) {
+        ReminderType.vaccination => VizPalette.slot(0, brightness),
+        ReminderType.medication => VizPalette.slot(2, brightness),
+        ReminderType.appointment => VizPalette.slot(6, brightness),
       },
       child: reminders.isEmpty
           ? const EmptyState(

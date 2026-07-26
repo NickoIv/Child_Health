@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'ai/ai_config.dart';
 import 'ai/assistant_service.dart';
+import 'core/analytics/illness_stats.dart';
 import 'data/auth_repository.dart';
 import 'data/memory_repository.dart';
 import 'data/photo_repository.dart';
@@ -145,10 +146,13 @@ final measurementsProvider = Provider<List<DevelopmentLog>>((ref) {
 
 /// Distinct calendar days marked as illness, used by the heat map and stats.
 final illnessDaysProvider = Provider<Set<DateTime>>((ref) {
-  final logs = ref.watch(logsProvider).value ?? const <DevelopmentLog>[];
-  return {
-    for (final l in logs)
-      if (l.type == LogType.illness)
-        DateTime(l.date.year, l.date.month, l.date.day),
-  };
+  return ref.watch(illnessSeverityByDayProvider).keys.toSet();
+});
+
+/// Worst severity recorded on each sick day. The arithmetic lives in
+/// `core/analytics/illness_stats.dart` so it can be tested on its own.
+final illnessSeverityByDayProvider = Provider<Map<DateTime, Severity>>((ref) {
+  return worstSeverityByDay(
+    ref.watch(logsProvider).value ?? const <DevelopmentLog>[],
+  );
 });

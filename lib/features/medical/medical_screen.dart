@@ -168,6 +168,7 @@ class _ReportCard extends StatelessWidget {
     return SectionCard(
       title: 'Отчёт для врача',
       icon: Icons.picture_as_pdf_outlined,
+      accentColor: VizPalette.slot(2, theme.brightness),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

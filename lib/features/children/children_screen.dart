@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/theme/app_theme.dart';
 import '../../core/vaccination/national_calendar.dart';
 import '../../models/child.dart';
 import '../../providers.dart';
@@ -143,19 +144,32 @@ class _ChildTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    // Two adjacent validated slots, so siblings are told apart by more than
+    // a label in a switcher.
+    final accent = VizPalette.slot(
+      child.gender == Gender.male ? 0 : 4,
+      theme.brightness,
+    );
+
     return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: CircleAvatar(
-        backgroundColor: isSelected
-            ? scheme.primaryContainer
-            : scheme.surfaceContainerHighest,
+      contentPadding: const EdgeInsets.symmetric(vertical: 4),
+      selected: isSelected,
+      selectedTileColor: scheme.primaryContainer.withValues(alpha: 0.35),
+      leading: Container(
+        width: 46,
+        height: 46,
+        decoration: BoxDecoration(
+          color: accent.withValues(alpha: 0.16),
+          borderRadius: BorderRadius.circular(15),
+        ),
         child: Icon(
           child.gender == Gender.male ? Icons.boy : Icons.girl,
-          color: isSelected ? scheme.onPrimaryContainer : scheme.onSurface,
+          color: accent,
         ),
       ),
-      title: Text(child.name),
+      title: Text(child.name, style: theme.textTheme.titleSmall),
       subtitle: Text(
         '${child.ageLabel} · ${shortDate.format(child.birthDate)} · '
         '${child.gender.label.toLowerCase()}',

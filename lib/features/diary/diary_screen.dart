@@ -147,13 +147,19 @@ class _LogTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final metrics = log.metrics;
+    final accent = _colorFor(log.type, theme.brightness);
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        CircleAvatar(
-          radius: 18,
-          backgroundColor: theme.colorScheme.surfaceContainerHighest,
-          child: Icon(_iconFor(log.type), size: 18),
+        Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: accent.withValues(alpha: 0.14),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(_iconFor(log.type), size: 18, color: accent),
         ),
         const SizedBox(width: 14),
         Expanded(
@@ -223,6 +229,17 @@ class _LogTile extends StatelessWidget {
     LogType.illness => Icons.sick_outlined,
     LogType.note => Icons.notes,
   };
+
+  /// Illness takes the status colour rather than a categorical slot: in a
+  /// feed of mostly happy entries, a sick day should read as a state and not
+  /// as one more category.
+  static Color _colorFor(LogType type, Brightness brightness) =>
+      switch (type) {
+        LogType.illness => StatusColors.alert,
+        LogType.milestone => VizPalette.slot(4, brightness),
+        LogType.measurement => VizPalette.slot(0, brightness),
+        LogType.note => VizPalette.slot(6, brightness),
+      };
 }
 
 class _PhotoPicker extends StatelessWidget {

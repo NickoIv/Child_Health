@@ -1,3 +1,4 @@
+import '../../core/analytics/illness_stats.dart';
 import '../../core/growth/who_standards.dart';
 import '../../models/child.dart';
 import '../../models/development_log.dart';
@@ -125,18 +126,10 @@ ReportData buildReportData({
   );
 }
 
-/// Consecutive sick days count as one episode; a gap of more than two clear
-/// days starts a new one. Same rule as the illness screen, so the report and
-/// the app never disagree.
-int countEpisodes(Set<DateTime> days) {
-  if (days.isEmpty) return 0;
-  final sorted = days.toList()..sort();
-  var episodes = 1;
-  for (var i = 1; i < sorted.length; i++) {
-    if (sorted[i].difference(sorted[i - 1]).inDays > 2) episodes++;
-  }
-  return episodes;
-}
+/// Delegates to the shared rule rather than restating it. The report and the
+/// illness screen showing different episode counts in front of a doctor is
+/// exactly the failure this prevents.
+int countEpisodes(Set<DateTime> days) => countIllnessEpisodes(days);
 
 List<GrowthAssessment> _assess(Child child, List<DevelopmentLog> measurements) {
   final result = <GrowthAssessment>[];

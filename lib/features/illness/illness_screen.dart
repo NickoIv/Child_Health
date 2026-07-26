@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/analytics/illness_stats.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/development_log.dart';
 import '../../models/json.dart';
@@ -29,7 +30,7 @@ class IllnessScreen extends ConsumerWidget {
           icon: Icons.thermostat_outlined,
           child: _Stats(
             sickDays: sickDays,
-            episodes: _episodeCount(sickDays),
+            episodes: countIllnessEpisodes(sickDays),
             logs: illnessLogs,
           ),
         ),
@@ -37,7 +38,10 @@ class IllnessScreen extends ConsumerWidget {
         SectionCard(
           title: 'Тепловая карта за $_monthsShown месяцев',
           icon: Icons.calendar_month_outlined,
-          child: _HeatMap(sickDays: sickDays, months: _monthsShown),
+          child: _HeatMap(
+            severityByDay: ref.watch(illnessSeverityByDayProvider),
+            months: _monthsShown,
+          ),
         ),
         const SizedBox(height: 16),
         SectionCard(
@@ -62,17 +66,6 @@ class IllnessScreen extends ConsumerWidget {
     );
   }
 
-  /// Consecutive sick days count as one episode; a gap of two or more clear
-  /// days starts a new one.
-  static int _episodeCount(Set<DateTime> days) {
-    if (days.isEmpty) return 0;
-    final sorted = days.toList()..sort();
-    var episodes = 1;
-    for (var i = 1; i < sorted.length; i++) {
-      if (sorted[i].difference(sorted[i - 1]).inDays > 2) episodes++;
-    }
-    return episodes;
-  }
 }
 
 class _Stats extends StatelessWidget {
@@ -115,10 +108,21 @@ class _Stats extends StatelessWidget {
 
 /// GitHub-style calendar: one square per day, coloured when the child was ill.
 class _HeatMap extends StatelessWidget {
-  const _HeatMap({required this.sickDays, required this.months});
+  const _HeatMap({required this.severityByDay, required this.months});
 
-  final Set<DateTime> sickDays;
+  final Map<DateTime, Severity> severityByDay;
   final int months;
+
+  /// Colour by how bad the day was, not merely whether it counted. A week of
+  /// a runny nose and a week of high fever are different histories, and the
+  /// point of a heat map is to make that visible without reading anything.
+  static Color _colorFor(Severity? severity, ThemeData theme) =>
+      switch (severity) {
+        null => theme.colorScheme.surfaceContainerHighest,
+        Severity.mild => StatusColors.warning,
+        Severity.moderate => StatusColors.serious,
+        Severity.severe => StatusColors.alert,
+      };
 
   @override
   Widget build(BuildContext context) {
@@ -152,17 +156,23 @@ class _HeatMap extends StatelessWidget {
                   child: Column(
                     children: [
                       for (final day in week)
-                        Container(
-                          width: 13,
-                          height: 13,
-                          margin: const EdgeInsets.only(bottom: 3),
-                          decoration: BoxDecoration(
-                            color: day == null
-                                ? Colors.transparent
-                                : sickDays.contains(day)
-                                ? StatusColors.alert
-                                : theme.colorScheme.surfaceContainerHighest,
-                            borderRadius: BorderRadius.circular(3),
+                        Tooltip(
+                          message: day == null
+                              ? ''
+                              : severityByDay[day] == null
+                              ? '${shortDate.format(day)} — здоров'
+                              : '${shortDate.format(day)} — '
+                                    '${severityByDay[day]!.label.toLowerCase()}',
+                          child: Container(
+                            width: 13,
+                            height: 13,
+                            margin: const EdgeInsets.only(bottom: 3),
+                            decoration: BoxDecoration(
+                              color: day == null
+                                  ? Colors.transparent
+                                  : _colorFor(severityByDay[day], theme),
+                              borderRadius: BorderRadius.circular(3),
+                            ),
                           ),
                         ),
                     ],
@@ -171,29 +181,36 @@ class _HeatMap extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 12),
-        Row(
+        const SizedBox(height: 14),
+        // Every swatch is labelled: the severity ramp must not depend on
+        // telling three warm hues apart.
+        Wrap(
+          spacing: 18,
+          runSpacing: 8,
           children: [
-            _swatch(theme.colorScheme.surfaceContainerHighest),
-            const SizedBox(width: 6),
-            Text('здоров', style: theme.textTheme.labelSmall),
-            const SizedBox(width: 20),
-            _swatch(StatusColors.alert),
-            const SizedBox(width: 6),
-            Text('болел', style: theme.textTheme.labelSmall),
+            _legend(theme, null, 'здоров'),
+            for (final s in Severity.values)
+              _legend(theme, s, s.label.toLowerCase()),
           ],
         ),
       ],
     );
   }
 
-  Widget _swatch(Color color) => Container(
-    width: 13,
-    height: 13,
-    decoration: BoxDecoration(
-      color: color,
-      borderRadius: BorderRadius.circular(3),
-    ),
+  Widget _legend(ThemeData theme, Severity? severity, String label) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Container(
+        width: 13,
+        height: 13,
+        decoration: BoxDecoration(
+          color: _colorFor(severity, theme),
+          borderRadius: BorderRadius.circular(3),
+        ),
+      ),
+      const SizedBox(width: 6),
+      Text(label, style: theme.textTheme.labelSmall),
+    ],
   );
 }
 
