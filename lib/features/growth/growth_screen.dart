@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/growth/who_standards.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/units/units.dart';
+import '../../models/app_user.dart';
 import '../../models/child.dart';
 import '../../models/development_log.dart';
 import '../../providers.dart';
@@ -72,6 +74,7 @@ class _GrowthScreenState extends ConsumerState<GrowthScreen> {
                     child: child,
                     metric: _metric,
                     points: points,
+                    units: ref.watch(unitSystemProvider),
                   ),
                 ),
         ),
@@ -114,11 +117,26 @@ class _GrowthChart extends StatelessWidget {
     required this.child,
     required this.metric,
     required this.points,
+    required this.units,
   });
 
   final Child child;
   final GrowthMetric metric;
   final List<_Point> points;
+  final UnitSystem units;
+
+  /// Metric in, display units out. Applied only when building spots and
+  /// labels — every computation upstream stays in the units the WHO tables
+  /// are indexed by.
+  double _display(double metricValue) => switch (metric) {
+    GrowthMetric.weight => Units.weightToDisplay(metricValue, units),
+    GrowthMetric.height => Units.heightToDisplay(metricValue, units),
+  };
+
+  String get _unitLabel => switch (metric) {
+    GrowthMetric.weight => Units.weightUnit(units),
+    GrowthMetric.height => Units.heightUnit(units),
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -136,13 +154,13 @@ class _GrowthChart extends StatelessWidget {
       final md = medianFor(metric, child.gender, m);
       final lo = valueAtZ(metric, child.gender, m, -2);
       final hi = valueAtZ(metric, child.gender, m, 2);
-      if (md != null) median.add(FlSpot(m.toDouble(), md));
-      if (lo != null) lower.add(FlSpot(m.toDouble(), lo));
-      if (hi != null) upper.add(FlSpot(m.toDouble(), hi));
+      if (md != null) median.add(FlSpot(m.toDouble(), _display(md)));
+      if (lo != null) lower.add(FlSpot(m.toDouble(), _display(lo)));
+      if (hi != null) upper.add(FlSpot(m.toDouble(), _display(hi)));
     }
 
     final childSpots = [
-      for (final p in points) FlSpot(p.month.toDouble(), p.value),
+      for (final p in points) FlSpot(p.month.toDouble(), _display(p.value)),
     ];
 
     final allValues = [
@@ -194,7 +212,7 @@ class _GrowthChart extends StatelessWidget {
                   ),
                 ),
                 leftTitles: AxisTitles(
-                  axisNameWidget: Text(metric.unit),
+                  axisNameWidget: Text(_unitLabel),
                   axisNameSize: 20,
                   sideTitles: SideTitles(
                     showTitles: true,
@@ -215,7 +233,7 @@ class _GrowthChart extends StatelessWidget {
                     // reference curves would just add noise.
                     if (s.barIndex != 3) return null;
                     return LineTooltipItem(
-                      '${s.y.toStringAsFixed(1)} ${metric.unit}\n'
+                      '${s.y.toStringAsFixed(1)} $_unitLabel\n'
                       '${s.x.toInt()} мес.',
                       theme.textTheme.labelMedium ?? const TextStyle(),
                     );
@@ -340,7 +358,7 @@ class _LegendDot extends StatelessWidget {
 }
 
 /// Verdict on the most recent measurement: z-score, percentile and a colour.
-class _LatestAssessment extends StatelessWidget {
+class _LatestAssessment extends ConsumerWidget {
   const _LatestAssessment({
     required this.child,
     required this.metric,
@@ -352,8 +370,9 @@ class _LatestAssessment extends StatelessWidget {
   final List<_Point> points;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (points.isEmpty) return const SizedBox.shrink();
+    final units = ref.watch(unitSystemProvider);
     final last = points.last;
     final z = zScore(metric, child.gender, last.month, last.value);
     if (z == null) {
@@ -385,7 +404,16 @@ class _LatestAssessment extends StatelessWidget {
             runSpacing: 16,
             children: [
               StatTile(
-                value: '${last.value.toStringAsFixed(1)} ${metric.unit}',
+                value: switch (metric) {
+                  GrowthMetric.weight => Units.formatWeight(
+                    last.value,
+                    units,
+                  ),
+                  GrowthMetric.height => Units.formatHeight(
+                    last.value,
+                    units,
+                  ),
+                },
                 caption: '${metric.label}, ${dayMonth.format(last.date)}',
               ),
               StatTile(
@@ -436,7 +464,7 @@ class _LatestAssessment extends StatelessWidget {
   }
 }
 
-class _MeasurementHistory extends StatelessWidget {
+class _MeasurementHistory extends ConsumerWidget {
   const _MeasurementHistory({
     required this.child,
     required this.measurements,
@@ -446,8 +474,9 @@ class _MeasurementHistory extends StatelessWidget {
   final List<DevelopmentLog> measurements;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (measurements.isEmpty) return const SizedBox.shrink();
+    final units = ref.watch(unitSystemProvider);
     final rows = measurements.reversed.toList();
     return SectionCard(
       title: 'История измерений',
@@ -456,11 +485,17 @@ class _MeasurementHistory extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         child: DataTable(
           columnSpacing: 28,
-          columns: const [
-            DataColumn(label: Text('Дата')),
-            DataColumn(label: Text('Возраст')),
-            DataColumn(label: Text('Вес, кг'), numeric: true),
-            DataColumn(label: Text('Рост, см'), numeric: true),
+          columns: [
+            const DataColumn(label: Text('Дата')),
+            const DataColumn(label: Text('Возраст')),
+            DataColumn(
+              label: Text('Вес, ${Units.weightUnit(units)}'),
+              numeric: true,
+            ),
+            DataColumn(
+              label: Text('Рост, ${Units.heightUnit(units)}'),
+              numeric: true,
+            ),
           ],
           rows: [
             for (final m in rows)
@@ -468,8 +503,26 @@ class _MeasurementHistory extends StatelessWidget {
                 cells: [
                   DataCell(Text(shortDate.format(m.date))),
                   DataCell(Text('${child.ageInMonthsAt(m.date)} мес.')),
-                  DataCell(Text(m.metrics.weightKg?.toString() ?? '—')),
-                  DataCell(Text(m.metrics.heightCm?.toString() ?? '—')),
+                  DataCell(
+                    Text(
+                      m.metrics.weightKg == null
+                          ? '—'
+                          : Units.weightToDisplay(
+                              m.metrics.weightKg!,
+                              units,
+                            ).toStringAsFixed(1),
+                    ),
+                  ),
+                  DataCell(
+                    Text(
+                      m.metrics.heightCm == null
+                          ? '—'
+                          : Units.heightToDisplay(
+                              m.metrics.heightCm!,
+                              units,
+                            ).toStringAsFixed(1),
+                    ),
+                  ),
                 ],
               ),
           ],

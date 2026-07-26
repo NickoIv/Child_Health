@@ -4,6 +4,8 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../core/photos/compression.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/units/units.dart';
+import '../../models/app_user.dart';
 import '../../models/development_log.dart';
 import '../../providers.dart';
 import '../shared/photo_widgets.dart';
@@ -137,16 +139,17 @@ class _FilterBar extends StatelessWidget {
   }
 }
 
-class _LogTile extends StatelessWidget {
+class _LogTile extends ConsumerWidget {
   const _LogTile({required this.log, required this.onDelete});
 
   final DevelopmentLog log;
   final VoidCallback onDelete;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final metrics = log.metrics;
+    final units = ref.watch(unitSystemProvider);
     final accent = _colorFor(log.type, theme.brightness);
 
     return Row(
@@ -186,17 +189,23 @@ class _LogTile extends StatelessWidget {
                   children: [
                     if (metrics.temperatureC != null)
                       _Pill(
-                        '${metrics.temperatureC} °C',
+                        Units.formatTemperature(metrics.temperatureC!),
                         highlight: metrics.hasFever,
                       ),
                     if (metrics.weightKg != null)
-                      _Pill('${metrics.weightKg} кг'),
+                      _Pill(Units.formatWeight(metrics.weightKg!, units)),
                     if (metrics.heightCm != null)
-                      _Pill('${metrics.heightCm} см'),
+                      _Pill(Units.formatHeight(metrics.heightCm!, units)),
                     if (metrics.headCircumferenceCm != null)
-                      _Pill('голова ${metrics.headCircumferenceCm} см'),
+                      _Pill(
+                        'голова '
+                        '${Units.formatHeight(metrics.headCircumferenceCm!, units)}',
+                      ),
                     if (metrics.chestCircumferenceCm != null)
-                      _Pill('грудь ${metrics.chestCircumferenceCm} см'),
+                      _Pill(
+                        'грудь '
+                        '${Units.formatHeight(metrics.chestCircumferenceCm!, units)}',
+                      ),
                   ],
                 ),
               ],
@@ -372,6 +381,7 @@ class _LogFormDialogState extends ConsumerState<_LogFormDialog> {
   final _weight = TextEditingController();
   final _height = TextEditingController();
   final _head = TextEditingController();
+  final _chest = TextEditingController();
   final _temperature = TextEditingController();
 
   LogType _type = LogType.note;
@@ -386,12 +396,14 @@ class _LogFormDialogState extends ConsumerState<_LogFormDialog> {
     _weight.dispose();
     _height.dispose();
     _head.dispose();
+    _chest.dispose();
     _temperature.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final units = ref.watch(unitSystemProvider);
     return AlertDialog(
       title: const Text('Новая запись'),
       content: SizedBox(
@@ -441,16 +453,38 @@ class _LogFormDialogState extends ConsumerState<_LogFormDialog> {
                   Row(
                     children: [
                       Expanded(
-                        child: _numberField(_weight, 'Вес, кг'),
+                        child: _numberField(
+                          _weight,
+                          'Вес, ${Units.weightUnit(units)}',
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: _numberField(_height, 'Рост, см'),
+                        child: _numberField(
+                          _height,
+                          'Рост, ${Units.heightUnit(units)}',
+                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 12),
-                  _numberField(_head, 'Окружность головы, см'),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _numberField(
+                          _head,
+                          'Окружность головы, ${Units.heightUnit(units)}',
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _numberField(
+                          _chest,
+                          'Окружность груди, ${Units.heightUnit(units)}',
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
                 if (_type == LogType.illness) ...[
                   const SizedBox(height: 12),
@@ -526,6 +560,16 @@ class _LogFormDialogState extends ConsumerState<_LogFormDialog> {
   double? _parse(TextEditingController c) =>
       double.tryParse(c.text.replaceAll(',', '.'));
 
+  /// Reads a field and converts it to the metric value that gets stored.
+  double? _toStorage(
+    TextEditingController controller,
+    double Function(double, UnitSystem) convert,
+    UnitSystem units,
+  ) {
+    final entered = _parse(controller);
+    return entered == null ? null : convert(entered, units);
+  }
+
   /// Uploads immediately on pick rather than on save.
   ///
   /// Compression takes a moment on a large photo, and doing it while the
@@ -570,6 +614,7 @@ class _LogFormDialogState extends ConsumerState<_LogFormDialog> {
 
   void _submit() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    final units = ref.read(unitSystemProvider);
     final log = DevelopmentLog(
       id: '',
       childId: widget.childId,
@@ -577,11 +622,22 @@ class _LogFormDialogState extends ConsumerState<_LogFormDialog> {
       type: _type,
       title: _title.text.trim(),
       description: _description.text.trim(),
+      // Converted to metric on the way in. What the parent typed depends on
+      // their unit setting; what gets stored never does.
       metrics: switch (_type) {
         LogType.measurement => Metrics(
-          weightKg: _parse(_weight),
-          heightCm: _parse(_height),
-          headCircumferenceCm: _parse(_head),
+          weightKg: _toStorage(_weight, Units.weightToStorage, units),
+          heightCm: _toStorage(_height, Units.heightToStorage, units),
+          headCircumferenceCm: _toStorage(
+            _head,
+            Units.heightToStorage,
+            units,
+          ),
+          chestCircumferenceCm: _toStorage(
+            _chest,
+            Units.heightToStorage,
+            units,
+          ),
         ),
         LogType.illness => Metrics(temperatureC: _parse(_temperature)),
         _ => const Metrics(),

@@ -5,6 +5,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../core/photos/compression.dart';
 import '../data/photo_repository.dart';
 import '../data/repositories.dart';
+import '../data/user_repository.dart';
+import '../models/app_user.dart';
 import '../models/child.dart';
 import '../models/development_log.dart';
 import '../models/medical_record.dart';
@@ -168,6 +170,34 @@ class FirestoreMedicalRecordRepository extends _Base
   @override
   Future<void> delete(String recordId) =>
       db.collection(Collections.records).doc(recordId).delete();
+}
+
+/// The parent's profile document, keyed by uid.
+///
+/// No `parent_uid` field here: the document id *is* the uid, which is what
+/// the security rule compares against.
+class FirestoreUserRepository implements UserRepository {
+  const FirestoreUserRepository(this.db);
+
+  final FirebaseFirestore db;
+
+  @override
+  Stream<AppUser?> watchProfile(String uid) {
+    return db
+        .collection(Collections.users)
+        .doc(uid)
+        .snapshots()
+        .map((snap) {
+          final data = snap.data();
+          return data == null ? null : AppUser.fromMap(snap.id, data);
+        });
+  }
+
+  @override
+  Future<void> save(AppUser user) => db
+      .collection(Collections.users)
+      .doc(user.uid)
+      .set(user.toMap(), SetOptions(merge: true));
 }
 
 class FirestorePhotoRepository extends _Base implements PhotoRepository {

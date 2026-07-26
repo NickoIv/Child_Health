@@ -62,6 +62,9 @@ Future<void> main() async {
             ref.watch(currentUidProvider),
           ),
         ),
+        userRepositoryProvider.overrideWith(
+          (ref) => FirestoreUserRepository(FirebaseFirestore.instance),
+        ),
       ],
       child: const ChildHealthApp(),
     ),

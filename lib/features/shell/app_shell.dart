@@ -165,6 +165,10 @@ class _AccountMenu extends ConsumerWidget {
           ref.read(authRepositoryProvider).signOut();
           return;
         }
+        if (value == 'settings') {
+          context.go(settingsPath);
+          return;
+        }
         final theme = ThemePreference.values.firstWhere(
           (t) => t.name == value,
           orElse: () => ThemePreference.auto,
@@ -177,6 +181,15 @@ class _AccountMenu extends ConsumerWidget {
           child: Text(
             user.email,
             style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ),
+        const PopupMenuDivider(),
+        const PopupMenuItem(
+          value: 'settings',
+          child: ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(Icons.settings_outlined),
+            title: Text('Профиль и настройки'),
           ),
         ),
         const PopupMenuDivider(),

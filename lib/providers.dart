@@ -7,6 +7,8 @@ import 'data/auth_repository.dart';
 import 'data/memory_repository.dart';
 import 'data/photo_repository.dart';
 import 'data/repositories.dart';
+import 'data/user_repository.dart';
+import 'models/app_user.dart';
 import 'models/child.dart';
 import 'models/development_log.dart';
 import 'models/medical_record.dart';
@@ -60,6 +62,24 @@ final reminderRepositoryProvider = Provider<ReminderRepository>(
 final photoRepositoryProvider = Provider<PhotoRepository>(
   (ref) => MemoryPhotoRepository(),
 );
+
+final userRepositoryProvider = Provider<UserRepository>(
+  (ref) => MemoryUserRepository(),
+);
+
+/// The parent's profile, or null before it has been saved for the first time.
+final userProfileProvider = StreamProvider<AppUser?>((ref) {
+  final uid = ref.watch(currentUidProvider);
+  if (uid.isEmpty) return Stream.value(null);
+  return ref.watch(userRepositoryProvider).watchProfile(uid);
+});
+
+/// Display units. Falls back to metric, which is also what everything is
+/// stored in — see `core/units/units.dart`.
+final unitSystemProvider = Provider<UnitSystem>((ref) {
+  return ref.watch(userProfileProvider).value?.settings.unitSystem ??
+      UnitSystem.metric;
+});
 
 /// One photo, fetched on demand.
 ///

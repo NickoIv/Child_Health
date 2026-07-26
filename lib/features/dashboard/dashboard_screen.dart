@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/growth/who_standards.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/units/units.dart';
 import '../../core/vaccination/national_calendar.dart';
 import '../../models/child.dart';
 import '../../models/development_log.dart';
@@ -214,6 +215,7 @@ class _GrowthCard extends ConsumerWidget {
     final month = child.ageInMonthsAt(last.date);
     final weight = last.metrics.weightKg;
     final height = last.metrics.heightCm;
+    final units = ref.watch(unitSystemProvider);
 
     return SectionCard(
       title: 'Рост и вес',
@@ -229,13 +231,13 @@ class _GrowthCard extends ConsumerWidget {
           if (weight != null)
             _MetricWithPercentile(
               label: 'Вес',
-              value: '$weight кг',
+              value: Units.formatWeight(weight, units),
               z: zScore(GrowthMetric.weight, child.gender, month, weight),
             ),
           if (height != null)
             _MetricWithPercentile(
               label: 'Рост',
-              value: '$height см',
+              value: Units.formatHeight(height, units),
               z: zScore(GrowthMetric.height, child.gender, month, height),
             ),
           StatTile(

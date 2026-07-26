@@ -188,7 +188,8 @@ pw.Widget _growthAssessment(ReportData data) => _section(
     pw.SizedBox(height: 6),
     pw.Text(
       'Расчёт по WHO Child Growth Standards (0–60 месяцев), '
-      'LMS-коэффициенты. Не является медицинским заключением.',
+      'LMS-коэффициенты. Не является медицинским заключением. '
+      'Все величины в отчёте метрические независимо от настроек приложения.',
       style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700),
     ),
   ],

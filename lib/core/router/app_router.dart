@@ -16,6 +16,7 @@ import '../../features/growth/growth_screen.dart';
 import '../../features/illness/illness_screen.dart';
 import '../../features/medical/medical_screen.dart';
 import '../../features/reminders/reminders_screen.dart';
+import '../../features/settings/settings_screen.dart';
 import '../../features/shell/app_shell.dart';
 import '../../providers.dart';
 
@@ -96,6 +97,7 @@ const appDestinations = <AppDestination>[
 ];
 
 const loginPath = '/login';
+const settingsPath = '/settings';
 
 final _assistantRoutes = <RouteBase>[
   GoRoute(
@@ -144,6 +146,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state, child) =>
             AppShell(location: state.uri.path, child: child),
         routes: [
+          // Not a navigation destination: reached from the account menu, and
+          // adding an eighth tab for something opened twice a year would cost
+          // more than it gives.
+          GoRoute(
+            path: settingsPath,
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: SettingsScreen()),
+          ),
           for (final d in appDestinations)
             GoRoute(
               path: d.path,
