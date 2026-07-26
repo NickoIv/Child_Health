@@ -171,6 +171,18 @@ void main() {
         'адаптация': 'kindergarten',
         'проглотил': 'home-safety',
         'температура без симптомов': 'roseola',
+        'мокнет пупок': 'umbilical-care',
+        'торчит пупок': 'umbilical-hernia',
+        'марганцовка': 'bathing',
+        'витамин д': 'vitamin-d',
+        'перегрелся': 'heat-and-sun',
+        'клещ': 'tick-bite',
+        'низкий гемоглобин': 'anemia',
+        'чешется попа': 'pinworms',
+        'малиновый язык': 'scarlet-fever',
+        'косоглазие': 'hearing-vision',
+        'мультики': 'screen-time',
+        'как одевать': 'dressing',
       };
       expectations.forEach((query, id) {
         final ids = searchArticles(query).map((a) => a.id).take(3);

@@ -1,8 +1,10 @@
 import 'article.dart';
+import 'content/baby_care_articles.dart';
 import 'content/care_articles.dart';
 import 'content/family_articles.dart';
 import 'content/illness_articles.dart';
 import 'content/infection_articles.dart';
+import 'content/more_illness_articles.dart';
 import 'content/newborn_articles.dart';
 
 /// The whole knowledge base, bundled into the app.
@@ -16,6 +18,8 @@ const knowledgeBase = <KbArticle>[
   ...careArticles,
   ...infectionArticles,
   ...familyArticles,
+  ...babyCareArticles,
+  ...moreIllnessArticles,
 ];
 
 /// Articles of one section, urgent ones first.
