@@ -4,6 +4,9 @@ enum LogType {
   milestone('milestone', 'Веха развития'),
   measurement('measurement', 'Измерение'),
   illness('illness', 'Болезнь'),
+  feeding('feeding', 'Кормление'),
+  nappy('nappy', 'Подгузник'),
+  sleep('sleep', 'Сон'),
   note('note', 'Запись');
 
   const LogType(this.code, this.label);
@@ -11,10 +14,63 @@ enum LogType {
   final String code;
   final String label;
 
+  /// Entries a parent records many times a day, rather than occasionally.
+  /// They get one-tap logging and daily counts instead of a form.
+  bool get isRoutine =>
+      this == LogType.feeding || this == LogType.nappy || this == LogType.sleep;
+
   static LogType fromCode(String? code) => LogType.values.firstWhere(
     (t) => t.code == code,
     orElse: () => LogType.note,
   );
+}
+
+/// Which breast, or a bottle.
+enum FeedingSide {
+  left('left', 'Левая'),
+  right('right', 'Правая'),
+  bottle('bottle', 'Бутылочка');
+
+  const FeedingSide(this.code, this.label);
+
+  final String code;
+  final String label;
+
+  static FeedingSide? fromCode(String? code) {
+    if (code == null) return null;
+    for (final s in FeedingSide.values) {
+      if (s.code == code) return s;
+    }
+    return null;
+  }
+}
+
+/// What was in the nappy.
+///
+/// Wet nappies are counted separately because the knowledge base uses them as
+/// the concrete test of whether a breastfed newborn is getting enough — six or
+/// more in twenty-four hours. Counting them is the point of this entry type.
+enum NappyKind {
+  wet('wet', 'Мокрый'),
+  dirty('dirty', 'Стул'),
+  both('both', 'Мокрый и стул');
+
+  const NappyKind(this.code, this.label);
+
+  final String code;
+  final String label;
+
+  bool get countsAsWet => this == NappyKind.wet || this == NappyKind.both;
+
+  bool get countsAsDirty => this == NappyKind.dirty || this == NappyKind.both;
+
+  static NappyKind? fromCode(String? code) {
+    if (code == null) return null;
+    for (final k in NappyKind.values) {
+      if (k.code == code) return k;
+    }
+    return null;
+  }
 }
 
 /// Severity of an illness episode, used by the illness heat map.
@@ -102,6 +158,9 @@ class DevelopmentLog {
     this.photos = const [],
     this.tags = const [],
     this.severity,
+    this.feedingSide,
+    this.nappyKind,
+    this.durationMinutes,
   });
 
   final String id;
@@ -115,6 +174,22 @@ class DevelopmentLog {
   final List<String> tags;
   final Severity? severity;
 
+  /// Set on [LogType.feeding].
+  final FeedingSide? feedingSide;
+
+  /// Set on [LogType.nappy].
+  final NappyKind? nappyKind;
+
+  /// Minutes, for a feed or a stretch of sleep.
+  final int? durationMinutes;
+
+  /// One-line summary for the feed, e.g. "Левая · 15 мин".
+  String get routineSummary => [
+    if (feedingSide != null) feedingSide!.label,
+    if (nappyKind != null) nappyKind!.label,
+    if (durationMinutes != null) '$durationMinutes мин',
+  ].join(' · ');
+
   DevelopmentLog copyWith({
     DateTime? date,
     LogType? type,
@@ -124,6 +199,9 @@ class DevelopmentLog {
     List<String>? photos,
     List<String>? tags,
     Severity? severity,
+    FeedingSide? feedingSide,
+    NappyKind? nappyKind,
+    int? durationMinutes,
   }) {
     return DevelopmentLog(
       id: id,
@@ -136,6 +214,9 @@ class DevelopmentLog {
       photos: photos ?? this.photos,
       tags: tags ?? this.tags,
       severity: severity ?? this.severity,
+      feedingSide: feedingSide ?? this.feedingSide,
+      nappyKind: nappyKind ?? this.nappyKind,
+      durationMinutes: durationMinutes ?? this.durationMinutes,
     );
   }
 
@@ -152,6 +233,9 @@ class DevelopmentLog {
     photos: photos,
     tags: tags,
     severity: severity,
+    feedingSide: feedingSide,
+    nappyKind: nappyKind,
+    durationMinutes: durationMinutes,
   );
 
   Map<String, dynamic> toMap() => {
@@ -164,6 +248,9 @@ class DevelopmentLog {
     'photos': photos,
     'tags': tags,
     if (severity != null) 'severity': severity!.code,
+    if (feedingSide != null) 'feeding_side': feedingSide!.code,
+    if (nappyKind != null) 'nappy_kind': nappyKind!.code,
+    if (durationMinutes != null) 'duration_minutes': durationMinutes,
   };
 
   factory DevelopmentLog.fromMap(String id, Map<String, dynamic> map) {
@@ -178,6 +265,9 @@ class DevelopmentLog {
       photos: (map['photos'] as List?)?.cast<String>() ?? const [],
       tags: (map['tags'] as List?)?.cast<String>() ?? const [],
       severity: Severity.fromCode(map['severity'] as String?),
+      feedingSide: FeedingSide.fromCode(map['feeding_side'] as String?),
+      nappyKind: NappyKind.fromCode(map['nappy_kind'] as String?),
+      durationMinutes: (map['duration_minutes'] as num?)?.toInt(),
     );
   }
 }

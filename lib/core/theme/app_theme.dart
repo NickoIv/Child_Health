@@ -16,9 +16,13 @@ export 'palette.dart';
 /// softening applied elsewhere: no gradient, full-strength colour, heaviest
 /// weight available.
 abstract final class AppTheme {
-  /// Warm violet. Chosen as much for what it is not — the alert colours must
-  /// remain unmistakable beside it.
-  static const seed = Color(0xFF6750E8);
+  /// Soft lavender. Gentle on purpose — this is opened at 3am by someone who
+  /// has not slept, and a vivid interface at that hour is an assault.
+  ///
+  /// Still chosen as much for what it is not: far enough from red and orange
+  /// in hue that the alert colours remain unmistakable beside it. A test
+  /// enforces that distance.
+  static const seed = Color(0xFF9E86D8);
 
   static ThemeData light() => _build(Brightness.light);
 
@@ -38,9 +42,11 @@ abstract final class AppTheme {
       colorScheme: scheme,
       useMaterial3: true,
       textTheme: text,
+      // Not white: a faint warm tint lets the cards read as raised without
+      // any shadow, and is easier on the eye during a night feed.
       scaffoldBackgroundColor: isDark
-          ? const Color(0xFF0F0E14)
-          : const Color(0xFFF7F5FB),
+          ? const Color(0xFF131019)
+          : const Color(0xFFFAF7FC),
       appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,

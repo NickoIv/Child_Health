@@ -57,26 +57,54 @@ class SectionCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                if (icon != null) ...[
-                  // A tinted chip rather than a bare glyph: it gives each
-                  // card a recognisable identity when scrolling past.
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: accent.withValues(alpha: 0.13),
-                      borderRadius: BorderRadius.circular(11),
+            // On a phone the trailing element — a segmented control, a long
+            // child name — does not fit beside the title, and Flutter
+            // overflows rather than wrapping. Below 420px it moves to its own
+            // line instead.
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final titleRow = Row(
+                  children: [
+                    if (icon != null) ...[
+                      // A tinted chip rather than a bare glyph: it gives each
+                      // card a recognisable identity when scrolling past.
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: accent.withValues(alpha: 0.13),
+                          borderRadius: BorderRadius.circular(11),
+                        ),
+                        child: Icon(icon, size: 18, color: accent),
+                      ),
+                      const SizedBox(width: 12),
+                    ],
+                    Expanded(
+                      child: Text(title, style: theme.textTheme.titleMedium),
                     ),
-                    child: Icon(icon, size: 18, color: accent),
-                  ),
-                  const SizedBox(width: 12),
-                ],
-                Expanded(
-                  child: Text(title, style: theme.textTheme.titleMedium),
-                ),
-                ?action,
-              ],
+                  ],
+                );
+
+                if (action == null) return titleRow;
+
+                final narrow = constraints.maxWidth < 420;
+                if (narrow) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      titleRow,
+                      const SizedBox(height: 10),
+                      Align(alignment: Alignment.centerLeft, child: action),
+                    ],
+                  );
+                }
+                return Row(
+                  children: [
+                    Expanded(child: titleRow),
+                    const SizedBox(width: 12),
+                    action!,
+                  ],
+                );
+              },
             ),
             const SizedBox(height: 16),
             child,

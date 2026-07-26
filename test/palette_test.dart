@@ -1,4 +1,5 @@
-import 'package:child_health_tracker/core/theme/palette.dart';
+// app_theme re-exports the palette.
+import 'package:child_health_tracker/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -101,7 +102,7 @@ void main() {
       // The primary was chosen violet partly so that a red element on screen
       // can only mean an alert. If someone reseeds the theme to a warm hue,
       // this fails and asks them to think about it.
-      final seed = HSLColor.fromColor(const Color(0xFF6750E8));
+      final seed = HSLColor.fromColor(AppTheme.seed);
       final alert = HSLColor.fromColor(StatusColors.alert);
       var delta = (seed.hue - alert.hue).abs();
       if (delta > 180) delta = 360 - delta;

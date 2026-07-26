@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/analytics/daily_care.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/theme_mode.dart';
 import '../../models/child.dart';
@@ -9,6 +10,7 @@ import '../../models/development_log.dart';
 import '../../models/json.dart';
 import '../../models/reminder.dart';
 import '../../providers.dart';
+import '../shared/widgets.dart';
 
 /// The at-a-glance card: what is going on with this child right now, and the
 /// three things a parent most often needs to do about it.
@@ -129,6 +131,8 @@ class NowCard extends ConsumerWidget {
                     ),
                   const SizedBox(height: 8),
                 ],
+                const _TodayCounts(),
+                const SizedBox(height: 14),
                 _QuickActions(child: child),
               ],
             ),
@@ -209,6 +213,141 @@ class _StatusChip extends StatelessWidget {
   }
 }
 
+/// Today's tally.
+///
+/// The numbers are coloured against the thresholds the knowledge base states —
+/// six wet nappies, eight feeds — but only once the day is over. Telling a
+/// mother at 9am that she is behind on feeds would be both wrong and cruel.
+class _TodayCounts extends ConsumerWidget {
+  const _TodayCounts();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final care = ref.watch(dailyCareProvider);
+    final now = DateTime.now();
+    // "Complete" only near the end of the day; before that a low count says
+    // nothing.
+    final dayComplete = now.hour >= 21;
+
+    if (care.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerHighest.withValues(
+            alpha: 0.4,
+          ),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Text(
+          'Сегодня записей ещё нет. Кнопки ниже отмечают время сами.',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      );
+    }
+
+    final feedStatus = CareTargets.feedingStatus(
+      care.feedings,
+      dayComplete: dayComplete,
+    );
+    final nappyStatus = CareTargets.wetNappyStatus(
+      care.wetNappies,
+      dayComplete: dayComplete,
+    );
+
+    return Row(
+      children: [
+        _Count(
+          value: '${care.feedings}',
+          label: 'кормлений',
+          status: feedStatus,
+          hint: care.lastFeedingAt == null
+              ? null
+              : 'последнее в ${timeOfDay.format(care.lastFeedingAt!)}',
+        ),
+        _Count(
+          value: '${care.wetNappies}',
+          label: 'мокрых',
+          status: nappyStatus,
+        ),
+        _Count(value: '${care.dirtyNappies}', label: 'стул'),
+        if (care.sleepMinutes > 0)
+          _Count(
+            value: formatDuration(care.sleepMinutes),
+            label: 'сна',
+          ),
+      ],
+    );
+  }
+}
+
+class _Count extends StatelessWidget {
+  const _Count({
+    required this.value,
+    required this.label,
+    this.status = CareStatus.unknown,
+    this.hint,
+  });
+
+  final String value;
+  final String label;
+  final CareStatus status;
+  final String? hint;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = switch (status) {
+      CareStatus.onTrack => StatusColors.normal,
+      CareStatus.watch => StatusColors.warning,
+      CareStatus.unknown => null,
+    };
+
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                value,
+                style: theme.textTheme.titleLarge?.copyWith(color: color),
+              ),
+              if (status != CareStatus.unknown) ...[
+                const SizedBox(width: 4),
+                Icon(
+                  status == CareStatus.onTrack
+                      ? Icons.check_circle
+                      : Icons.info_outline,
+                  size: 14,
+                  color: color,
+                ),
+              ],
+            ],
+          ),
+          Text(
+            label,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          if (hint != null)
+            Text(
+              hint!,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.outline,
+                fontSize: 10,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class _QuickActions extends ConsumerWidget {
   const _QuickActions({required this.child});
 
@@ -216,33 +355,193 @@ class _QuickActions extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Row(
+    final brightness = Theme.of(context).brightness;
+
+    // Two rows rather than one: five targets squeezed across a phone would
+    // each be too small to hit reliably with a baby in the other arm.
+    // Feeding and nappies lead because for a newborn they are the whole day.
+    return Column(
       children: [
-        Expanded(
-          child: _ActionButton(
-            icon: Icons.thermostat,
-            label: 'Температура',
-            onTap: () => _logTemperature(context, ref),
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: _ActionButton(
+                icon: Icons.water_drop_outlined,
+                label: 'Покормила',
+                color: VizPalette.slot(2, brightness),
+                onTap: () => _logFeeding(context, ref),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _ActionButton(
+                icon: Icons.child_care_outlined,
+                label: 'Подгузник',
+                color: VizPalette.slot(3, brightness),
+                onTap: () => _logNappy(context, ref),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _ActionButton(
-            icon: Icons.forum_outlined,
-            label: 'Спросить',
-            onTap: () => context.go('/assistant/chat'),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _ActionButton(
-            icon: Icons.emergency_outlined,
-            label: 'Тревога',
-            color: StatusColors.alert,
-            onTap: () => context.go('/assistant/triage'),
-          ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: _ActionButton(
+                icon: Icons.thermostat,
+                label: 'Температура',
+                onTap: () => _logTemperature(context, ref),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _ActionButton(
+                icon: Icons.forum_outlined,
+                label: 'Спросить',
+                onTap: () => context.go('/assistant/chat'),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _ActionButton(
+                icon: Icons.emergency_outlined,
+                label: 'Тревога',
+                color: StatusColors.alert,
+                onTap: () => context.go('/assistant/triage'),
+              ),
+            ),
+          ],
         ),
       ],
+    );
+  }
+
+  Future<void> _logFeeding(BuildContext context, WidgetRef ref) async {
+    final side = await _pickOption<FeedingSide>(
+      context,
+      title: 'Кормление',
+      options: {
+        for (final s in FeedingSide.values)
+          s: switch (s) {
+            FeedingSide.left => Icons.chevron_left,
+            FeedingSide.right => Icons.chevron_right,
+            FeedingSide.bottle => Icons.local_drink_outlined,
+          },
+      },
+      label: (s) => s.label,
+    );
+    if (side == null || !context.mounted) return;
+
+    await _add(
+      ref,
+      DevelopmentLog(
+        id: '',
+        childId: child.id,
+        date: DateTime.now(),
+        type: LogType.feeding,
+        title: 'Кормление',
+        feedingSide: side,
+      ),
+      context,
+      'Записано: кормление, ${side.label.toLowerCase()}',
+    );
+  }
+
+  Future<void> _logNappy(BuildContext context, WidgetRef ref) async {
+    final kind = await _pickOption<NappyKind>(
+      context,
+      title: 'Подгузник',
+      options: {
+        for (final k in NappyKind.values)
+          k: switch (k) {
+            NappyKind.wet => Icons.water_drop_outlined,
+            NappyKind.dirty => Icons.eco_outlined,
+            NappyKind.both => Icons.done_all,
+          },
+      },
+      label: (k) => k.label,
+    );
+    if (kind == null || !context.mounted) return;
+
+    await _add(
+      ref,
+      DevelopmentLog(
+        id: '',
+        childId: child.id,
+        date: DateTime.now(),
+        type: LogType.nappy,
+        title: 'Подгузник',
+        nappyKind: kind,
+      ),
+      context,
+      'Записано: ${kind.label.toLowerCase()}',
+    );
+  }
+
+  Future<void> _add(
+    WidgetRef ref,
+    DevelopmentLog log,
+    BuildContext context,
+    String confirmation,
+  ) async {
+    await ref.read(logRepositoryProvider).add(log);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(confirmation),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  /// A sheet of large buttons rather than a dropdown: this is tapped a dozen
+  /// times a day, often one-handed and half-awake.
+  Future<T?> _pickOption<T>(
+    BuildContext context, {
+    required String title,
+    required Map<T, IconData> options,
+    required String Function(T) label,
+  }) {
+    return showModalBottomSheet<T>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        final theme = Theme.of(sheetContext);
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: theme.textTheme.titleLarge),
+                const SizedBox(height: 6),
+                Text(
+                  'Отметится текущим временем',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                for (final entry in options.entries)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.tonalIcon(
+                        onPressed: () =>
+                            Navigator.of(sheetContext).pop(entry.key),
+                        icon: Icon(entry.value),
+                        label: Text(label(entry.key)),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

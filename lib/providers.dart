@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'ai/ai_config.dart';
 import 'ai/assistant_service.dart';
+import 'core/analytics/daily_care.dart';
 import 'core/analytics/illness_stats.dart';
 import 'data/auth_repository.dart';
 import 'data/memory_repository.dart';
@@ -162,6 +163,14 @@ final measurementsProvider = Provider<List<DevelopmentLog>>((ref) {
           .toList()
         ..sort((a, b) => a.date.compareTo(b.date));
   return result;
+});
+
+/// Today's feeds, nappies and sleep for the selected child.
+final dailyCareProvider = Provider<DailyCare>((ref) {
+  return dailyCareFor(
+    ref.watch(logsProvider).value ?? const <DevelopmentLog>[],
+    DateTime.now(),
+  );
 });
 
 /// Distinct calendar days marked as illness, used by the heat map and stats.

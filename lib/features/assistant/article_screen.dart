@@ -199,11 +199,16 @@ class _Block extends StatelessWidget {
               children: [
                 Icon(icon, size: 20, color: color),
                 const SizedBox(width: 10),
-                Text(
-                  title,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: emphasised ? color : null,
-                    fontWeight: emphasised ? FontWeight.w700 : null,
+                // Expanded so a long heading wraps instead of running off a
+                // phone screen — "Когда обратиться к врачу" overflowed by
+                // 19px at 390 logical pixels.
+                Expanded(
+                  child: Text(
+                    title,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: emphasised ? color : null,
+                      fontWeight: emphasised ? FontWeight.w700 : null,
+                    ),
                   ),
                 ),
               ],

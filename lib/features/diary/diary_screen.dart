@@ -172,7 +172,13 @@ class _LogTile extends ConsumerWidget {
               Text(log.title, style: theme.textTheme.titleSmall),
               const SizedBox(height: 2),
               Text(
-                dayMonthYear.format(log.date),
+                // Routine entries happen many times a day, so the clock time
+                // is the useful part; a milestone only needs the date.
+                log.type.isRoutine
+                    ? '${dayMonth.format(log.date)}, '
+                          '${timeOfDay.format(log.date)}'
+                          '${log.routineSummary.isEmpty ? '' : ' · ${log.routineSummary}'}'
+                    : dayMonthYear.format(log.date),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -236,6 +242,9 @@ class _LogTile extends ConsumerWidget {
     LogType.milestone => Icons.star_outline,
     LogType.measurement => Icons.straighten,
     LogType.illness => Icons.sick_outlined,
+    LogType.feeding => Icons.water_drop_outlined,
+    LogType.nappy => Icons.child_care_outlined,
+    LogType.sleep => Icons.bedtime_outlined,
     LogType.note => Icons.notes,
   };
 
@@ -247,6 +256,9 @@ class _LogTile extends ConsumerWidget {
         LogType.illness => StatusColors.alert,
         LogType.milestone => VizPalette.slot(4, brightness),
         LogType.measurement => VizPalette.slot(0, brightness),
+        LogType.feeding => VizPalette.slot(2, brightness),
+        LogType.nappy => VizPalette.slot(3, brightness),
+        LogType.sleep => VizPalette.slot(5, brightness),
         LogType.note => VizPalette.slot(6, brightness),
       };
 }
