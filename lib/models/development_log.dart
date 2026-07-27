@@ -7,6 +7,7 @@ enum LogType {
   feeding('feeding', 'Кормление'),
   nappy('nappy', 'Подгузник'),
   sleep('sleep', 'Сон'),
+  question('question', 'Вопрос врачу'),
   note('note', 'Запись');
 
   const LogType(this.code, this.label);
@@ -18,6 +19,12 @@ enum LogType {
   /// They get one-tap logging and daily counts instead of a form.
   bool get isRoutine =>
       this == LogType.feeding || this == LogType.nappy || this == LogType.sleep;
+
+  /// Types the manual entry form offers. Routine care is logged by tapping a
+  /// button on the dashboard, so putting it in a dropdown as well would only
+  /// make the longer path look like the intended one.
+  static List<LogType> get formTypes =>
+      LogType.values.where((t) => !t.isRoutine).toList();
 
   static LogType fromCode(String? code) => LogType.values.firstWhere(
     (t) => t.code == code,

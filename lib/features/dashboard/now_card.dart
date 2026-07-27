@@ -258,27 +258,74 @@ class _TodayCounts extends ConsumerWidget {
       dayComplete: dayComplete,
     );
 
-    return Row(
+    final sinceFeeding = care.minutesSinceFeeding(now);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _Count(
-          value: '${care.feedings}',
-          label: 'кормлений',
-          status: feedStatus,
-          hint: care.lastFeedingAt == null
-              ? null
-              : 'последнее в ${timeOfDay.format(care.lastFeedingAt!)}',
-        ),
-        _Count(
-          value: '${care.wetNappies}',
-          label: 'мокрых',
-          status: nappyStatus,
-        ),
-        _Count(value: '${care.dirtyNappies}', label: 'стул'),
-        if (care.sleepMinutes > 0)
-          _Count(
-            value: formatDuration(care.sleepMinutes),
-            label: 'сна',
+        // The single most-asked question of a newborn day gets its own line,
+        // not a footnote under a number.
+        if (sinceFeeding != null) ...[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.schedule,
+                  size: 18,
+                  color: theme.colorScheme.onPrimaryContainer,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'С последнего кормления — ${formatDuration(sinceFeeding)}',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onPrimaryContainer,
+                    ),
+                  ),
+                ),
+                Text(
+                  timeOfDay.format(care.lastFeedingAt!),
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: theme.colorScheme.onPrimaryContainer,
+                  ),
+                ),
+              ],
+            ),
           ),
+          const SizedBox(height: 14),
+        ],
+        // A Wrap, not a Row: the fourth tally appears only once sleep has
+        // been logged, and "1 ч 30 мин" pushed the row 137px off a phone
+        // screen. Wrapping lets the counts reflow instead of clipping.
+        Wrap(
+          spacing: 20,
+          runSpacing: 12,
+          children: [
+            _Count(
+              value: '${care.feedings}',
+              label: 'кормлений',
+              status: feedStatus,
+            ),
+            _Count(
+              value: '${care.wetNappies}',
+              label: 'мокрых',
+              status: nappyStatus,
+            ),
+            _Count(value: '${care.dirtyNappies}', label: 'стул'),
+            if (care.sleepMinutes > 0)
+              _Count(
+                value: formatDuration(care.sleepMinutes),
+                label: 'сна',
+              ),
+          ],
+        ),
       ],
     );
   }
@@ -289,13 +336,11 @@ class _Count extends StatelessWidget {
     required this.value,
     required this.label,
     this.status = CareStatus.unknown,
-    this.hint,
   });
 
   final String value;
   final String label;
   final CareStatus status;
-  final String? hint;
 
   @override
   Widget build(BuildContext context) {
@@ -306,11 +351,13 @@ class _Count extends StatelessWidget {
       CareStatus.unknown => null,
     };
 
-    return Expanded(
+    // Sized by its content, not by a flex factor: it lives in a Wrap now.
+    return IntrinsicWidth(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 value,
@@ -334,14 +381,6 @@ class _Count extends StatelessWidget {
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
-          if (hint != null)
-            Text(
-              hint!,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.outline,
-                fontSize: 10,
-              ),
-            ),
         ],
       ),
     );
@@ -379,6 +418,15 @@ class _QuickActions extends ConsumerWidget {
                 label: 'Подгузник',
                 color: VizPalette.slot(3, brightness),
                 onTap: () => _logNappy(context, ref),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _ActionButton(
+                icon: Icons.bedtime_outlined,
+                label: 'Поспал',
+                color: VizPalette.slot(5, brightness),
+                onTap: () => _logSleep(context, ref),
               ),
             ),
           ],
@@ -478,6 +526,40 @@ class _QuickActions extends ConsumerWidget {
     );
   }
 
+  Future<void> _logSleep(BuildContext context, WidgetRef ref) async {
+    // Preset lengths rather than a time picker: a newborn's sleep is
+    // measured in "about an hour", and nobody is entering 47 minutes.
+    const options = {
+      30: 'Полчаса',
+      60: 'Час',
+      90: 'Полтора часа',
+      120: 'Два часа',
+      180: 'Три часа',
+    };
+
+    final minutes = await _pickOption<int>(
+      context,
+      title: 'Сколько поспал',
+      options: {for (final m in options.keys) m: Icons.bedtime_outlined},
+      label: (m) => options[m]!,
+    );
+    if (minutes == null || !context.mounted) return;
+
+    await _add(
+      ref,
+      DevelopmentLog(
+        id: '',
+        childId: child.id,
+        date: DateTime.now(),
+        type: LogType.sleep,
+        title: 'Сон',
+        durationMinutes: minutes,
+      ),
+      context,
+      'Записано: сон ${formatDuration(minutes)}',
+    );
+  }
+
   Future<void> _add(
     WidgetRef ref,
     DevelopmentLog log,
@@ -506,10 +588,14 @@ class _QuickActions extends ConsumerWidget {
     return showModalBottomSheet<T>(
       context: context,
       showDragHandle: true,
+      // Sleep offers five lengths, which overflowed the default half-height
+      // sheet by 40px on a phone. Scroll-controlled and scrollable so the
+      // list can grow without clipping the last option.
+      isScrollControlled: true,
       builder: (sheetContext) {
         final theme = Theme.of(sheetContext);
         return SafeArea(
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
             child: Column(
               mainAxisSize: MainAxisSize.min,

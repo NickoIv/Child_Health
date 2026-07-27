@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../models/development_log.dart';
 import '../../models/medical_record.dart';
 import '../../providers.dart';
 import '../reports/medical_report.dart';
@@ -49,6 +50,8 @@ class _MedicalScreenState extends ConsumerState<MedicalScreen> {
     return Scaffold(
       body: PageBody(
         children: [
+          _QuestionsCard(onAdd: _addQuestion),
+          const SizedBox(height: 16),
           _ReportCard(building: _building, onGenerate: _generateReport),
           const SizedBox(height: 16),
           if (records.isEmpty)
@@ -119,6 +122,29 @@ class _MedicalScreenState extends ConsumerState<MedicalScreen> {
     }
   }
 
+  Future<void> _addQuestion() async {
+    final child = ref.read(selectedChildProvider);
+    if (child == null) return;
+
+    final text = await showDialog<String>(
+      context: context,
+      builder: (_) => const _QuestionDialog(),
+    );
+    if (text == null || text.isEmpty) return;
+
+    await ref
+        .read(logRepositoryProvider)
+        .add(
+          DevelopmentLog(
+            id: '',
+            childId: child.id,
+            date: DateTime.now(),
+            type: LogType.question,
+            title: text,
+          ),
+        );
+  }
+
   Future<void> _generateReport() async {
     final child = ref.read(selectedChildProvider);
     if (child == null || _building) return;
@@ -154,6 +180,111 @@ class _MedicalScreenState extends ConsumerState<MedicalScreen> {
   static String _fileDate(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-'
       '${d.day.toString().padLeft(2, '0')}';
+}
+
+/// Questions to raise at the next appointment.
+///
+/// They come to mind at 2am and vanish the moment a doctor asks "any
+/// questions?". Written down here, they also print into the report, so the
+/// list is in hand rather than in memory.
+class _QuestionsCard extends ConsumerWidget {
+  const _QuestionsCard({required this.onAdd});
+
+  final Future<void> Function() onAdd;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final questions = ref.watch(doctorQuestionsProvider);
+
+    return SectionCard(
+      title: 'Спросить у врача',
+      icon: Icons.help_outline,
+      accentColor: VizPalette.slot(1, theme.brightness),
+      action: TextButton.icon(
+        onPressed: onAdd,
+        icon: const Icon(Icons.add, size: 18),
+        label: const Text('Записать'),
+      ),
+      child: questions.isEmpty
+          ? Text(
+              'Запишите сюда всё, что хотите спросить. Список попадёт '
+              'в отчёт для врача — не придётся вспоминать в кабинете.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            )
+          : Column(
+              children: [
+                for (final q in questions)
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(
+                      Icons.circle_outlined,
+                      size: 18,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    title: Text(q.title),
+                    subtitle: Text(shortDate.format(q.date)),
+                    trailing: IconButton(
+                      tooltip: 'Спросила',
+                      icon: const Icon(Icons.check, size: 20),
+                      onPressed: () =>
+                          ref.read(logRepositoryProvider).delete(q.id),
+                    ),
+                  ),
+              ],
+            ),
+    );
+  }
+}
+
+class _QuestionDialog extends StatefulWidget {
+  const _QuestionDialog();
+
+  @override
+  State<_QuestionDialog> createState() => _QuestionDialogState();
+}
+
+class _QuestionDialogState extends State<_QuestionDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Спросить у врача'),
+      content: SizedBox(
+        width: 420,
+        child: TextField(
+          controller: _controller,
+          autofocus: true,
+          maxLines: 3,
+          minLines: 1,
+          decoration: const InputDecoration(
+            hintText: 'Например: нормально ли, что срыгивает после каждого кормления',
+          ),
+          onSubmitted: (v) => Navigator.of(context).pop(v.trim()),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Отмена'),
+        ),
+        FilledButton(
+          onPressed: () =>
+              Navigator.of(context).pop(_controller.text.trim()),
+          child: const Text('Сохранить'),
+        ),
+      ],
+    );
+  }
 }
 
 class _ReportCard extends StatelessWidget {
@@ -238,11 +369,15 @@ class _RecordCard extends StatelessWidget {
             const SizedBox(height: 16),
           ],
           if (record.labResults.isNotEmpty) ...[
-            Row(
+            // Wrap, not Row with a Spacer: on a phone the heading plus the
+            // "вне нормы" chip ran 114px past the edge.
+            Wrap(
+              spacing: 10,
+              runSpacing: 6,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 Text('Результаты анализов',
                     style: theme.textTheme.labelLarge),
-                const Spacer(),
                 if (record.outOfRangeCount > 0)
                   Chip(
                     label: Text(

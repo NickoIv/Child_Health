@@ -300,11 +300,14 @@ class NoChildPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Warmer than "profile not created". The parent has not failed to do
+    // something; the app simply does not know the child yet.
     return const Center(
       child: EmptyState(
         icon: Icons.child_care_outlined,
-        message: 'Профиль ребёнка ещё не создан',
-        hint: 'Откройте раздел «Дети» и добавьте первый профиль',
+        message: 'Давайте познакомимся',
+        hint: 'Расскажите о малыше в разделе «Дети» — '
+            'дальше приложение подстроится под его возраст',
       ),
     );
   }

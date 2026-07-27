@@ -62,8 +62,9 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen> {
               icon: Icons.auto_stories_outlined,
               child: EmptyState(
                 icon: Icons.edit_note,
-                message: 'Записей пока нет',
-                hint: 'Нажмите «Добавить запись», чтобы создать первую',
+                message: 'Здесь будет история малыша',
+                hint: 'Кормления и подгузники отмечаются кнопками на главной, '
+                    'а первое слово и первый зуб — здесь',
               ),
             )
           else
@@ -245,6 +246,7 @@ class _LogTile extends ConsumerWidget {
     LogType.feeding => Icons.water_drop_outlined,
     LogType.nappy => Icons.child_care_outlined,
     LogType.sleep => Icons.bedtime_outlined,
+    LogType.question => Icons.help_outline,
     LogType.note => Icons.notes,
   };
 
@@ -259,6 +261,7 @@ class _LogTile extends ConsumerWidget {
         LogType.feeding => VizPalette.slot(2, brightness),
         LogType.nappy => VizPalette.slot(3, brightness),
         LogType.sleep => VizPalette.slot(5, brightness),
+        LogType.question => VizPalette.slot(1, brightness),
         LogType.note => VizPalette.slot(6, brightness),
       };
 }
@@ -431,7 +434,7 @@ class _LogFormDialogState extends ConsumerState<_LogFormDialog> {
                   initialValue: _type,
                   decoration: const InputDecoration(labelText: 'Тип записи'),
                   items: [
-                    for (final t in LogType.values)
+                    for (final t in LogType.formTypes)
                       DropdownMenuItem(value: t, child: Text(t.label)),
                   ],
                   onChanged: (t) => setState(() => _type = t ?? LogType.note),

@@ -81,6 +81,53 @@ void main() {
     expect(find.text('стул'), findsOneWidget);
   });
 
+  testWidgets('logging sleep records a duration', (tester) async {
+    await pumpPhone(tester);
+
+    await tester.tap(find.text('Поспал'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Полтора часа'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('сна'), findsOneWidget);
+    expect(find.textContaining('1 ч 30 мин'), findsWidgets);
+  });
+
+  testWidgets('time since the last feed is shown prominently', (tester) async {
+    await pumpPhone(tester);
+
+    await tester.tap(find.text('Покормила'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Бутылочка'));
+    await tester.pumpAndSettle();
+
+    // The most-asked question of a newborn day gets its own line.
+    expect(find.textContaining('С последнего кормления'), findsOneWidget);
+  });
+
+  testWidgets('a question for the doctor can be written down', (tester) async {
+    await pumpPhone(tester);
+
+    // Only four destinations fit the bottom bar; the medical card lives
+    // behind "Ещё". Worth encoding — it is how the phone navigation works.
+    await tester.tap(find.text('Ещё'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Медкарта'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Записать').first);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byType(TextField).first,
+      'Нормально ли срыгивание',
+    );
+    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Нормально ли срыгивание'), findsOneWidget);
+  });
+
   testWidgets('the assistant fits a phone', (tester) async {
     await pumpPhone(tester);
     await tester.tap(find.byIcon(Icons.lightbulb_outline).first);

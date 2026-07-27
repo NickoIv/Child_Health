@@ -111,7 +111,7 @@ void main() {
     );
 
     expect(find.byType(LineChart), findsOneWidget);
-    expect(find.text('Нет измерений для построения графика'), findsNothing);
+    expect(find.text('Пока нечего показать на графике'), findsNothing);
     expect(find.text('медиана ВОЗ'), findsOneWidget);
     expect(find.text('перцентиль'), findsOneWidget);
   });
@@ -141,7 +141,7 @@ void main() {
     );
 
     expect(find.byType(LineChart), findsOneWidget);
-    expect(find.text('Нет измерений для построения графика'), findsNothing);
+    expect(find.text('Пока нечего показать на графике'), findsNothing);
 
     // The reference curves still cover 0-60 months, so the legend belongs
     // there — but the chart says plainly where they stop.
@@ -170,7 +170,7 @@ void main() {
 
     await pumpGrowth(tester, child: child, logs: const []);
 
-    expect(find.text('Нет измерений для построения графика'), findsOneWidget);
+    expect(find.text('Пока нечего показать на графике'), findsOneWidget);
     expect(find.byType(LineChart), findsNothing);
   });
 }

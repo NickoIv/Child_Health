@@ -173,6 +173,16 @@ final dailyCareProvider = Provider<DailyCare>((ref) {
   );
 });
 
+/// Things to raise at the next appointment, newest first.
+///
+/// They accumulate over a week and evaporate the moment the doctor says
+/// "any questions?" — which is why they are collected here and printed into
+/// the report rather than left in the diary stream.
+final doctorQuestionsProvider = Provider<List<DevelopmentLog>>((ref) {
+  final logs = ref.watch(logsProvider).value ?? const <DevelopmentLog>[];
+  return logs.where((l) => l.type == LogType.question).toList();
+});
+
 /// Distinct calendar days marked as illness, used by the heat map and stats.
 final illnessDaysProvider = Provider<Set<DateTime>>((ref) {
   return ref.watch(illnessSeverityByDayProvider).keys.toSet();

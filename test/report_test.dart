@@ -257,6 +257,48 @@ void main() {
     });
   });
 
+  group('questions for the doctor', () {
+    test('are collected oldest first', () {
+      // Oldest first so the list reads in the order the worries appeared.
+      final data = buildReportData(
+        child: _child(),
+        logs: [
+          _log(LogType.question, DateTime(2026, 7, 20), title: 'Про сон'),
+          _log(LogType.question, DateTime(2026, 7, 10), title: 'Про срыгивания'),
+          _log(LogType.note, DateTime(2026, 7, 15), title: 'Обычная запись'),
+        ],
+        records: const [],
+        reminders: const [],
+        now: _now,
+      );
+
+      expect(
+        data.questions.map((q) => q.title),
+        ['Про срыгивания', 'Про сон'],
+      );
+    });
+
+    test('appear in the rendered document', () async {
+      final data = buildReportData(
+        child: _child(),
+        logs: [
+          _log(
+            LogType.question,
+            DateTime(2026, 7, 20),
+            title: 'Нормально ли срыгивание после каждого кормления',
+          ),
+        ],
+        records: const [],
+        reminders: const [],
+        now: _now,
+      );
+
+      final bytes = await buildMedicalReport(data);
+      expect(String.fromCharCodes(bytes.take(5)), '%PDF-');
+      expect(bytes.length, greaterThan(10000));
+    });
+  });
+
   group('growth assessment in the report', () {
     test('assesses the latest weight and height', () {
       final child = _child(ageMonths: 12);

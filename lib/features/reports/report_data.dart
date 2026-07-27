@@ -25,6 +25,7 @@ class ReportData {
     required this.upcomingVaccinations,
     required this.milestones,
     required this.latestAssessments,
+    required this.questions,
   });
 
   final Child child;
@@ -39,6 +40,10 @@ class ReportData {
   final List<Reminder> overdueVaccinations;
   final List<Reminder> upcomingVaccinations;
   final List<DevelopmentLog> milestones;
+
+  /// Things the parent wrote down to ask about, oldest first so the list
+  /// reads in the order the worries appeared.
+  final List<DevelopmentLog> questions;
 
   /// WHO verdict on the most recent weight and height, where the age is
   /// inside the reference range.
@@ -123,6 +128,9 @@ ReportData buildReportData({
     upcomingVaccinations: upcoming.take(5).toList(),
     milestones: milestones,
     latestAssessments: _assess(child, measurements),
+    questions:
+        logs.where((l) => l.type == LogType.question).toList()
+          ..sort((a, b) => a.date.compareTo(b.date)),
   );
 }
 

@@ -52,6 +52,12 @@ Future<Uint8List> buildMedicalReport(ReportData data) async {
         _header(data),
         pw.SizedBox(height: 16),
         _summary(data),
+        // High in the document on purpose: these get asked at the start of an
+        // appointment, and a list buried on page two is a list not used.
+        if (data.questions.isNotEmpty) ...[
+          pw.SizedBox(height: 16),
+          _questions(data),
+        ],
         if (data.latestAssessments.isNotEmpty) ...[
           pw.SizedBox(height: 16),
           _growthAssessment(data),
@@ -156,6 +162,41 @@ pw.Widget _stat(String value, String caption) => pw.Expanded(
       ),
     ],
   ),
+);
+
+pw.Widget _questions(ReportData data) => _section(
+  'Вопросы родителя',
+  [
+    for (final q in data.questions)
+      pw.Padding(
+        padding: const pw.EdgeInsets.only(bottom: 4),
+        child: pw.Row(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            // An empty box rather than a bullet: the doctor can tick them off
+            // as they go.
+            pw.Container(
+              width: 8,
+              height: 8,
+              margin: const pw.EdgeInsets.only(top: 2, right: 8),
+              decoration: pw.BoxDecoration(
+                border: pw.Border.all(color: PdfColors.grey600, width: 0.7),
+              ),
+            ),
+            pw.Expanded(
+              child: pw.Text(
+                q.title,
+                style: const pw.TextStyle(fontSize: 10),
+              ),
+            ),
+            pw.Text(
+              _date.format(q.date),
+              style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600),
+            ),
+          ],
+        ),
+      ),
+  ],
 );
 
 pw.Widget _growthAssessment(ReportData data) => _section(

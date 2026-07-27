@@ -65,8 +65,9 @@ class _GrowthScreenState extends ConsumerState<GrowthScreen> {
           child: points.isEmpty
               ? const EmptyState(
                   icon: Icons.straighten,
-                  message: 'Нет измерений для построения графика',
-                  hint: 'Добавьте запись типа «Измерение» в дневнике',
+                  message: 'Пока нечего показать на графике',
+                  hint: 'Добавьте рост и вес в дневнике — кривая появится '
+                      'после первого измерения, а нормы ВОЗ уже ждут',
                 )
               : SizedBox(
                   height: 320,
