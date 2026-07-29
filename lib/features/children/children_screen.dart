@@ -103,30 +103,39 @@ class ChildrenScreen extends ConsumerWidget {
     }
   }
 
-  Future<void> _openForm(BuildContext context, WidgetRef ref) async {
-    final result = await showDialog<_ChildDraft>(
-      context: context,
-      builder: (_) => const _ChildFormDialog(),
-    );
-    if (result == null) return;
-    final created = await ref
-        .read(childRepositoryProvider)
-        .add(
-          parentUid: ref.read(currentUidProvider),
-          name: result.name,
-          birthDate: result.birthDate,
-          gender: result.gender,
-        );
+  Future<void> _openForm(BuildContext context, WidgetRef ref) =>
+      addChildFlow(context, ref);
+}
 
-    // Requirement 2.6: the immunisation plan is generated automatically from
-    // the national schedule as soon as a profile exists.
-    final reminders = ref.read(reminderRepositoryProvider);
-    for (final dose in buildVaccinationPlan(created)) {
-      await reminders.add(dose);
-    }
+/// Creates a child profile, from wherever the parent happened to be.
+///
+/// Public because the empty-state placeholder offers it too: telling someone
+/// "open the Children section and add a profile" while showing no button is a
+/// dead end, and it is the very first screen a new user meets.
+Future<void> addChildFlow(BuildContext context, WidgetRef ref) async {
+  final result = await showDialog<_ChildDraft>(
+    context: context,
+    builder: (_) => const _ChildFormDialog(),
+  );
+  if (result == null) return;
 
-    ref.read(selectedChildIdProvider.notifier).select(created.id);
+  final created = await ref
+      .read(childRepositoryProvider)
+      .add(
+        parentUid: ref.read(currentUidProvider),
+        name: result.name,
+        birthDate: result.birthDate,
+        gender: result.gender,
+      );
+
+  // Requirement 2.6: the immunisation plan is generated automatically from
+  // the national schedule as soon as a profile exists.
+  final reminders = ref.read(reminderRepositoryProvider);
+  for (final dose in buildVaccinationPlan(created)) {
+    await reminders.add(dose);
   }
+
+  ref.read(selectedChildIdProvider.notifier).select(created.id);
 }
 
 class _ChildTile extends StatelessWidget {

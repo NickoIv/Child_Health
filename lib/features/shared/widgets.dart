@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+
+import '../children/children_screen.dart';
 
 final dayMonth = DateFormat('d MMMM', 'ru_RU');
 final dayMonthYear = DateFormat('d MMMM y', 'ru_RU');
@@ -295,19 +298,38 @@ class ErrorState extends StatelessWidget {
 }
 
 /// Shown by every screen when no child profile exists yet.
-class NoChildPlaceholder extends StatelessWidget {
+///
+/// It carries the button rather than directions to it. This is the first
+/// screen a new user meets, and sending her to find a section herself is a
+/// dead end at the worst possible moment — she has not seen the app yet and
+/// has no reason to trust that the trip is worth it.
+class NoChildPlaceholder extends ConsumerWidget {
   const NoChildPlaceholder({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // Warmer than "profile not created". The parent has not failed to do
-    // something; the app simply does not know the child yet.
-    return const Center(
-      child: EmptyState(
-        icon: Icons.child_care_outlined,
-        message: 'Давайте познакомимся',
-        hint: 'Расскажите о малыше в разделе «Дети» — '
-            'дальше приложение подстроится под его возраст',
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Warmer than "profile not created". The parent has not failed to
+            // do something; the app simply does not know the child yet.
+            const EmptyState(
+              icon: Icons.child_care_outlined,
+              message: 'Давайте познакомимся',
+              hint: 'Расскажите о малыше — дальше приложение подстроится '
+                  'под его возраст и само составит календарь прививок',
+            ),
+            const SizedBox(height: 20),
+            FilledButton.icon(
+              onPressed: () => addChildFlow(context, ref),
+              icon: const Icon(Icons.add),
+              label: const Text('Добавить ребёнка'),
+            ),
+          ],
+        ),
       ),
     );
   }
