@@ -204,6 +204,10 @@ class FirestoreUserRepository implements UserRepository {
       .collection(Collections.users)
       .doc(user.uid)
       .set(user.toMap(), SetOptions(merge: true));
+
+  @override
+  Future<void> delete(String uid) =>
+      db.collection(Collections.users).doc(uid).delete();
 }
 
 class FirestorePhotoRepository extends _Base implements PhotoRepository {

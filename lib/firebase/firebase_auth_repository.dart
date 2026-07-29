@@ -48,7 +48,39 @@ class FirebaseAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final user = await _reauthenticate(currentPassword);
+    await _guard(() => user.updatePassword(newPassword));
+  }
+
+  @override
+  Future<void> deleteAccount({required String currentPassword}) async {
+    final user = await _reauthenticate(currentPassword);
+    await _guard(user.delete);
+  }
+
+  @override
   Future<void> signOut() => _auth.signOut();
+
+  /// Firebase rejects a password change or deletion on a session older than a
+  /// few minutes, so both paths sign in again first with the password the
+  /// parent just typed.
+  Future<fb.User> _reauthenticate(String password) async {
+    final user = _auth.currentUser;
+    final email = user?.email;
+    if (user == null || email == null || email.isEmpty) {
+      throw const AuthException('Сначала войдите в свою учётную запись');
+    }
+    await _guard(
+      () => user.reauthenticateWithCredential(
+        fb.EmailAuthProvider.credential(email: email, password: password),
+      ),
+    );
+    return user;
+  }
 
   AuthUser? _map(fb.User? user) {
     if (user == null) return null;
@@ -74,6 +106,8 @@ class FirebaseAuthRepository implements AuthRepository {
     'email-already-in-use' => 'Этот email уже зарегистрирован',
     'weak-password' => 'Пароль слишком простой — минимум 6 символов',
     'user-disabled' => 'Учётная запись отключена',
+    'requires-recent-login' =>
+      'Для этого действия нужно войти заново. Выйдите и войдите ещё раз',
     'too-many-requests' =>
       'Слишком много попыток. Попробуйте через несколько минут',
     'network-request-failed' => 'Нет связи с сервером. Проверьте интернет',

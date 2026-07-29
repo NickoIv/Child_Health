@@ -10,6 +10,8 @@ abstract class UserRepository {
   Stream<AppUser?> watchProfile(String uid);
 
   Future<void> save(AppUser user);
+
+  Future<void> delete(String uid);
 }
 
 class MemoryUserRepository implements UserRepository {
@@ -21,4 +23,7 @@ class MemoryUserRepository implements UserRepository {
 
   @override
   Future<void> save(AppUser user) async => _profiles[user.uid] = user;
+
+  @override
+  Future<void> delete(String uid) async => _profiles.remove(uid);
 }

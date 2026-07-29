@@ -24,6 +24,9 @@ abstract final class AppTheme {
   /// enforces that distance.
   static const seed = Color(0xFF9E86D8);
 
+  /// Rounded and warm rather than the clinical default, with full Cyrillic.
+  static const fontFamily = 'Nunito';
+
   static ThemeData light() => _build(Brightness.light);
 
   static ThemeData dark() => _build(Brightness.dark);
@@ -36,11 +39,19 @@ abstract final class AppTheme {
     );
 
     final base = isDark ? ThemeData.dark() : ThemeData.light();
-    final text = _typography(base.textTheme, scheme);
+    // Applied last, and not left to ThemeData.fontFamily alone: the styles
+    // below start from the default text theme, which names Roboto outright,
+    // and an explicit family on a style beats the theme-wide one. Without
+    // this every heading would quietly stay Roboto.
+    final text = _typography(
+      base.textTheme,
+      scheme,
+    ).apply(fontFamily: fontFamily);
 
     return ThemeData(
       colorScheme: scheme,
       useMaterial3: true,
+      fontFamily: fontFamily,
       textTheme: text,
       // Not white: a faint warm tint lets the cards read as raised without
       // any shadow, and is easier on the eye during a night feed.

@@ -21,6 +21,8 @@ class FakeAuthRepository implements AuthRepository {
   int signInCalls = 0;
   int registerCalls = 0;
   String? resetSentTo;
+  String? changedPasswordTo;
+  bool deleted = false;
 
   @override
   AuthUser? get currentUser => _user;
@@ -62,6 +64,22 @@ class FakeAuthRepository implements AuthRepository {
   Future<void> sendPasswordReset(String email) async {
     if (failWith != null) throw failWith!;
     resetSentTo = email;
+  }
+
+  @override
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    if (failWith != null) throw failWith!;
+    changedPasswordTo = newPassword;
+  }
+
+  @override
+  Future<void> deleteAccount({required String currentPassword}) async {
+    if (failWith != null) throw failWith!;
+    deleted = true;
+    emit(null);
   }
 
   @override

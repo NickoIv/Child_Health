@@ -30,6 +30,21 @@ abstract class AuthRepository {
 
   Future<void> sendPasswordReset(String email);
 
+  /// Both operations below re-check the current password first.
+  ///
+  /// Firebase demands it for any sensitive change, and it is the right rule
+  /// anyway: a phone left unlocked on a changing table should not be enough
+  /// to lock the parent out or erase a year of records.
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  });
+
+  /// Removes the Firebase user. Everything the parent stored must already be
+  /// deleted by the caller — once the account is gone, the security rules
+  /// deny access to those documents forever.
+  Future<void> deleteAccount({required String currentPassword});
+
   Future<void> signOut();
 }
 
@@ -56,6 +71,15 @@ class DemoAuthRepository implements AuthRepository {
 
   @override
   Future<void> sendPasswordReset(String email) async {}
+
+  @override
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {}
+
+  @override
+  Future<void> deleteAccount({required String currentPassword}) async {}
 
   @override
   Future<void> signOut() async {}

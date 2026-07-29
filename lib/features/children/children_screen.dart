@@ -1,10 +1,14 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
-import '../../core/theme/app_theme.dart';
+import '../../core/photos/compression.dart';
 import '../../core/vaccination/national_calendar.dart';
 import '../../models/child.dart';
 import '../../providers.dart';
+import '../shared/photo_widgets.dart';
 import '../shared/widgets.dart';
 
 class ChildrenScreen extends ConsumerWidget {
@@ -55,6 +59,7 @@ class ChildrenScreen extends ConsumerWidget {
                         onSelect: () => ref
                             .read(selectedChildIdProvider.notifier)
                             .select(c.id),
+                        onEdit: () => editChildFlow(context, ref, c),
                         onDelete: () => _confirmDelete(context, ref, c),
                       ),
                   ],
@@ -119,14 +124,13 @@ Future<void> addChildFlow(BuildContext context, WidgetRef ref) async {
   );
   if (result == null) return;
 
-  final created = await ref
-      .read(childRepositoryProvider)
-      .add(
-        parentUid: ref.read(currentUidProvider),
-        name: result.name,
-        birthDate: result.birthDate,
-        gender: result.gender,
-      );
+  final repository = ref.read(childRepositoryProvider);
+  final created = await repository.add(
+    parentUid: ref.read(currentUidProvider),
+    name: result.name,
+    birthDate: result.birthDate,
+    gender: result.gender,
+  );
 
   // Requirement 2.6: the immunisation plan is generated automatically from
   // the national schedule as soon as a profile exists.
@@ -136,6 +140,67 @@ Future<void> addChildFlow(BuildContext context, WidgetRef ref) async {
   }
 
   ref.read(selectedChildIdProvider.notifier).select(created.id);
+
+  // Last, and allowed to fail: a photo that will not compress must not cost
+  // the parent the profile they just filled in.
+  if (result.photoBytes != null && context.mounted) {
+    await _attachPhoto(context, ref, created, result.photoBytes!);
+  }
+}
+
+/// Edits an existing profile — name, date, sex and photo.
+Future<void> editChildFlow(
+  BuildContext context,
+  WidgetRef ref,
+  Child child,
+) async {
+  final result = await showDialog<_ChildDraft>(
+    context: context,
+    builder: (_) => _ChildFormDialog(existing: child),
+  );
+  if (result == null) return;
+
+  final updated = child.copyWith(
+    name: result.name,
+    birthDate: result.birthDate,
+    gender: result.gender,
+  );
+  await ref.read(childRepositoryProvider).update(updated);
+
+  if (result.photoBytes != null && context.mounted) {
+    await _attachPhoto(context, ref, updated, result.photoBytes!);
+  }
+}
+
+/// Uploads the picked image and points the profile at it.
+///
+/// The previous photo is deleted afterwards rather than before: if the upload
+/// fails, the child keeps the face they had.
+Future<void> _attachPhoto(
+  BuildContext context,
+  WidgetRef ref,
+  Child child,
+  Uint8List bytes,
+) async {
+  final messenger = ScaffoldMessenger.maybeOf(context);
+  final photos = ref.read(photoRepositoryProvider);
+  final previous = child.photoUrl;
+
+  try {
+    final photo = await photos.upload(childId: child.id, bytes: bytes);
+    await ref
+        .read(childRepositoryProvider)
+        .update(child.copyWith(photoUrl: photo.id));
+    if (previous != null && previous.isNotEmpty) {
+      await photos.delete(previous);
+    }
+  } on PhotoTooLargeException catch (e) {
+    messenger?.showSnackBar(SnackBar(content: Text(e.message)));
+  } catch (e) {
+    messenger?.showSnackBar(
+      SnackBar(content: Text('Не удалось сохранить фото: $e')),
+    );
+  }
 }
 
 class _ChildTile extends StatelessWidget {
@@ -143,41 +208,26 @@ class _ChildTile extends StatelessWidget {
     required this.child,
     required this.isSelected,
     required this.onSelect,
+    required this.onEdit,
     required this.onDelete,
   });
 
   final Child child;
   final bool isSelected;
   final VoidCallback onSelect;
+  final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    // Two adjacent validated slots, so siblings are told apart by more than
-    // a label in a switcher.
-    final accent = VizPalette.slot(
-      child.gender == Gender.male ? 0 : 4,
-      theme.brightness,
-    );
 
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(vertical: 4),
       selected: isSelected,
       selectedTileColor: scheme.primaryContainer.withValues(alpha: 0.35),
-      leading: Container(
-        width: 46,
-        height: 46,
-        decoration: BoxDecoration(
-          color: accent.withValues(alpha: 0.16),
-          borderRadius: BorderRadius.circular(15),
-        ),
-        child: Icon(
-          child.gender == Gender.male ? Icons.boy : Icons.girl,
-          color: accent,
-        ),
-      ),
+      leading: ChildAvatar(child: child),
       title: Text(child.name, style: theme.textTheme.titleSmall),
       subtitle: Text(
         '${child.ageLabel} · ${shortDate.format(child.birthDate)} · '
@@ -194,6 +244,11 @@ class _ChildTile extends StatelessWidget {
               side: BorderSide.none,
             ),
           IconButton(
+            tooltip: 'Изменить',
+            onPressed: onEdit,
+            icon: const Icon(Icons.edit_outlined),
+          ),
+          IconButton(
             tooltip: 'Удалить',
             onPressed: onDelete,
             icon: const Icon(Icons.delete_outline),
@@ -206,15 +261,21 @@ class _ChildTile extends StatelessWidget {
 }
 
 class _ChildDraft {
-  const _ChildDraft(this.name, this.birthDate, this.gender);
+  const _ChildDraft(this.name, this.birthDate, this.gender, this.photoBytes);
 
   final String name;
   final DateTime birthDate;
   final Gender gender;
+
+  /// Raw bytes, not an uploaded id: at creation time there is no child to
+  /// attach a photo to yet, so the upload waits until the profile exists.
+  final Uint8List? photoBytes;
 }
 
 class _ChildFormDialog extends StatefulWidget {
-  const _ChildFormDialog();
+  const _ChildFormDialog({this.existing});
+
+  final Child? existing;
 
   @override
   State<_ChildFormDialog> createState() => _ChildFormDialogState();
@@ -225,6 +286,18 @@ class _ChildFormDialogState extends State<_ChildFormDialog> {
   final _nameController = TextEditingController();
   DateTime? _birthDate;
   Gender _gender = Gender.male;
+  Uint8List? _photoBytes;
+
+  @override
+  void initState() {
+    super.initState();
+    final existing = widget.existing;
+    if (existing != null) {
+      _nameController.text = existing.name;
+      _birthDate = existing.birthDate;
+      _gender = existing.gender;
+    }
+  }
 
   @override
   void dispose() {
@@ -234,8 +307,10 @@ class _ChildFormDialogState extends State<_ChildFormDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final editing = widget.existing != null;
+
     return AlertDialog(
-      title: const Text('Новый профиль'),
+      title: Text(editing ? 'Профиль ребёнка' : 'Новый профиль'),
       content: SizedBox(
         width: 380,
         child: Form(
@@ -243,6 +318,15 @@ class _ChildFormDialogState extends State<_ChildFormDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              _PhotoField(
+                bytes: _photoBytes,
+                existing: widget.existing,
+                onPick: _pickPhoto,
+                onClear: _photoBytes == null
+                    ? null
+                    : () => setState(() => _photoBytes = null),
+              ),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _nameController,
                 autofocus: true,
@@ -284,9 +368,26 @@ class _ChildFormDialogState extends State<_ChildFormDialog> {
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Отмена'),
         ),
-        FilledButton(onPressed: _submit, child: const Text('Создать')),
+        FilledButton(
+          onPressed: _submit,
+          child: Text(editing ? 'Сохранить' : 'Создать'),
+        ),
       ],
     );
+  }
+
+  Future<void> _pickPhoto() async {
+    // Downscaled by the picker before it ever reaches us: a modern phone
+    // camera produces 4000px frames, and the compressor would only throw
+    // that detail away again after decoding the whole thing.
+    final file = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 90,
+      maxWidth: 1200,
+    );
+    if (file == null) return;
+    final bytes = await file.readAsBytes();
+    if (mounted) setState(() => _photoBytes = bytes);
   }
 
   Future<void> _pickDate() async {
@@ -309,8 +410,93 @@ class _ChildFormDialogState extends State<_ChildFormDialog> {
       );
       return;
     }
-    Navigator.of(
-      context,
-    ).pop(_ChildDraft(_nameController.text.trim(), _birthDate!, _gender));
+    Navigator.of(context).pop(
+      _ChildDraft(
+        _nameController.text.trim(),
+        _birthDate!,
+        _gender,
+        _photoBytes,
+      ),
+    );
+  }
+}
+
+/// Tappable avatar at the top of the profile form.
+class _PhotoField extends StatelessWidget {
+  const _PhotoField({
+    required this.bytes,
+    required this.existing,
+    required this.onPick,
+    this.onClear,
+  });
+
+  final Uint8List? bytes;
+  final Child? existing;
+  final VoidCallback onPick;
+  final VoidCallback? onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    const size = 96.0;
+
+    return Column(
+      children: [
+        InkWell(
+          onTap: onPick,
+          borderRadius: BorderRadius.circular(size / 3),
+          child: Stack(
+            children: [
+              if (bytes != null)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(size / 3),
+                  child: Image.memory(
+                    bytes!,
+                    width: size,
+                    height: size,
+                    fit: BoxFit.cover,
+                  ),
+                )
+              else if (existing != null)
+                ChildAvatar(child: existing!, size: size)
+              else
+                Container(
+                  width: size,
+                  height: size,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(size / 3),
+                  ),
+                  child: Icon(
+                    Icons.add_a_photo_outlined,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              Positioned(
+                right: 0,
+                bottom: 0,
+                child: Container(
+                  padding: const EdgeInsets.all(5),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.photo_camera_outlined,
+                    size: 15,
+                    color: theme.colorScheme.onPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextButton(
+          onPressed: onClear ?? onPick,
+          child: Text(onClear != null ? 'Убрать фото' : 'Добавить фото'),
+        ),
+      ],
+    );
   }
 }

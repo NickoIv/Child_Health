@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../firebase/push_messaging.dart';
 import '../../models/development_log.dart';
 import '../../models/medical_record.dart';
 import '../../providers.dart';
@@ -511,20 +512,30 @@ class _PendingFeatures extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
+    // Keep this list honest. It listed manual entry and scan attachment for
+    // two releases after both shipped, because it was written before the work
+    // rather than after it. A stale "not yet implemented" is worse than none:
+    // it tells a parent to stop looking for something that is right there.
+    //
+    // Push is built — client, service worker and the scheduler that sends.
+    // It only stays off while the build has no VAPID key, so this line goes
+    // away the moment one is supplied rather than waiting for someone to
+    // remember to delete it. With nothing left to list, so does the card.
+    final pending = <String>[
+      if (!PushConfig.isConfigured)
+        'Push-уведомления о приёме лекарств и визитах: в этой сборке не '
+            'задан ключ отправителя',
+    ];
+    if (pending.isEmpty) return const SizedBox.shrink();
+
     return SectionCard(
       title: 'Ещё не реализовано',
       icon: Icons.construction_outlined,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Keep this list honest. It listed manual entry and scan
-          // attachment for two releases after both shipped, because it was
-          // written before the work rather than after it. A stale "not yet
-          // implemented" is worse than none: it tells a parent to stop
-          // looking for something that is right there.
-          for (final line in const [
-            'Push-уведомления о приёме лекарств и визитах',
-          ])
+          for (final line in pending)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: Row(

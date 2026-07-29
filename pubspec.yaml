@@ -83,6 +83,14 @@ flutter:
     - assets/fonts/Roboto-Regular.ttf
     - assets/fonts/Roboto-Bold.ttf
 
+  fonts:
+    # Nunito for the interface: rounded and warm rather than the clinical
+    # default, with full Cyrillic. One variable file covers every weight —
+    # 277 KB instead of three static faces.
+    - family: Nunito
+      fonts:
+        - asset: assets/fonts/Nunito.ttf
+
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 

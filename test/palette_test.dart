@@ -8,6 +8,30 @@ import 'package:flutter_test/flutter_test.dart';
 /// breaks that guarantee. These tests exist so a future tidy-up cannot do it
 /// by accident.
 void main() {
+  group('typography', () {
+    test('every text style is Nunito, in both modes', () {
+      for (final theme in [AppTheme.light(), AppTheme.dark()]) {
+        final text = theme.textTheme;
+        // Not just ThemeData.fontFamily: the styles are built from the
+        // default text theme, which names Roboto outright, and a family on
+        // the style itself wins. This caught exactly that.
+        for (final style in [
+          text.headlineSmall,
+          text.titleLarge,
+          text.titleMedium,
+          text.titleSmall,
+          text.bodyLarge,
+          text.bodyMedium,
+          text.bodySmall,
+          text.labelLarge,
+        ]) {
+          expect(style?.fontFamily, AppTheme.fontFamily);
+        }
+        expect(theme.textTheme, isNot(same(ThemeData.light().textTheme)));
+      }
+    });
+  });
+
   group('categorical palette', () {
     test('both modes define the same number of slots', () {
       expect(

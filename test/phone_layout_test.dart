@@ -23,6 +23,14 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  /// Only four destinations fit the bottom bar; the rest are behind «Ещё».
+  Future<void> openMore(WidgetTester tester, String label) async {
+    await tester.tap(find.byIcon(Icons.more_horiz));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(label));
+    await tester.pumpAndSettle();
+  }
+
   testWidgets('the dashboard fits a phone screen', (tester) async {
     await pumpPhone(tester);
     expect(find.widgetWithText(AppBar, 'Обзор'), findsOneWidget);
@@ -157,6 +165,61 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Динамика показателей'), findsOneWidget);
+  });
+
+  testWidgets('the measurement button fits beside the chart', (tester) async {
+    await pumpPhone(tester);
+    await tester.tap(find.byIcon(Icons.show_chart_outlined).first);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.widgetWithText(FloatingActionButton, 'Добавить измерение'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('the profile list fits with an avatar and both actions', (
+    tester,
+  ) async {
+    await pumpPhone(tester);
+    await openMore(tester, 'Дети');
+
+    // A chip, a pencil and a bin on one narrow row is exactly the kind of
+    // trailing group that overflows.
+    expect(find.byIcon(Icons.edit_outlined), findsWidgets);
+    expect(find.byIcon(Icons.delete_outline), findsWidgets);
+  });
+
+  testWidgets('the profile form fits with its photo picker', (tester) async {
+    await pumpPhone(tester);
+    await openMore(tester, 'Дети');
+
+    await tester.tap(find.text('Добавить ребёнка'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Добавить фото'), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, 'Создать'), findsOneWidget);
+  });
+
+  testWidgets('settings fits, all the way down to account deletion', (
+    tester,
+  ) async {
+    await pumpPhone(tester);
+    await tester.tap(find.byIcon(Icons.account_circle_outlined));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Профиль и настройки'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Родитель'), findsOneWidget);
+
+    // The page grew a layout editor and an account section; the bottom of it
+    // has to stay reachable and unbroken on a phone.
+    await tester.scrollUntilVisible(
+      find.text('Удалить учётную запись'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('Удалить учётную запись'), findsOneWidget);
   });
 
   testWidgets('the triage checklist fits', (tester) async {

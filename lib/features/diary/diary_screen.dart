@@ -81,6 +81,12 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen> {
                     if (i > 0) const Divider(height: 24),
                     _LogTile(
                       log: visible[i],
+                      onEdit: () => showDiaryEntryForm(
+                        context,
+                        ref,
+                        childId: child.id,
+                        existing: visible[i],
+                      ),
                       onDelete: () => ref
                           .read(logRepositoryProvider)
                           .delete(visible[i].id),
@@ -102,13 +108,7 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen> {
   Future<void> _openForm(BuildContext context) async {
     final child = ref.read(selectedChildProvider);
     if (child == null) return;
-    final draft = await showDialog<DevelopmentLog>(
-      context: context,
-      builder: (_) => _LogFormDialog(childId: child.id),
-    );
-    if (draft != null) {
-      await ref.read(logRepositoryProvider).add(draft);
-    }
+    await showDiaryEntryForm(context, ref, childId: child.id);
   }
 }
 
@@ -141,9 +141,14 @@ class _FilterBar extends StatelessWidget {
 }
 
 class _LogTile extends ConsumerWidget {
-  const _LogTile({required this.log, required this.onDelete});
+  const _LogTile({
+    required this.log,
+    required this.onEdit,
+    required this.onDelete,
+  });
 
   final DevelopmentLog log;
+  final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   @override
@@ -229,6 +234,13 @@ class _LogTile extends ConsumerWidget {
               ],
             ],
           ),
+        ),
+        // Two small targets rather than one: editing a typo in a milestone
+        // should not require deleting and retyping it.
+        IconButton(
+          tooltip: 'Изменить',
+          onPressed: onEdit,
+          icon: const Icon(Icons.edit_outlined, size: 18),
         ),
         IconButton(
           tooltip: 'Удалить запись',
@@ -375,10 +387,47 @@ class _Pill extends StatelessWidget {
   }
 }
 
+/// Opens the entry form and saves the result.
+///
+/// Public so other screens can reach it: the growth tab needs to add a
+/// measurement without sending the parent to the diary first, and an entry
+/// has to be editable from wherever it is shown.
+Future<void> showDiaryEntryForm(
+  BuildContext context,
+  WidgetRef ref, {
+  required String childId,
+  LogType initialType = LogType.note,
+  DevelopmentLog? existing,
+}) async {
+  final draft = await showDialog<DevelopmentLog>(
+    context: context,
+    builder: (_) => _LogFormDialog(
+      childId: childId,
+      initialType: existing?.type ?? initialType,
+      existing: existing,
+    ),
+  );
+  if (draft == null) return;
+
+  final repository = ref.read(logRepositoryProvider);
+  // A draft carrying an id is an edit; without one it is a new entry.
+  if (draft.id.isEmpty) {
+    await repository.add(draft);
+  } else {
+    await repository.update(draft);
+  }
+}
+
 class _LogFormDialog extends ConsumerStatefulWidget {
-  const _LogFormDialog({required this.childId});
+  const _LogFormDialog({
+    required this.childId,
+    this.initialType = LogType.note,
+    this.existing,
+  });
 
   final String childId;
+  final LogType initialType;
+  final DevelopmentLog? existing;
 
   @override
   ConsumerState<_LogFormDialog> createState() => _LogFormDialogState();
@@ -404,6 +453,59 @@ class _LogFormDialogState extends ConsumerState<_LogFormDialog> {
   DateTime _date = DateTime.now();
 
   @override
+  void initState() {
+    super.initState();
+    _type = widget.initialType;
+
+    final existing = widget.existing;
+    if (existing == null) return;
+
+    _title.text = existing.title;
+    _description.text = existing.description;
+    _tags.text = existing.tags.join(', ');
+    _date = existing.date;
+    _severity = existing.severity ?? Severity.mild;
+    _photoIds.addAll(existing.photos);
+
+    // Metrics are stored in metric units and shown in the parent's chosen
+    // ones, so they are converted back on the way into the fields.
+    final units = ref.read(unitSystemProvider);
+    final metrics = existing.metrics;
+    if (metrics.weightKg != null) {
+      _weight.text = _display(
+        Units.weightToDisplay(metrics.weightKg!, units),
+      );
+    }
+    if (metrics.heightCm != null) {
+      _height.text = _display(
+        Units.heightToDisplay(metrics.heightCm!, units),
+      );
+    }
+    if (metrics.headCircumferenceCm != null) {
+      _head.text = _display(
+        Units.heightToDisplay(metrics.headCircumferenceCm!, units),
+      );
+    }
+    if (metrics.chestCircumferenceCm != null) {
+      _chest.text = _display(
+        Units.heightToDisplay(metrics.chestCircumferenceCm!, units),
+      );
+    }
+    if (metrics.temperatureC != null) {
+      _temperature.text = metrics.temperatureC!.toStringAsFixed(1);
+    }
+  }
+
+  /// Trims the trailing zero a conversion leaves behind, so the field reads
+  /// "9.6" rather than "9.600000000000001".
+  static String _display(double value) {
+    final rounded = (value * 100).roundToDouble() / 100;
+    return rounded == rounded.roundToDouble()
+        ? rounded.toStringAsFixed(0)
+        : rounded.toString();
+  }
+
+  @override
   void dispose() {
     _title.dispose();
     _description.dispose();
@@ -420,7 +522,9 @@ class _LogFormDialogState extends ConsumerState<_LogFormDialog> {
   Widget build(BuildContext context) {
     final units = ref.watch(unitSystemProvider);
     return AlertDialog(
-      title: const Text('Новая запись'),
+      title: Text(
+        widget.existing == null ? 'Новая запись' : 'Изменить запись',
+      ),
       content: SizedBox(
         width: 420,
         child: SingleChildScrollView(
@@ -631,7 +735,8 @@ class _LogFormDialogState extends ConsumerState<_LogFormDialog> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final units = ref.read(unitSystemProvider);
     final log = DevelopmentLog(
-      id: '',
+      // Keeping the id is what makes this an edit rather than a copy.
+      id: widget.existing?.id ?? '',
       childId: widget.childId,
       date: _date,
       type: _type,
@@ -657,6 +762,7 @@ class _LogFormDialogState extends ConsumerState<_LogFormDialog> {
         LogType.illness => Metrics(temperatureC: _parse(_temperature)),
         _ => const Metrics(),
       },
+      // Keeping the id is what makes this an edit rather than a copy.
       photos: List.of(_photoIds),
       tags: _tags.text
           .split(',')

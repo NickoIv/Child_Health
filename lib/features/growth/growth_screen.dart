@@ -7,6 +7,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/units/units.dart';
 import '../../models/app_user.dart';
 import '../../models/child.dart';
+import '../diary/diary_screen.dart';
 import '../../models/development_log.dart';
 import '../../providers.dart';
 import '../shared/widgets.dart';
@@ -48,8 +49,21 @@ class _GrowthScreenState extends ConsumerState<GrowthScreen> {
     final measurements = ref.watch(measurementsProvider);
     final points = _pointsFor(child, measurements, _metric);
 
-    return PageBody(
-      children: [
+    return Scaffold(
+      // The chart is where a parent notices a measurement is missing, so the
+      // way to add one belongs here rather than only in the diary.
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => showDiaryEntryForm(
+          context,
+          ref,
+          childId: child.id,
+          initialType: LogType.measurement,
+        ),
+        icon: const Icon(Icons.add),
+        label: const Text('Добавить измерение'),
+      ),
+      body: PageBody(
+        children: [
         SectionCard(
           title: 'Динамика показателей',
           icon: Icons.show_chart_outlined,
@@ -79,11 +93,12 @@ class _GrowthScreenState extends ConsumerState<GrowthScreen> {
                   ),
                 ),
         ),
-        const SizedBox(height: 16),
-        _LatestAssessment(child: child, metric: _metric, points: points),
-        const SizedBox(height: 16),
-        _MeasurementHistory(child: child, measurements: measurements),
-      ],
+          const SizedBox(height: 16),
+          _LatestAssessment(child: child, metric: _metric, points: points),
+          const SizedBox(height: 16),
+          _MeasurementHistory(child: child, measurements: measurements),
+        ],
+      ),
     );
   }
 }

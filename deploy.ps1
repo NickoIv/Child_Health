@@ -9,7 +9,12 @@
 #
 # Usage:  .\deploy.ps1
 
-$ErrorActionPreference = 'Stop'
+# Deliberately not 'Stop'. Every step here is a native executable, and
+# PowerShell 5.1 turns anything they write to stderr into a terminating error
+# under 'Stop' - which killed a perfectly good build over a Wasm advisory note
+# printed on the way out. Each step is checked by its exit code instead, which
+# is the only thing that actually says whether it worked.
+$ErrorActionPreference = 'Continue'
 
 $env:PATH = "H:\dev\flutter\bin;C:\Program Files\nodejs;$env:APPDATA\npm;$env:PATH"
 $env:CHROME_EXECUTABLE = "C:\Program Files\Google\Chrome\Application\chrome.exe"

@@ -6,6 +6,7 @@ import '../../core/router/app_router.dart';
 import '../../core/theme/theme_mode.dart';
 import '../../models/child.dart';
 import '../../providers.dart';
+import '../shared/photo_widgets.dart';
 
 /// Navigation chrome shared by every screen.
 ///
@@ -224,9 +225,16 @@ class _ChildSwitcher extends ConsumerWidget {
     if (children.isEmpty || selected == null) return const SizedBox.shrink();
     if (children.length == 1) {
       return Center(
-        child: Text(
-          selected.name,
-          style: Theme.of(context).textTheme.labelLarge,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ChildAvatar(child: selected, size: 28),
+            const SizedBox(width: 8),
+            Text(
+              selected.name,
+              style: Theme.of(context).textTheme.labelLarge,
+            ),
+          ],
         ),
       );
     }
@@ -238,7 +246,17 @@ class _ChildSwitcher extends ConsumerWidget {
             ref.read(selectedChildIdProvider.notifier).select(id),
         items: [
           for (final c in children)
-            DropdownMenuItem(value: c.id, child: Text(c.name)),
+            DropdownMenuItem(
+              value: c.id,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ChildAvatar(child: c, size: 28),
+                  const SizedBox(width: 8),
+                  Text(c.name),
+                ],
+              ),
+            ),
         ],
       ),
     );

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/growth/who_standards.dart';
+import '../../core/router/app_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/units/units.dart';
 import '../../core/vaccination/national_calendar.dart';
@@ -15,47 +16,43 @@ import 'dashboard_config.dart';
 import 'now_card.dart';
 
 /// Configurable home screen, per requirement 2.7.
-class DashboardScreen extends ConsumerStatefulWidget {
+///
+/// The customisation lives in settings rather than behind a button here. The
+/// home screen is opened dozens of times a day and rearranged perhaps twice;
+/// a permanent button for the rare action was crowding the common one.
+class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
   @override
-  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
-}
-
-class _DashboardScreenState extends ConsumerState<DashboardScreen> {
-  bool _editing = false;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final child = ref.watch(selectedChildProvider);
     if (child == null) return const NoChildPlaceholder();
 
     final layout = ref.watch(dashboardLayoutProvider);
 
-    return Scaffold(
-      body: _editing
-          ? _LayoutEditor(onDone: () => setState(() => _editing = false))
-          : PageBody(
-              children: [
-                for (final kind in layout) ...[
-                  _widgetFor(kind, child),
-                  const SizedBox(height: 16),
-                ],
-                if (layout.isEmpty)
-                  const EmptyState(
-                    icon: Icons.dashboard_customize_outlined,
-                    message: 'Все виджеты скрыты',
-                    hint: 'Нажмите «Настроить», чтобы вернуть их',
-                  ),
-              ],
-            ),
-      floatingActionButton: _editing
-          ? null
-          : FloatingActionButton.extended(
-              onPressed: () => setState(() => _editing = true),
-              icon: const Icon(Icons.dashboard_customize_outlined),
-              label: const Text('Настроить'),
-            ),
+    return PageBody(
+      children: [
+        for (final kind in layout) ...[
+          _widgetFor(kind, child),
+          const SizedBox(height: 16),
+        ],
+        if (layout.isEmpty)
+          Column(
+            children: [
+              const EmptyState(
+                icon: Icons.dashboard_customize_outlined,
+                message: 'Все блоки скрыты',
+                hint: 'Вернуть их можно в настройках',
+              ),
+              const SizedBox(height: 16),
+              FilledButton.tonalIcon(
+                onPressed: () => context.go(settingsPath),
+                icon: const Icon(Icons.tune),
+                label: const Text('Настроить главный экран'),
+              ),
+            ],
+          ),
+      ],
     );
   }
 
@@ -72,10 +69,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       };
 }
 
-class _LayoutEditor extends ConsumerWidget {
-  const _LayoutEditor({required this.onDone});
-
-  final VoidCallback onDone;
+/// The home-screen layout editor, embedded in settings.
+class DashboardLayoutEditor extends ConsumerWidget {
+  const DashboardLayoutEditor({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -85,16 +81,15 @@ class _LayoutEditor extends ConsumerWidget {
         .where((k) => !layout.contains(k))
         .toList();
 
-    return PageBody(
+    return Column(
       children: [
         SectionCard(
-          title: 'Виджеты на экране',
+          title: 'Блоки на главном экране',
           icon: Icons.dashboard_customize_outlined,
-          action: TextButton(onPressed: onDone, child: const Text('Готово')),
           child: layout.isEmpty
               ? const EmptyState(
                   icon: Icons.visibility_off_outlined,
-                  message: 'Ни один виджет не выбран',
+                  message: 'Ни один блок не выбран',
                 )
               : ReorderableListView(
                   shrinkWrap: true,
@@ -132,7 +127,7 @@ class _LayoutEditor extends ConsumerWidget {
         const SizedBox(height: 16),
         if (hidden.isNotEmpty)
           SectionCard(
-            title: 'Скрытые виджеты',
+            title: 'Скрытые блоки',
             icon: Icons.visibility_off_outlined,
             child: Column(
               children: [

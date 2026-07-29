@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../data/auth_repository.dart';
+import '../dashboard/dashboard_screen.dart';
 import '../../core/theme/theme_mode.dart';
 import '../../firebase/push_messaging.dart';
 import '../../models/app_user.dart';
@@ -165,6 +167,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
         const SizedBox(height: 16),
 
+        const DashboardLayoutEditor(),
+        const SizedBox(height: 16),
+
         SectionCard(
           title: 'Уведомления',
           icon: Icons.notifications_outlined,
@@ -211,18 +216,125 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
         SectionCard(
           title: 'Учётная запись',
-          icon: Icons.logout,
+          icon: Icons.manage_accounts_outlined,
           accentColor: StatusColors.serious,
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: FilledButton.tonalIcon(
-              onPressed: () => ref.read(authRepositoryProvider).signOut(),
-              icon: const Icon(Icons.logout),
-              label: const Text('Выйти'),
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Wrap, not Row: on a narrow phone three buttons on one line
+              // overflow, and this card is the one place a parent must never
+              // find a control cut in half.
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  FilledButton.tonalIcon(
+                    onPressed: _changePassword,
+                    icon: const Icon(Icons.key_outlined),
+                    label: const Text('Сменить пароль'),
+                  ),
+                  FilledButton.tonalIcon(
+                    onPressed: () =>
+                        ref.read(authRepositoryProvider).signOut(),
+                    icon: const Icon(Icons.logout),
+                    label: const Text('Выйти'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              const Divider(),
+              const SizedBox(height: 12),
+              Text(
+                'Удаление учётной записи',
+                style: theme.textTheme.titleSmall,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Вместе с записью безвозвратно удаляются все дети, дневник, '
+                'медкарта и напоминания. Отменить это будет нельзя, поэтому '
+                'сначала выгрузите PDF-отчёт, если он вам нужен.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed: _deleteAccount,
+                  style: TextButton.styleFrom(
+                    foregroundColor: theme.colorScheme.error,
+                  ),
+                  icon: const Icon(Icons.delete_forever_outlined),
+                  label: const Text('Удалить учётную запись'),
+                ),
+              ),
+            ],
           ),
         ),
       ],
+    );
+  }
+
+  Future<void> _changePassword() async {
+    final result = await showDialog<_PasswordChange>(
+      context: context,
+      builder: (_) => const _PasswordDialog(),
+    );
+    if (result == null || !mounted) return;
+
+    try {
+      await ref
+          .read(authRepositoryProvider)
+          .changePassword(
+            currentPassword: result.current,
+            newPassword: result.next,
+          );
+      _tell('Пароль изменён');
+    } on AuthException catch (e) {
+      _tell(e.message, error: true);
+    }
+  }
+
+  /// Deletes the parent's data first, then the account.
+  ///
+  /// That order matters: once the Firebase user is gone the security rules
+  /// deny every one of those documents, and nothing could ever remove them.
+  Future<void> _deleteAccount() async {
+    final password = await showDialog<String>(
+      context: context,
+      builder: (_) => const _DeleteAccountDialog(),
+    );
+    if (password == null || !mounted) return;
+
+    final uid = ref.read(currentUidProvider);
+    final children = ref.read(childrenProvider).value ?? const [];
+
+    try {
+      final childRepository = ref.read(childRepositoryProvider);
+      for (final child in children) {
+        await childRepository.delete(child.id);
+      }
+      await ref.read(userRepositoryProvider).delete(uid);
+      await ref
+          .read(authRepositoryProvider)
+          .deleteAccount(currentPassword: password);
+      // No message: the router has already thrown us back to the login
+      // screen, and this widget is gone.
+    } on AuthException catch (e) {
+      _tell(e.message, error: true);
+    }
+  }
+
+  void _tell(String message, {bool error = false}) {
+    if (!mounted) return;
+    final scheme = Theme.of(context).colorScheme;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: error ? scheme.errorContainer : null,
+        showCloseIcon: true,
+      ),
     );
   }
 
@@ -307,5 +419,175 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 const [],
           ),
         );
+  }
+}
+
+class _PasswordChange {
+  const _PasswordChange(this.current, this.next);
+
+  final String current;
+  final String next;
+}
+
+class _PasswordDialog extends StatefulWidget {
+  const _PasswordDialog();
+
+  @override
+  State<_PasswordDialog> createState() => _PasswordDialogState();
+}
+
+class _PasswordDialogState extends State<_PasswordDialog> {
+  final _form = GlobalKey<FormState>();
+  final _current = TextEditingController();
+  final _next = TextEditingController();
+  final _repeat = TextEditingController();
+
+  @override
+  void dispose() {
+    _current.dispose();
+    _next.dispose();
+    _repeat.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Сменить пароль'),
+      content: Form(
+        key: _form,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextFormField(
+              controller: _current,
+              obscureText: true,
+              autofocus: true,
+              decoration: const InputDecoration(labelText: 'Текущий пароль'),
+              validator: (v) =>
+                  (v ?? '').isEmpty ? 'Введите текущий пароль' : null,
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _next,
+              obscureText: true,
+              decoration: const InputDecoration(labelText: 'Новый пароль'),
+              // Firebase's own floor. Checking here saves a round trip and an
+              // error message that arrives after the dialog has closed.
+              validator: (v) => (v ?? '').length < 6
+                  ? 'Минимум 6 символов'
+                  : null,
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _repeat,
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: 'Новый пароль ещё раз',
+              ),
+              validator: (v) =>
+                  v == _next.text ? null : 'Пароли не совпадают',
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Отмена'),
+        ),
+        FilledButton(
+          onPressed: () {
+            if (_form.currentState?.validate() != true) return;
+            Navigator.pop(
+              context,
+              _PasswordChange(_current.text, _next.text),
+            );
+          },
+          child: const Text('Сменить'),
+        ),
+      ],
+    );
+  }
+}
+
+/// Deletion asks for the password *and* for the word «УДАЛИТЬ».
+///
+/// One is Firebase's requirement; the other is ours. This is the only action
+/// in the app that cannot be undone, and a mis-tap should not be able to
+/// reach it.
+class _DeleteAccountDialog extends StatefulWidget {
+  const _DeleteAccountDialog();
+
+  @override
+  State<_DeleteAccountDialog> createState() => _DeleteAccountDialogState();
+}
+
+class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
+  static const _word = 'УДАЛИТЬ';
+
+  final _password = TextEditingController();
+  final _confirm = TextEditingController();
+
+  @override
+  void dispose() {
+    _password.dispose();
+    _confirm.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final ready =
+        _password.text.isNotEmpty &&
+        _confirm.text.trim().toUpperCase() == _word;
+
+    return AlertDialog(
+      title: const Text('Удалить учётную запись?'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Все данные о детях будут удалены навсегда. Восстановить их '
+            'не сможем ни мы, ни вы.',
+            style: theme.textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _password,
+            obscureText: true,
+            autofocus: true,
+            decoration: const InputDecoration(labelText: 'Ваш пароль'),
+            onChanged: (_) => setState(() {}),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _confirm,
+            decoration: const InputDecoration(
+              labelText: 'Напишите $_word',
+            ),
+            onChanged: (_) => setState(() {}),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Отмена'),
+        ),
+        FilledButton(
+          onPressed: ready
+              ? () => Navigator.pop(context, _password.text)
+              : null,
+          style: FilledButton.styleFrom(
+            backgroundColor: theme.colorScheme.error,
+            foregroundColor: theme.colorScheme.onError,
+          ),
+          child: const Text('Удалить навсегда'),
+        ),
+      ],
+    );
   }
 }
