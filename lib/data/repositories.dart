@@ -39,6 +39,8 @@ abstract class MedicalRecordRepository {
 
   Future<MedicalRecord> add(MedicalRecord record);
 
+  Future<void> update(MedicalRecord record);
+
   Future<void> delete(String recordId);
 }
 

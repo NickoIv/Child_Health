@@ -135,6 +135,42 @@ void main() {
     expect(find.text('Осмотр без анализов'), findsOneWidget);
   });
 
+  testWidgets('a saved record can be edited in place', (tester) async {
+    await openMedical(tester);
+    expect(find.text('ОРВИ, неосложнённое течение'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.edit_outlined).first);
+    await tester.pumpAndSettle();
+
+    // The form opens filled in, not blank.
+    expect(find.text('Изменить запись'), findsOneWidget);
+    expect(find.text('Гемоглобин'), findsWidgets);
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Диагноз или причина визита'),
+      'ОРВИ, выздоровление',
+    );
+    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.pumpAndSettle();
+
+    // Edited, not duplicated.
+    expect(find.text('ОРВИ, выздоровление'), findsOneWidget);
+    expect(find.text('ОРВИ, неосложнённое течение'), findsNothing);
+  });
+
+  testWidgets('editing keeps the lab results that were saved', (tester) async {
+    await openMedical(tester);
+
+    await tester.tap(find.byIcon(Icons.edit_outlined).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Сохранить'));
+    await tester.pumpAndSettle();
+
+    // Saving an untouched edit must not quietly drop the results.
+    expect(find.text('Гемоглобин'), findsOneWidget);
+    expect(find.textContaining('вне нормы'), findsOneWidget);
+  });
+
   testWidgets('the "not yet implemented" list does not lie', (tester) async {
     // This regressed once: the list kept advertising manual entry and scan
     // attachment as missing for two releases after both shipped, because it

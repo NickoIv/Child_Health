@@ -168,6 +168,12 @@ class FirestoreMedicalRecordRepository extends _Base
   }
 
   @override
+  Future<void> update(MedicalRecord record) => db
+      .collection(Collections.records)
+      .doc(record.id)
+      .update({...record.toMap(), _parentUid: parentUid});
+
+  @override
   Future<void> delete(String recordId) =>
       db.collection(Collections.records).doc(recordId).delete();
 }

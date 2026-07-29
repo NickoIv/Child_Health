@@ -8,6 +8,7 @@ enum DashboardWidgetKind {
   growth('Рост и вес', Icons.show_chart_outlined),
   vaccinations('Ближайшие прививки', Icons.vaccines_outlined),
   illness('Заболеваемость', Icons.thermostat_outlined),
+  milestones('Вехи развития', Icons.star_outline),
   recentEntries('Последние записи', Icons.auto_stories_outlined),
   upcoming('Ближайшие события', Icons.event_outlined);
 

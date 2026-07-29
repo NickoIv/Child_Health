@@ -68,6 +68,7 @@ class _MedicalScreenState extends ConsumerState<MedicalScreen> {
             for (final r in records) ...[
               _RecordCard(
                 record: r,
+                onEdit: () => _editRecord(r),
                 onDelete: () => _confirmDelete(r),
               ),
               const SizedBox(height: 16),
@@ -94,6 +95,22 @@ class _MedicalScreenState extends ConsumerState<MedicalScreen> {
     if (record == null) return;
 
     await ref.read(medicalRepositoryProvider).add(record);
+  }
+
+  Future<void> _editRecord(MedicalRecord record) async {
+    final child = ref.read(selectedChildProvider);
+    if (child == null) return;
+
+    final updated = await showDialog<MedicalRecord>(
+      context: context,
+      builder: (_) => MedicalRecordForm(
+        childId: child.id,
+        existing: record,
+      ),
+    );
+    if (updated == null) return;
+
+    await ref.read(medicalRepositoryProvider).update(updated);
   }
 
   Future<void> _confirmDelete(MedicalRecord record) async {
@@ -328,9 +345,14 @@ class _ReportCard extends StatelessWidget {
 }
 
 class _RecordCard extends StatelessWidget {
-  const _RecordCard({required this.record, required this.onDelete});
+  const _RecordCard({
+    required this.record,
+    required this.onEdit,
+    required this.onDelete,
+  });
 
   final MedicalRecord record;
+  final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   @override
@@ -345,6 +367,11 @@ class _RecordCard extends StatelessWidget {
           Text(
             shortDate.format(record.date),
             style: theme.textTheme.bodySmall,
+          ),
+          IconButton(
+            tooltip: 'Изменить запись',
+            onPressed: onEdit,
+            icon: const Icon(Icons.edit_outlined, size: 20),
           ),
           IconButton(
             tooltip: 'Удалить запись',
@@ -496,7 +523,6 @@ class _PendingFeatures extends StatelessWidget {
           // implemented" is worse than none: it tells a parent to stop
           // looking for something that is right there.
           for (final line in const [
-            'Редактирование сохранённой записи — пока только добавление и удаление',
             'Push-уведомления о приёме лекарств и визитах',
           ])
             Padding(

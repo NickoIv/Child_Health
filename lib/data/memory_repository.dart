@@ -177,6 +177,14 @@ class MemoryMedicalRecordRepository implements MedicalRecordRepository {
   }
 
   @override
+  Future<void> update(MedicalRecord record) async {
+    _db.records.mutate((items) {
+      final i = items.indexWhere((r) => r.id == record.id);
+      if (i != -1) items[i] = record;
+    });
+  }
+
+  @override
   Future<void> delete(String recordId) async {
     _db.records.mutate((items) => items.removeWhere((r) => r.id == recordId));
   }

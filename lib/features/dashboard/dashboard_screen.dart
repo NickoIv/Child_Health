@@ -66,6 +66,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         DashboardWidgetKind.growth => _GrowthCard(child: child),
         DashboardWidgetKind.vaccinations => const _VaccinationCard(),
         DashboardWidgetKind.illness => const _IllnessCard(),
+        DashboardWidgetKind.milestones => const _MilestonesCard(),
         DashboardWidgetKind.recentEntries => const _RecentEntriesCard(),
         DashboardWidgetKind.upcoming => const _UpcomingCard(),
       };
@@ -351,6 +352,64 @@ class _IllnessCard extends ConsumerWidget {
   }
 }
 
+/// Milestones already recorded, newest first.
+///
+/// Separate from "последние записи" on purpose: feeds and nappies scroll past
+/// in hours, while a first smile is the thing a parent will want to find in a
+/// year. Burying it in a stream of routine care loses it.
+class _MilestonesCard extends ConsumerWidget {
+  const _MilestonesCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final logs = ref.watch(logsProvider).value ?? const <DevelopmentLog>[];
+    final milestones =
+        logs.where((l) => l.type == LogType.milestone).toList()
+          ..sort((a, b) => b.date.compareTo(a.date));
+
+    return SectionCard(
+      title: 'Вехи развития',
+      icon: Icons.star_outline,
+      accentColor: VizPalette.slot(4, theme.brightness),
+      action: TextButton(
+        onPressed: () => context.go('/diary'),
+        child: const Text('Дневник'),
+      ),
+      child: milestones.isEmpty
+          ? const EmptyState(
+              icon: Icons.star_outline,
+              message: 'Первое ещё впереди',
+              hint: 'Первая улыбка, первый зуб, первое слово — '
+                  'добавьте их в дневнике как «Веха развития»',
+            )
+          : Column(
+              children: [
+                for (final m in milestones.take(5))
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.star,
+                          size: 16,
+                          color: VizPalette.slot(4, theme.brightness),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(child: Text(m.title)),
+                        Text(
+                          shortDate.format(m.date),
+                          style: theme.textTheme.labelSmall,
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+    );
+  }
+}
+
 class _RecentEntriesCard extends ConsumerWidget {
   const _RecentEntriesCard();
 
@@ -400,38 +459,52 @@ class _UpcomingCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final reminders = ref.watch(remindersProvider).value ?? const <Reminder>[];
     final now = DateTime.now();
+    // Vaccinations used to be filtered out here, on the theory that they had
+    // their own card. For a newborn they are the only thing scheduled, so
+    // "ближайшие события" was permanently empty — the exclusion made the
+    // card useless exactly when it mattered most.
     final soon =
         reminders
             .where(
               (r) =>
                   !r.isCompleted &&
-                  r.type != ReminderType.vaccination &&
                   r.scheduledTime.isAfter(
                     now.subtract(const Duration(days: 1)),
                   ),
             )
-            .take(4)
-            .toList();
+            .toList()
+          ..sort((a, b) => a.scheduledTime.compareTo(b.scheduledTime));
+    final visible = soon.take(4).toList();
 
     return SectionCard(
       title: 'Ближайшие события',
       icon: Icons.event_outlined,
-      child: soon.isEmpty
+      action: TextButton(
+        onPressed: () => context.go('/reminders'),
+        child: const Text('Все'),
+      ),
+      child: visible.isEmpty
           ? const EmptyState(
               icon: Icons.event_available_outlined,
               message: 'Ничего не запланировано',
+              hint: 'Прививки появятся здесь сами, как только будет '
+                  'создан профиль ребёнка',
             )
           : Column(
               children: [
-                for (final r in soon)
+                for (final r in visible)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 10),
                     child: Row(
                       children: [
                         Icon(
-                          r.type == ReminderType.medication
-                              ? Icons.medication_outlined
-                              : Icons.event_available_outlined,
+                          switch (r.type) {
+                            ReminderType.medication =>
+                              Icons.medication_outlined,
+                            ReminderType.vaccination => Icons.vaccines_outlined,
+                            ReminderType.appointment =>
+                              Icons.event_available_outlined,
+                          },
                           size: 18,
                         ),
                         const SizedBox(width: 10),

@@ -51,9 +51,14 @@ class _LabDraft {
 
 /// Form for a doctor's visit: diagnosis, prescriptions, lab results, scans.
 class MedicalRecordForm extends ConsumerStatefulWidget {
-  const MedicalRecordForm({required this.childId, super.key});
+  const MedicalRecordForm({required this.childId, this.existing, super.key});
 
   final String childId;
+
+  /// When set, the form edits this record instead of creating a new one.
+  /// The returned record carries the same id, so the caller updates rather
+  /// than inserting a duplicate.
+  final MedicalRecord? existing;
 
   @override
   ConsumerState<MedicalRecordForm> createState() => _MedicalRecordFormState();
@@ -72,6 +77,46 @@ class _MedicalRecordFormState extends ConsumerState<MedicalRecordForm> {
   String? _photoError;
 
   @override
+  void initState() {
+    super.initState();
+    final existing = widget.existing;
+    if (existing == null) return;
+
+    _diagnosis.text = existing.diagnosis;
+    _doctor.text = existing.doctor;
+    _prescriptions.text = existing.prescriptions;
+    _date = existing.date;
+    _fileIds.addAll(existing.files);
+
+    if (existing.labResults.isNotEmpty) {
+      // Replace the single blank starter row with the saved results, plus one
+      // empty row so another can be added without hunting for a button.
+      _labs.first.dispose();
+      _labs.clear();
+      for (final result in existing.labResults) {
+        final draft = _LabDraft()
+          ..name.text = result.name
+          ..value.text = _trim(result.value)
+          ..unit.text = result.unit;
+        if (result.referenceMin != null) {
+          draft.min.text = _trim(result.referenceMin!);
+        }
+        if (result.referenceMax != null) {
+          draft.max.text = _trim(result.referenceMax!);
+        }
+        _labs.add(draft);
+      }
+      _labs.add(_LabDraft());
+    }
+  }
+
+  /// 9.0 reads better as "9" in an input field the parent is about to edit.
+  static String _trim(double value) =>
+      value == value.roundToDouble()
+          ? value.toStringAsFixed(0)
+          : value.toString();
+
+  @override
   void dispose() {
     _diagnosis.dispose();
     _doctor.dispose();
@@ -87,7 +132,11 @@ class _MedicalRecordFormState extends ConsumerState<MedicalRecordForm> {
     final theme = Theme.of(context);
 
     return AlertDialog(
-      title: const Text('Медицинская запись'),
+      title: Text(
+        widget.existing == null
+            ? 'Медицинская запись'
+            : 'Изменить запись',
+      ),
       content: SizedBox(
         width: 560,
         child: SingleChildScrollView(
@@ -255,7 +304,8 @@ class _MedicalRecordFormState extends ConsumerState<MedicalRecordForm> {
 
     Navigator.of(context).pop(
       MedicalRecord(
-        id: '',
+        // Keeping the id is what makes this an edit rather than a copy.
+        id: widget.existing?.id ?? '',
         childId: widget.childId,
         date: _date,
         diagnosis: _diagnosis.text.trim(),
