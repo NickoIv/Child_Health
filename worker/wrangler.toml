@@ -2,6 +2,12 @@ name = "child-health-ai"
 main = "worker.js"
 compatibility_date = "2026-07-01"
 
+# Hourly reminder sweep. Cron triggers are included in the Workers free plan,
+# which is the whole reason the scheduler lives here rather than in Cloud
+# Functions — those need the paid Blaze plan.
+[triggers]
+crons = ["0 * * * *"]
+
 [vars]
 # Alias rather than a pinned version: Google retires model names without
 # notice. Check what a key may actually call with GET /models on the Worker.

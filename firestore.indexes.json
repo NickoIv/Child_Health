@@ -26,6 +26,14 @@
         { "fieldPath": "child_id", "order": "ASCENDING" },
         { "fieldPath": "scheduled_time", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "reminders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "is_completed", "order": "ASCENDING" },
+        { "fieldPath": "scheduled_time", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

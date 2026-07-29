@@ -16,6 +16,12 @@ $env:CHROME_EXECUTABLE = "C:\Program Files\Google\Chrome\Application\chrome.exe"
 
 $aiProxy = 'https://child-health-ai.nickru777.workers.dev'
 
+# Web push sender identity. Public by design — it is not a credential.
+# Firebase console -> Project settings -> Cloud Messaging -> Web Push
+# certificates -> "Key pair". Empty means push stays switched off and the
+# settings screen says so, rather than failing silently.
+$vapidKey = ''
+
 Set-Location $PSScriptRoot
 
 Write-Host '--- analyze ---' -ForegroundColor Cyan
@@ -27,7 +33,7 @@ flutter test
 if ($LASTEXITCODE -ne 0) { throw 'tests failed' }
 
 Write-Host '--- build web ---' -ForegroundColor Cyan
-flutter build web --release --dart-define=AI_PROXY_URL=$aiProxy
+flutter build web --release --dart-define=AI_PROXY_URL=$aiProxy --dart-define=FCM_VAPID_KEY=$vapidKey
 if ($LASTEXITCODE -ne 0) { throw 'build failed' }
 
 Write-Host '--- deploy hosting ---' -ForegroundColor Cyan

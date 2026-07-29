@@ -51,6 +51,7 @@ class AppUser {
     required this.email,
     this.displayName = '',
     this.settings = const UserSettings(),
+    this.pushTokens = const [],
   });
 
   final String uid;
@@ -58,17 +59,30 @@ class AppUser {
   final String displayName;
   final UserSettings settings;
 
-  AppUser copyWith({String? displayName, UserSettings? settings}) => AppUser(
+  /// Devices signed in to this account that accepted notifications.
+  ///
+  /// A list rather than one value: a parent may use the phone and a laptop,
+  /// and a reminder that only reaches whichever device registered last is
+  /// worse than no reminder at all.
+  final List<String> pushTokens;
+
+  AppUser copyWith({
+    String? displayName,
+    UserSettings? settings,
+    List<String>? pushTokens,
+  }) => AppUser(
     uid: uid,
     email: email,
     displayName: displayName ?? this.displayName,
     settings: settings ?? this.settings,
+    pushTokens: pushTokens ?? this.pushTokens,
   );
 
   Map<String, dynamic> toMap() => {
     'email': email,
     'display_name': displayName,
     'settings': settings.toMap(),
+    'push_tokens': pushTokens,
   };
 
   factory AppUser.fromMap(String uid, Map<String, dynamic> map) => AppUser(
@@ -78,5 +92,6 @@ class AppUser {
     settings: UserSettings.fromMap(
       (map['settings'] as Map?)?.cast<String, dynamic>(),
     ),
+    pushTokens: (map['push_tokens'] as List?)?.cast<String>() ?? const [],
   );
 }

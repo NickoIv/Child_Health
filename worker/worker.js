@@ -24,7 +24,19 @@ const DEFAULT_MODEL = 'gemini-flash-latest';
 const MAX_PROMPT_CHARS = 24000;
 const MAX_QUESTION_CHARS = 500;
 
+import { runReminderSweep } from './notifications.js';
+
 export default {
+  /// Hourly cron. Sends reminders that have come due — see notifications.js.
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(
+      runReminderSweep(env).then(
+        (result) => console.log('reminder sweep', JSON.stringify(result)),
+        (error) => console.error('reminder sweep failed', error),
+      ),
+    );
+  },
+
   async fetch(request, env) {
     const cors = corsHeaders(env);
 

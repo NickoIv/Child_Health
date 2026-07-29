@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/theme_mode.dart';
+import '../../firebase/push_messaging.dart';
 import '../../models/app_user.dart';
 import '../../providers.dart';
 import '../shared/widgets.dart';
@@ -19,6 +20,9 @@ class SettingsScreen extends ConsumerStatefulWidget {
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   final _name = TextEditingController();
   bool _nameLoaded = false;
+  bool _busyWithPush = false;
+  String? _pushMessage;
+  bool _pushOk = false;
 
   @override
   void dispose() {
@@ -171,14 +175,31 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 value: settings.notificationsEnabled,
-                onChanged: (v) =>
-                    _save(settings.copyWith(notificationsEnabled: v)),
+                onChanged: _busyWithPush
+                    ? null
+                    : (v) => _toggleNotifications(settings, v),
                 title: const Text('Напоминать о прививках и лекарствах'),
+                subtitle: _busyWithPush
+                    ? const Text('Подключаю…')
+                    : null,
               ),
+              if (_pushMessage != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  _pushMessage!,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: _pushOk
+                        ? StatusColors.normal
+                        : theme.colorScheme.error,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 8),
               Text(
-                'Настройка сохраняется, но push-уведомления в веб-версии '
-                'пока не подключены — напоминания видны в разделе '
-                '«Напоминания».',
+                'Работает, пока приложение установлено на домашний экран '
+                'или открыто в браузере. Разрешение спрашивает сам браузер — '
+                'если откажете, включить снова можно будет только в его '
+                'настройках сайта.',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -205,7 +226,69 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  Future<void> _save(UserSettings settings) async {
+  /// Turning the switch on is what asks the browser for permission.
+  ///
+  /// Never on load: an unprompted permission dialog is the fastest way to be
+  /// denied forever, and on the web a denial can only be undone in the
+  /// browser's own site settings.
+  Future<void> _toggleNotifications(UserSettings settings, bool enable) async {
+    setState(() {
+      _busyWithPush = true;
+      _pushMessage = null;
+    });
+
+    final profile = ref.read(userProfileProvider).value;
+    final tokens = List<String>.of(profile?.pushTokens ?? const []);
+
+    if (!enable) {
+      await unregisterFromPush();
+      await _save(
+        settings.copyWith(notificationsEnabled: false),
+        pushTokens: const [],
+      );
+      if (mounted) {
+        setState(() {
+          _busyWithPush = false;
+          _pushOk = false;
+          _pushMessage = 'Уведомления выключены';
+        });
+      }
+      return;
+    }
+
+    final result = await registerForPush();
+    if (!mounted) return;
+
+    if (!result.status.isOn) {
+      // The setting stays off: pretending it worked would leave a parent
+      // waiting for reminders that can never arrive.
+      await _save(settings.copyWith(notificationsEnabled: false));
+      setState(() {
+        _busyWithPush = false;
+        _pushOk = false;
+        _pushMessage = result.status.message;
+      });
+      return;
+    }
+
+    if (result.token != null && !tokens.contains(result.token)) {
+      tokens.add(result.token!);
+    }
+    await _save(
+      settings.copyWith(notificationsEnabled: true),
+      pushTokens: tokens,
+    );
+
+    if (mounted) {
+      setState(() {
+        _busyWithPush = false;
+        _pushOk = true;
+        _pushMessage = PushStatus.granted.message;
+      });
+    }
+  }
+
+  Future<void> _save(UserSettings settings, {List<String>? pushTokens}) async {
     final uid = ref.read(currentUidProvider);
     final auth = ref.read(authStateProvider).value;
     if (uid.isEmpty) return;
@@ -218,6 +301,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             email: auth?.email ?? '',
             displayName: _name.text.trim(),
             settings: settings,
+            pushTokens:
+                pushTokens ??
+                ref.read(userProfileProvider).value?.pushTokens ??
+                const [],
           ),
         );
   }
