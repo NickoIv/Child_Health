@@ -5,12 +5,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_mode.dart';
+import 'providers.dart';
 
 class ChildHealthApp extends ConsumerWidget {
   const ChildHealthApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Nothing is read from it: watching is what keeps the reminder schedule
+    // alive for as long as the app is.
+    ref.watch(notificationSyncProvider);
+
     return MaterialApp.router(
       // On web this value also becomes the browser tab title, overriding the
       // <title> tag in web/index.html.

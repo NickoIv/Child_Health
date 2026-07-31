@@ -277,6 +277,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Future<void> _changePassword() async {
+    // Asked before the dialog opens: a form whose only possible outcome is a
+    // refusal is worse than a sentence explaining why.
+    final user = ref.read(authStateProvider).value;
+    if (user != null && !user.hasPassword) {
+      _tell(
+        'У этой учётной записи нет пароля: вход выполняется через Google. '
+        'Пароль меняется в настройках аккаунта Google',
+        error: true,
+      );
+      return;
+    }
+
     final result = await showDialog<_PasswordChange>(
       context: context,
       builder: (_) => const _PasswordDialog(),
@@ -301,9 +313,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   /// That order matters: once the Firebase user is gone the security rules
   /// deny every one of those documents, and nothing could ever remove them.
   Future<void> _deleteAccount() async {
+    // A Google account has no password to type; Firebase is satisfied instead
+    // by a fresh trip through Google, which the repository handles.
+    final hasPassword = ref.read(authStateProvider).value?.hasPassword ?? true;
     final password = await showDialog<String>(
       context: context,
-      builder: (_) => const _DeleteAccountDialog(),
+      builder: (_) => _DeleteAccountDialog(requiresPassword: hasPassword),
     );
     if (password == null || !mounted) return;
 
@@ -353,6 +368,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final tokens = List<String>.of(profile?.pushTokens ?? const []);
 
     if (!enable) {
+      await ref.read(notificationServiceProvider).cancelAll();
       await unregisterFromPush();
       await _save(
         settings.copyWith(notificationsEnabled: false),
@@ -368,17 +384,32 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       return;
     }
 
+    // Reminders the phone raises by itself need the same system permission,
+    // but they do not need a configured push backend — so they are asked for
+    // first and judged separately.
+    final notifications = ref.read(notificationServiceProvider);
+    final localGranted = await notifications.requestPermission();
+    if (localGranted) {
+      await notifications.syncAll(
+        ref.read(allRemindersProvider).value ?? const [],
+      );
+    }
+
     final result = await registerForPush();
     if (!mounted) return;
 
     if (!result.status.isOn) {
-      // The setting stays off: pretending it worked would leave a parent
-      // waiting for reminders that can never arrive.
-      await _save(settings.copyWith(notificationsEnabled: false));
+      // Push did not come up. If the phone itself may remind, the switch has
+      // still earned its place; otherwise it goes back off rather than leave
+      // a parent waiting for something that can never arrive.
+      await _save(settings.copyWith(notificationsEnabled: localGranted));
       setState(() {
         _busyWithPush = false;
-        _pushOk = false;
-        _pushMessage = result.status.message;
+        _pushOk = localGranted;
+        _pushMessage = localGranted
+            ? 'Напоминания на этом устройстве включены. '
+                  'Push пока недоступен: ${result.status.message}'
+            : result.status.message;
       });
       return;
     }
@@ -517,7 +548,12 @@ class _PasswordDialogState extends State<_PasswordDialog> {
 /// in the app that cannot be undone, and a mis-tap should not be able to
 /// reach it.
 class _DeleteAccountDialog extends StatefulWidget {
-  const _DeleteAccountDialog();
+  const _DeleteAccountDialog({required this.requiresPassword});
+
+  /// False for an account that signs in through Google or Apple: there is no
+  /// password to ask for, and confirmation happens in the provider's own
+  /// window after this dialog closes.
+  final bool requiresPassword;
 
   @override
   State<_DeleteAccountDialog> createState() => _DeleteAccountDialogState();
@@ -540,7 +576,7 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final ready =
-        _password.text.isNotEmpty &&
+        (!widget.requiresPassword || _password.text.isNotEmpty) &&
         _confirm.text.trim().toUpperCase() == _word;
 
     return AlertDialog(
@@ -555,14 +591,25 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
             style: theme.textTheme.bodyMedium,
           ),
           const SizedBox(height: 16),
-          TextField(
-            controller: _password,
-            obscureText: true,
-            autofocus: true,
-            decoration: const InputDecoration(labelText: 'Ваш пароль'),
-            onChanged: (_) => setState(() {}),
-          ),
-          const SizedBox(height: 12),
+          if (widget.requiresPassword) ...[
+            TextField(
+              controller: _password,
+              obscureText: true,
+              autofocus: true,
+              decoration: const InputDecoration(labelText: 'Ваш пароль'),
+              onChanged: (_) => setState(() {}),
+            ),
+            const SizedBox(height: 12),
+          ] else ...[
+            Text(
+              'После подтверждения Google попросит вас войти ещё раз — '
+              'так проверяется, что удаляете именно вы.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
           TextField(
             controller: _confirm,
             decoration: const InputDecoration(

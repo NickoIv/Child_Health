@@ -3,11 +3,31 @@
 /// Deliberately not `firebase_auth.User`: keeping the UI behind this type is
 /// what lets the widget tests run without initialising Firebase.
 class AuthUser {
-  const AuthUser({required this.uid, required this.email});
+  const AuthUser({
+    required this.uid,
+    required this.email,
+    this.providers = const {'password'},
+  });
 
   final String uid;
   final String email;
+
+  /// How this account can sign in: `password`, `google.com`, `apple.com`.
+  ///
+  /// The app needs it for one reason — an account created through Google has
+  /// no password, so anything that asks for the current one has to ask
+  /// something else instead. Defaults to a password account, which is what
+  /// the demo stack and the tests are.
+  final Set<String> providers;
+
+  bool get hasPassword => providers.contains(passwordProvider);
+
+  bool get signedInWithGoogle => providers.contains(googleProvider);
 }
+
+const passwordProvider = 'password';
+const googleProvider = 'google.com';
+const appleProvider = 'apple.com';
 
 /// A failure worth showing to the parent, already phrased in Russian.
 class AuthException implements Exception {
@@ -19,6 +39,17 @@ class AuthException implements Exception {
   String toString() => message;
 }
 
+/// The parent closed the provider's window without finishing.
+///
+/// Deliberately not an [AuthException]: there is nothing to tell them, the
+/// screen just goes back to how it was.
+class AuthCancelled implements Exception {
+  const AuthCancelled();
+}
+
+/// Sign-in providers offered alongside email and password.
+enum SocialProvider { google, apple }
+
 abstract class AuthRepository {
   Stream<AuthUser?> authStateChanges();
 
@@ -27,6 +58,12 @@ abstract class AuthRepository {
   Future<void> signIn({required String email, required String password});
 
   Future<void> register({required String email, required String password});
+
+  /// Signs in through [provider], creating the account on first use.
+  ///
+  /// Throws [AuthCancelled] when the parent backs out of the provider's own
+  /// dialog, which is a normal outcome rather than a failure.
+  Future<void> signInWith(SocialProvider provider);
 
   Future<void> sendPasswordReset(String email);
 
@@ -68,6 +105,9 @@ class DemoAuthRepository implements AuthRepository {
     required String email,
     required String password,
   }) async {}
+
+  @override
+  Future<void> signInWith(SocialProvider provider) async {}
 
   @override
   Future<void> sendPasswordReset(String email) async {}

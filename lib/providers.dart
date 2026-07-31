@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'ai/ai_config.dart';
 import 'ai/assistant_service.dart';
 import 'core/analytics/daily_care.dart';
 import 'core/analytics/illness_stats.dart';
+import 'core/notifications/notification_service.dart';
 import 'data/auth_repository.dart';
 import 'data/memory_repository.dart';
 import 'data/photo_repository.dart';
@@ -140,6 +143,81 @@ final remindersProvider = StreamProvider<List<Reminder>>((ref) {
   final child = ref.watch(selectedChildProvider);
   if (child == null) return Stream.value(const []);
   return ref.watch(reminderRepositoryProvider).watchReminders(child.id);
+});
+
+// --- Local notifications --------------------------------------------------
+
+/// The device's own reminder scheduler.
+///
+/// The default instance is never initialised, and every method on it returns
+/// early until it is — which is exactly what tests and the offline demo want.
+/// `main.dart` overrides this with the one it has started up.
+final notificationServiceProvider = Provider<NotificationService>(
+  (ref) => NotificationService(),
+);
+
+/// Reminders of every child at once.
+///
+/// Deliberately not [remindersProvider], which follows the child currently on
+/// screen: the planner shows one child at a time, but a phone has to ring for
+/// all of them. Reminder ids are unique across children, so concatenating the
+/// lists cannot produce a duplicate notification.
+final allRemindersProvider = StreamProvider<List<Reminder>>((ref) {
+  final children = ref.watch(childrenProvider).value ?? const <Child>[];
+  if (children.isEmpty) return Stream.value(const <Reminder>[]);
+
+  final repository = ref.watch(reminderRepositoryProvider);
+  return _combineLatest([
+    for (final child in children) repository.watchReminders(child.id),
+  ]);
+});
+
+/// Latest value of every stream, concatenated, re-emitted whenever any of them
+/// moves.
+///
+/// Hand-rolled because the alternative is a reactive-extensions dependency for
+/// this one function. Each list starts out empty rather than absent, so a
+/// child whose stream has not spoken yet cannot hold up the others.
+Stream<List<Reminder>> _combineLatest(List<Stream<List<Reminder>>> streams) {
+  final latest = List<List<Reminder>>.filled(streams.length, const []);
+  final subscriptions = <StreamSubscription<List<Reminder>>>[];
+  late final StreamController<List<Reminder>> controller;
+
+  controller = StreamController<List<Reminder>>(
+    onListen: () {
+      for (var i = 0; i < streams.length; i++) {
+        final index = i;
+        subscriptions.add(
+          streams[i].listen((reminders) {
+            latest[index] = reminders;
+            controller.add([for (final list in latest) ...list]);
+          }, onError: controller.addError),
+        );
+      }
+    },
+    onCancel: () async {
+      for (final subscription in subscriptions) {
+        await subscription.cancel();
+      }
+      subscriptions.clear();
+    },
+  );
+
+  return controller.stream;
+}
+
+/// Keeps the scheduled notifications in step with the planner.
+///
+/// Watched once from the root widget. Every change to the reminder list —
+/// added, completed, deleted — re-runs the whole schedule, which is safe
+/// because scheduling is keyed by reminder id and so replaces rather than
+/// accumulates.
+final notificationSyncProvider = Provider<void>((ref) {
+  final service = ref.watch(notificationServiceProvider);
+  ref.listen<AsyncValue<List<Reminder>>>(allRemindersProvider, (_, next) {
+    final reminders = next.value;
+    if (reminders != null) service.syncAll(reminders);
+  }, fireImmediately: true);
 });
 
 // --- Assistant ------------------------------------------------------------

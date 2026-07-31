@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'app.dart';
+import 'core/notifications/notification_service.dart';
 import 'firebase/firebase_auth_repository.dart';
 import 'firebase/firebase_options.dart';
 import 'firebase/firestore_repositories.dart';
@@ -26,11 +27,18 @@ Future<void> main() async {
     cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
   );
 
+  // Local reminders. Started before the first frame so a notification tapped
+  // from the lock screen has somewhere to arrive, and deliberately independent
+  // of Firebase Messaging above: push and local reminders run side by side.
+  final notifications = NotificationService();
+  await notifications.init();
+
   runApp(
     ProviderScope(
       // This list is the entire difference between the offline demo stack the
       // tests run on and the real backend.
       overrides: [
+        notificationServiceProvider.overrideWithValue(notifications),
         authRepositoryProvider.overrideWithValue(FirebaseAuthRepository()),
         childRepositoryProvider.overrideWith(
           (ref) => FirestoreChildRepository(

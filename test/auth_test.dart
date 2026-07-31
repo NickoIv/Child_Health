@@ -18,6 +18,13 @@ class FakeAuthRepository implements AuthRepository {
   AuthUser? _user;
 
   AuthException? failWith;
+
+  /// Kept apart from [failWith] so the social path can fail on its own — the
+  /// email tests set [failWith] and never touch these buttons.
+  Exception? socialFailWith;
+  SocialProvider? lastSocialProvider;
+  int socialCalls = 0;
+
   int signInCalls = 0;
   int registerCalls = 0;
   String? resetSentTo;
@@ -58,6 +65,14 @@ class FakeAuthRepository implements AuthRepository {
     registerCalls++;
     if (failWith != null) throw failWith!;
     emit(AuthUser(uid: 'uid-1', email: email));
+  }
+
+  @override
+  Future<void> signInWith(SocialProvider provider) async {
+    socialCalls++;
+    lastSocialProvider = provider;
+    if (socialFailWith != null) throw socialFailWith!;
+    emit(const AuthUser(uid: 'uid-1', email: 'parent@gmail.com'));
   }
 
   @override
@@ -194,6 +209,54 @@ void main() {
 
     expect(find.text('Минимум 6 символов'), findsOneWidget);
     expect(auth.registerCalls, 0);
+  });
+
+  testWidgets('Google sign-in needs no form and reveals the app', (
+    tester,
+  ) async {
+    await pumpApp(tester);
+
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Войти через Google'));
+    await tester.pumpAndSettle();
+
+    expect(auth.socialCalls, 1);
+    expect(auth.lastSocialProvider, SocialProvider.google);
+    expect(auth.signInCalls, 0);
+    expect(find.widgetWithText(AppBar, 'Обзор'), findsOneWidget);
+  });
+
+  testWidgets('closing the Google window leaves no error behind', (
+    tester,
+  ) async {
+    auth.socialFailWith = const AuthCancelled();
+    await pumpApp(tester);
+
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Войти через Google'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Войдите, чтобы продолжить'), findsOneWidget);
+    expect(find.byIcon(Icons.error_outline), findsNothing);
+  });
+
+  testWidgets('a failed Google sign-in explains itself', (tester) async {
+    auth.socialFailWith = const AuthException(
+      'Вход через Google не настроен для этой сборки приложения',
+    );
+    await pumpApp(tester);
+
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Войти через Google'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Вход через Google не настроен для этой сборки приложения'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('the Apple button stays off Android', (tester) async {
+    await pumpApp(tester);
+
+    expect(find.text('Войти через Apple'), findsNothing);
   });
 
   testWidgets('signing out returns to the login screen', (tester) async {

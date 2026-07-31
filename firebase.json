@@ -45,5 +45,33 @@
         ]
       }
     ]
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "child-health-tracker-7aad1",
+          "appId": "1:261212268544:android:a06df551afdafee685d0e5",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "child-health-tracker-7aad1",
+          "appId": "1:261212268544:ios:3d00b76af928e39185d0e5",
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase/firebase_options.dart": {
+          "projectId": "child-health-tracker-7aad1",
+          "configurations": {
+            "android": "1:261212268544:android:a06df551afdafee685d0e5",
+            "ios": "1:261212268544:ios:3d00b76af928e39185d0e5",
+            "web": "1:261212268544:web:ff57dccb00dd478285d0e5"
+          }
+        }
+      }
+    }
   }
 }

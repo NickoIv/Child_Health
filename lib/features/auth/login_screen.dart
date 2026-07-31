@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -5,6 +7,13 @@ import '../../data/auth_repository.dart';
 import '../../providers.dart';
 
 enum _Mode { signIn, register }
+
+/// Sign in with Apple exists only on Apple's own platforms; the web flow needs
+/// a separate Apple Developer service id, so it stays off until that is set up.
+final _appleAvailable =
+    !kIsWeb &&
+    (defaultTargetPlatform == TargetPlatform.iOS ||
+        defaultTargetPlatform == TargetPlatform.macOS);
 
 /// Email + password sign-in and registration, per requirement 2.1.
 class LoginScreen extends ConsumerStatefulWidget {
@@ -160,6 +169,42 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           onPressed: _busy ? null : _resetPassword,
                           child: const Text('Забыли пароль?'),
                         ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Expanded(child: Divider()),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            child: Text(
+                              'или',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                          const Expanded(child: Divider()),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        onPressed: _busy
+                            ? null
+                            : () => _signInWith(SocialProvider.google),
+                        icon: const Icon(Icons.g_mobiledata, size: 28),
+                        label: const Text('Войти через Google'),
+                      ),
+                      // Apple only wants its button where its own sheet
+                      // exists; on Android it would lead nowhere.
+                      if (_appleAvailable) ...[
+                        const SizedBox(height: 8),
+                        OutlinedButton.icon(
+                          onPressed: _busy
+                              ? null
+                              : () => _signInWith(SocialProvider.apple),
+                          icon: const Icon(Icons.apple, size: 22),
+                          label: const Text('Войти через Apple'),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -217,6 +262,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
       // Navigation is driven by the router's auth redirect, so there is
       // nothing to push here.
+    } on AuthException catch (e) {
+      if (mounted) setState(() => _error = e.message);
+    } catch (e) {
+      if (mounted) setState(() => _error = 'Неожиданная ошибка: $e');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  /// Google or Apple. No form validation: the provider collects the
+  /// credentials itself, so the email and password fields are irrelevant here.
+  Future<void> _signInWith(SocialProvider provider) async {
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await ref.read(authRepositoryProvider).signInWith(provider);
+    } on AuthCancelled {
+      // Backing out of the provider's window is not a failure.
     } on AuthException catch (e) {
       if (mounted) setState(() => _error = e.message);
     } catch (e) {

@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "261212268544",
+    "project_id": "child-health-tracker-7aad1",
+    "storage_bucket": "child-health-tracker-7aad1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:261212268544:android:a06df551afdafee685d0e5",
+        "android_client_info": {
+          "package_name": "com.nickoiv.childhealth"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "261212268544-a81p0h9j6b71vum7pctif43t2ispn8u0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.nickoiv.childhealth",
+            "certificate_hash": "67fcf95d58caf3455843ac04be7febc12fe3690c"
+          }
+        },
+        {
+          "client_id": "261212268544-u6u25c4qnkb821fcnfi165jqlfujo50m.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCvQ4dHbGhUPmlqQFi1zsJHgU51K0R7HIQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "261212268544-u6u25c4qnkb821fcnfi165jqlfujo50m.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "261212268544-c6ecfksf2gcb00jh24jlupnpfa5tphea.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.nickoiv.childhealth"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

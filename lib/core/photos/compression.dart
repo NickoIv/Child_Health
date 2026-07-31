@@ -17,12 +17,19 @@ abstract final class PhotoLimits {
   /// Firestore's hard ceiling for one document.
   static const firestoreDocumentBytes = 1048576;
 
-  /// Budget for the base64 payload, leaving headroom for the rest of the
-  /// document and Firestore's own field overhead.
-  static const maxEncodedBytes = 900 * 1024;
+  /// The compressed JPEG itself. Chosen well below what a document could hold:
+  /// a diary of several hundred photos on the free tier is limited by stored
+  /// bytes and by what a phone downloads on mobile data, not by the ceiling.
+  /// 400 KiB still leaves a 1280px milestone photo and a lab form readable.
+  static const maxBinaryBytes = 400 * 1024;
 
-  /// Therefore the largest binary that may be encoded.
-  static const maxBinaryBytes = maxEncodedBytes * 3 ~/ 4;
+  /// What that becomes once base64 inflates it — roughly 533 KiB, about half
+  /// of Firestore's limit, leaving ample room for the other fields.
+  ///
+  /// The exact base64 length, four characters per three bytes rounded up, not
+  /// a truncating 4/3: the discarded remainder made this a byte short of what
+  /// a full-budget photo actually encodes to.
+  static const maxEncodedBytes = 4 * ((maxBinaryBytes + 2) ~/ 3);
 
   /// Longest edge after resizing. 1280 keeps a lab form readable and a
   /// milestone photo pleasant without wasting the budget.
