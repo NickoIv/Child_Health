@@ -86,7 +86,7 @@ class _VoiceActionButtonState extends ConsumerState<VoiceActionButton> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 14, 18, 14),
+      padding: const EdgeInsets.fromLTRB(20, 14, 14, 14),
       decoration: BoxDecoration(
         color: Warm.card(theme.brightness),
         borderRadius: BorderRadius.circular(28),
@@ -94,46 +94,6 @@ class _VoiceActionButtonState extends ConsumerState<VoiceActionButton> {
       ),
       child: Row(
         children: [
-          Semantics(
-            button: true,
-            label: l.voiceQuickHint,
-            child: GestureDetector(
-              // A long press is what she means to do; a drag off the button is
-              // what her thumb does when the baby moves. Either ending closes
-              // the microphone.
-              onLongPressStart: (_) => _start(),
-              onLongPressEnd: (_) => _stop(),
-              onLongPressCancel: _stop,
-              onTap: () => _hint(l),
-              child: MicPulse(
-                listening: _listening,
-                color: Warm.accent,
-                child: Container(
-                  width: VoiceActionButton.size,
-                  height: VoiceActionButton.size,
-                  decoration: BoxDecoration(
-                    gradient: Warm.accentGradient,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Warm.accent.withValues(
-                          alpha: _listening ? 0.45 : 0.28,
-                        ),
-                        blurRadius: _listening ? 28 : 16,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  child: Icon(
-                    _listening ? Icons.graphic_eq : Icons.mic,
-                    color: Colors.white,
-                    size: 28,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 14),
           // The instruction and, once she is speaking, the room's own volume
           // in the same place — so nothing moves under her thumb when the
           // microphone opens.
@@ -186,6 +146,48 @@ class _VoiceActionButtonState extends ConsumerState<VoiceActionButton> {
               color: _listening
                   ? Warm.accent
                   : Warm.onCardSoft(theme.brightness),
+            ),
+          ),
+          const SizedBox(width: 14),
+          // Last in the row, so it lands under a right thumb. Everything to
+          // the left of it is text, which is read once and never touched.
+          Semantics(
+            button: true,
+            label: l.voiceQuickHint,
+            child: GestureDetector(
+              // A long press is what she means to do; a drag off the button is
+              // what her thumb does when the baby moves. Either ending closes
+              // the microphone.
+              onLongPressStart: (_) => _start(),
+              onLongPressEnd: (_) => _stop(),
+              onLongPressCancel: _stop,
+              onTap: () => _hint(l),
+              child: MicPulse(
+                listening: _listening,
+                color: Warm.accent,
+                child: Container(
+                  width: VoiceActionButton.size,
+                  height: VoiceActionButton.size,
+                  decoration: BoxDecoration(
+                    gradient: Warm.accentGradient,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Warm.accent.withValues(
+                          alpha: _listening ? 0.45 : 0.28,
+                        ),
+                        blurRadius: _listening ? 28 : 16,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    _listening ? Icons.graphic_eq : Icons.mic,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                ),
+              ),
             ),
           ),
         ],

@@ -277,6 +277,21 @@ void main() {
       );
     });
 
+    testWidgets('the button itself is on the right, under a thumb', (
+      tester,
+    ) async {
+      await pump(tester, size: const Size(390, 1400));
+
+      final card = tester.getRect(find.byType(VoiceActionButton));
+      final button = tester.getRect(find.byIcon(Icons.mic));
+
+      // Right-hand end of the card, tight to its edge. Everything left of it
+      // is text: read once, never touched.
+      expect(button.center.dx, greaterThan(card.center.dx));
+      expect(card.right - button.right, lessThan(20));
+      expect(button.width, VoiceActionButton.size);
+    });
+
     testWidgets('is 64 across and opens nothing on a tap', (tester) async {
       await pump(tester);
 
