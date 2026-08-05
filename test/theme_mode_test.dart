@@ -73,13 +73,29 @@ void main() {
       expect(await readSavedTheme(), ThemePreference.light);
     });
 
-    test('nothing saved yet means automatic', () async {
-      expect(await readSavedTheme(), ThemePreference.auto);
+    test('nothing saved yet means the light theme', () async {
+      // Not automatic. The warm palette is the app; automatic meant a parent
+      // who opens this after the evening feed never saw it once.
+      expect(defaultTheme, ThemePreference.light);
+      expect(await readSavedTheme(), ThemePreference.light);
+      expect(
+        resolveThemeMode(defaultTheme, now: _at(3)),
+        ThemeMode.light,
+        reason: 'the default does not change at night',
+      );
+    });
+
+    test('dimming at night is still there to choose', () async {
+      expect(ThemePreference.values, contains(ThemePreference.auto));
+      expect(
+        resolveThemeMode(ThemePreference.auto, now: _at(3)),
+        ThemeMode.dark,
+      );
     });
 
     test('a value written by an older version is ignored, not fatal', () async {
       SharedPreferences.setMockInitialValues({'app_theme': 'sepia'});
-      expect(await readSavedTheme(), ThemePreference.auto);
+      expect(await readSavedTheme(), defaultTheme);
     });
 
     test('the saved choice is what the app starts on', () async {

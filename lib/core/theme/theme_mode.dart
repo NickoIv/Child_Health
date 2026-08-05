@@ -28,9 +28,18 @@ bool isNightAt(DateTime moment) =>
 
 const _storageKey = 'app_theme';
 
+/// What the app opens on before anyone has chosen.
+///
+/// Light, not automatic. The warm palette *is* the app — it is what makes a
+/// record of a hard week feel like something other than paperwork — and
+/// automatic meant a parent who only ever opens this thing after the evening
+/// feed never once saw it. Dim-at-night is still a switch away, and now that
+/// the choice is remembered it is a switch flipped once.
+const defaultTheme = ThemePreference.light;
+
 ThemePreference themeForName(String? name) => ThemePreference.values.firstWhere(
   (t) => t.name == name,
-  orElse: () => ThemePreference.auto,
+  orElse: () => defaultTheme,
 );
 
 /// Reads the saved appearance, for `main.dart` to seed the provider with
@@ -45,12 +54,12 @@ Future<ThemePreference> readSavedTheme() async {
     return themeForName(prefs.getString(_storageKey));
   } catch (_) {
     // No preferences plugin on this platform, or storage refused.
-    return ThemePreference.auto;
+    return defaultTheme;
   }
 }
 
 class ThemeChoice extends Notifier<ThemePreference> {
-  ThemeChoice([this._initial = ThemePreference.auto]);
+  ThemeChoice([this._initial = defaultTheme]);
 
   final ThemePreference _initial;
 

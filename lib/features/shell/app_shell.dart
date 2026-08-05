@@ -188,7 +188,7 @@ class _AccountMenu extends ConsumerWidget {
         }
         final theme = ThemePreference.values.firstWhere(
           (t) => t.name == value,
-          orElse: () => ThemePreference.auto,
+          orElse: () => defaultTheme,
         );
         ref.read(themePreferenceProvider.notifier).set(theme);
       },

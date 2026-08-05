@@ -151,7 +151,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             groupValue: ref.watch(themePreferenceProvider),
             onChanged: (v) => ref
                 .read(themePreferenceProvider.notifier)
-                .set(v ?? ThemePreference.auto),
+                .set(v ?? defaultTheme),
             child: Column(
               children: [
                 for (final t in ThemePreference.values)
