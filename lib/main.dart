@@ -7,6 +7,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'app.dart';
 import 'core/l10n/app_locale.dart';
 import 'core/notifications/notification_service.dart';
+import 'core/theme/theme_mode.dart';
 import 'core/voice/dictation.dart';
 import 'firebase/firebase_auth_repository.dart';
 import 'firebase/firebase_options.dart';
@@ -21,6 +22,9 @@ Future<void> main() async {
   // than one: the parent may have chosen English or Kazakh last time.
   await initializeDateFormatting();
   final locale = await readSavedLocale();
+  // Read before the first frame for the same reason as the language: drawing
+  // the dark theme and then repainting light is worse than waiting a moment.
+  final theme = await readSavedTheme();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -47,6 +51,7 @@ Future<void> main() async {
       // tests run on and the real backend.
       overrides: [
         localeProvider.overrideWith(() => LocaleChoice(locale)),
+        themePreferenceProvider.overrideWith(() => ThemeChoice(theme)),
         notificationServiceProvider.overrideWithValue(notifications),
         // The device's own recogniser. Constructed lazily, so a build that
         // nobody ever dictates into never touches the microphone at all.

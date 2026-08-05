@@ -1,10 +1,14 @@
 import 'package:child_health_tracker/core/theme/theme_mode.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 DateTime _at(int hour) => DateTime(2026, 7, 25, hour, 30);
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('isNightAt', () {
     test('is night from 21:00 through 06:59', () {
       for (final hour in [21, 22, 23, 0, 3, 5, 6]) {
@@ -48,6 +52,48 @@ void main() {
         resolveThemeMode(ThemePreference.dark, now: _at(12)),
         ThemeMode.dark,
       );
+    });
+  });
+
+  group('the choice survives a restart', () {
+    setUp(() => SharedPreferences.setMockInitialValues({}));
+
+    test('picking a theme writes it down', () async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      await container.read(themePreferenceProvider.notifier).set(
+        ThemePreference.light,
+      );
+
+      expect(container.read(themePreferenceProvider), ThemePreference.light);
+      // The next launch reads this before the first frame. Without it a parent
+      // who chose light got dark back on every reload, because the default is
+      // automatic and most reloads happen in the evening.
+      expect(await readSavedTheme(), ThemePreference.light);
+    });
+
+    test('nothing saved yet means automatic', () async {
+      expect(await readSavedTheme(), ThemePreference.auto);
+    });
+
+    test('a value written by an older version is ignored, not fatal', () async {
+      SharedPreferences.setMockInitialValues({'app_theme': 'sepia'});
+      expect(await readSavedTheme(), ThemePreference.auto);
+    });
+
+    test('the saved choice is what the app starts on', () async {
+      SharedPreferences.setMockInitialValues({'app_theme': 'light'});
+      final saved = await readSavedTheme();
+
+      final container = ProviderContainer(
+        overrides: [
+          themePreferenceProvider.overrideWith(() => ThemeChoice(saved)),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      expect(container.read(themePreferenceProvider), ThemePreference.light);
     });
   });
 }
