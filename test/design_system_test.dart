@@ -135,8 +135,8 @@ void main() {
       expect(ActionCard.titleSize, 16);
       expect(ActionCard.captionSize, 11.5);
 
-      expect(WarmHeader.photoSize, 96);
-      expect(VoiceActionButton.size, 72);
+      expect(WarmHeader.photoSize, 78);
+      expect(VoiceActionButton.size, 64);
       expect(Warm.accentGradient.colors.last, Warm.accent);
     });
 

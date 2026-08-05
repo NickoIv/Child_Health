@@ -1912,6 +1912,12 @@ abstract class AppLocalizations {
   /// **'Удерживайте кнопку и говорите'**
   String get voiceHoldHint;
 
+  /// No description provided for @voiceExample.
+  ///
+  /// In ru, this message translates to:
+  /// **'«покормила левой 15 минут»'**
+  String get voiceExample;
+
   /// No description provided for @voiceHeard.
   ///
   /// In ru, this message translates to:

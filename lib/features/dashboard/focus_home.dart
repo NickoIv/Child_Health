@@ -31,7 +31,10 @@ class WarmHeader extends ConsumerWidget {
   /// Big enough to be a photograph of a person rather than an avatar beside a
   /// name. It is the first thing on the screen and the only thing on it that
   /// is nobody else's.
-  static const photoSize = 96.0;
+  ///
+  /// Down from 96: the age moved onto a chip of its own, and at 96 the photo
+  /// pushed the name and the chip into a narrower column than either wanted.
+  static const photoSize = 78.0;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -64,14 +67,13 @@ class WarmHeader extends ConsumerWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  localizedAge(l, child),
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: Warm.onCardSoft(theme.brightness),
-                  ),
-                ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 7),
+                // On a chip rather than in grey under the name. It is the one
+                // number on this screen a parent says out loud — to a nurse,
+                // to a grandmother — and as a third line of soft grey it read
+                // as filler between the name and the line that matters.
+                _AgeChip(child: child),
+                const SizedBox(height: 7),
                 // One line, and it is the only line. Either the fact nobody
                 // can answer from memory at four in the morning, or — before
                 // there is one — the greeting for the hour.
@@ -86,6 +88,41 @@ class WarmHeader extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// How old, on a soft chip.
+///
+/// The colour is the peach the feeding card uses, at a weight that reads as a
+/// label rather than as a button — nothing here is tappable, and a chip that
+/// looks pressable in a header is a small lie told forty times a day.
+class _AgeChip extends StatelessWidget {
+  const _AgeChip({required this.child});
+
+  final Child child;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l = AppLocalizations.of(context);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 5),
+      decoration: BoxDecoration(
+        color: SoftTone.peach.fill(theme.brightness),
+        borderRadius: BorderRadius.circular(Warm.chipRadius),
+      ),
+      child: Text(
+        localizedAge(l, child),
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: SoftTone.peach.ink(theme.brightness),
+        ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
       ),
     );
   }
@@ -365,17 +402,22 @@ class RecentPreview extends ConsumerWidget {
   }
 }
 
-/// One event on the rail: a dot, a line, the time, what it was, and — where
-/// there is a photograph — the photograph.
+/// One event: a badge, the time, what it was, and — where there is a
+/// photograph — the photograph.
 ///
-/// A rail rather than a list because three events in a column with no thread
-/// between them read as three unrelated facts. The line is what makes them a
-/// morning.
+/// The badge is a ring rather than a dot on a thread. A vertical rail made
+/// three entries read as one continuing thing, which is exactly wrong: the
+/// question this list answers is "did I already write *that* one down", and
+/// the answer is easier to find when each entry has an edge of its own.
 class _TimelineRow extends StatelessWidget {
   const _TimelineRow({required this.entry, required this.last});
 
   final DevelopmentLog entry;
   final bool last;
+
+  /// Big enough for the icon to be recognised without being read, small
+  /// enough that three of them stacked stay a list and not a grid.
+  static const badgeSize = 34.0;
 
   @override
   Widget build(BuildContext context) {
@@ -385,87 +427,72 @@ class _TimelineRow extends StatelessWidget {
     final soft = Warm.onCardSoft(theme.brightness);
     final detail = routineSummary(l, entry);
 
-    return IntrinsicHeight(
+    return Padding(
+      padding: EdgeInsets.only(top: 6, bottom: last ? 2 : 6),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          SizedBox(
-            width: 26,
-            child: Column(
-              children: [
-                const SizedBox(height: 6),
-                Container(
-                  width: 26,
-                  height: 26,
-                  decoration: BoxDecoration(
-                    color: Warm.soft(theme.brightness),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(logIcon(entry), size: 14, color: Warm.accent),
-                ),
-                if (!last)
-                  Expanded(
-                    child: Container(
-                      width: 1.5,
-                      margin: const EdgeInsets.symmetric(vertical: 4),
-                      color: soft.withValues(alpha: 0.25),
-                    ),
-                  ),
-              ],
+          Container(
+            width: badgeSize,
+            height: badgeSize,
+            decoration: BoxDecoration(
+              color: Warm.soft(theme.brightness),
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: Warm.accent.withValues(alpha: 0.35),
+                width: 1.5,
+              ),
             ),
+            child: Icon(logIcon(entry), size: 16, color: Warm.accent),
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(top: 8, bottom: last ? 4 : 14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        timeOfDay.format(entry.date),
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: Warm.accent,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          localizedLogTitle(l, entry),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: ink,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (detail.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: Text(
-                        detail,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodySmall?.copyWith(color: soft),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      timeOfDay.format(entry.date),
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: Warm.accent,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                ],
-              ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        localizedLogTitle(l, entry),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: ink,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (detail.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      detail,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(color: soft),
+                    ),
+                  ),
+              ],
             ),
           ),
           // The photograph, where there is one. It is the reason a parent
           // recognises the entry without reading it.
           if (entry.photos.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.only(left: 10, top: 6),
+              padding: const EdgeInsets.only(left: 10),
               child: PhotoThumb(
                 photoId: entry.photos.first,
-                size: 44,
+                size: 42,
                 album: entry.photos,
               ),
             ),

@@ -1024,6 +1024,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get voiceHoldHint => 'Удерживайте кнопку и говорите';
 
   @override
+  String get voiceExample => '«покормила левой 15 минут»';
+
+  @override
   String get voiceHeard => 'Услышано';
 
   @override

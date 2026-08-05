@@ -1015,6 +1015,9 @@ class AppLocalizationsKk extends AppLocalizations {
   String get voiceHoldHint => 'Түймені басып тұрып сөйлеңіз';
 
   @override
+  String get voiceExample => '«сол көкірекпен 15 минут еміздім»';
+
+  @override
   String get voiceHeard => 'Естілді';
 
   @override

@@ -1,5 +1,6 @@
 import 'package:child_health_tracker/app.dart';
 import 'package:child_health_tracker/core/l10n/app_locale.dart';
+import 'package:child_health_tracker/core/l10n/labels.dart';
 import 'package:child_health_tracker/core/theme/app_theme.dart';
 import 'package:child_health_tracker/core/theme/motion.dart';
 import 'package:child_health_tracker/core/voice/dictation.dart';
@@ -96,6 +97,35 @@ void main() {
       );
     });
 
+    testWidgets('the age is on a chip, not a third line of grey', (
+      tester,
+    ) async {
+      await pump(tester);
+      final l = await AppLocalizations.delegate.load(defaultLocale);
+      final age = find.descendant(
+        of: find.byType(WarmHeader),
+        matching: find.text(localizedAge(l, child)),
+      );
+
+      expect(age, findsOneWidget);
+      // On the peach the feeding card uses, rounded to a chip: it is the one
+      // number here a parent repeats out loud.
+      final chip = tester.widget<Container>(
+        find
+            .ancestor(of: age, matching: find.byType(Container))
+            .first,
+      );
+      // Read from the tree rather than assumed: after 21:00 the app is in
+      // its dark theme, and the tone is a different pair there.
+      final brightness = Theme.of(tester.element(age)).brightness;
+      final decoration = chip.decoration! as BoxDecoration;
+      expect(decoration.color, SoftTone.peach.fill(brightness));
+      expect(
+        decoration.borderRadius,
+        BorderRadius.circular(Warm.chipRadius),
+      );
+    });
+
     testWidgets('the actions are a two by two square of 104px cards', (
       tester,
     ) async {
@@ -169,36 +199,89 @@ void main() {
         findsWidgets,
       );
     });
+
+    testWidgets('each carries a ring of its own, not a shared thread', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        logs: [
+          for (var i = 0; i < 3; i++)
+            DevelopmentLog(
+              id: 'f$i',
+              childId: child.id,
+              date: DateTime.now().subtract(Duration(minutes: 30 * i + 5)),
+              type: LogType.feeding,
+              title: LogType.feeding.label,
+            ),
+        ],
+      );
+
+      // Three entries, three badges, each a circle with an accent edge — the
+      // rail that used to join them made three facts read as one.
+      final badges = find
+          .descendant(
+            of: find.byType(RecentPreview),
+            matching: find.byWidgetPredicate((w) {
+              if (w is! Container) return false;
+              final d = w.decoration;
+              return d is BoxDecoration &&
+                  d.shape == BoxShape.circle &&
+                  d.border != null;
+            }),
+          )
+          .evaluate();
+
+      expect(badges, hasLength(3));
+      for (final badge in badges) {
+        final box = (badge.widget as Container);
+        final border = (box.decoration! as BoxDecoration).border!.top;
+        expect(border.color.a, closeTo(0.35, 0.01));
+        expect(tester.getSize(find.byWidget(box)).width, 34);
+      }
+    });
   });
 
   group('the microphone', () {
-    testWidgets('sits in the corner a right thumb rests in', (tester) async {
-      const screen = Size(390, 844);
-      await pump(tester, size: screen);
+    testWidgets('is a card under the events, not a circle over them', (
+      tester,
+    ) async {
+      await pump(tester);
+      final l = await AppLocalizations.delegate.load(defaultLocale);
+      final card = find.byType(VoiceActionButton);
 
-      final button = tester.getRect(find.byIcon(Icons.mic));
-      // Right-hand side, and tight to the edge: a held button is reached
-      // without the hand changing its grip on the phone.
-      expect(button.center.dx, greaterThan(screen.width * 0.72));
-      expect(screen.width - button.right, lessThan(20));
-      // Low enough for a thumb, and still clear of the tab bar.
-      expect(button.bottom, lessThan(screen.height));
-      expect(screen.height - button.bottom, greaterThan(60));
-      // And it does not sit on top of what it is a shortcut to.
-      final cards = find.byType(ActionCard);
-      for (final card in cards.evaluate()) {
-        expect(
-          tester.getRect(find.byWidget(card.widget)).overlaps(button),
-          isFalse,
-        );
-      }
+      // Floating, it covered whichever entry was being read. In the column it
+      // covers nothing, and there is room to print what to say to it.
+      expect(find.byType(FloatingActionButton), findsNothing);
+      expect(
+        tester.getRect(card).top,
+        greaterThan(tester.getRect(find.byType(RecentPreview)).bottom - 1),
+      );
+      // It spans the column, like every other card on this screen.
+      expect(
+        tester.getSize(card).width,
+        tester.getSize(find.byType(RecentPreview)).width,
+      );
+      // The instruction and an example of a sentence it understands.
+      expect(
+        find.descendant(of: card, matching: find.text(l.voiceHoldHint)),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: card, matching: find.text(l.voiceExample)),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: card, matching: find.text(voiceTimer(Duration.zero))),
+        findsOneWidget,
+      );
     });
 
-    testWidgets('is 72 across and opens nothing on a tap', (tester) async {
+    testWidgets('is 64 across and opens nothing on a tap', (tester) async {
       await pump(tester);
 
       expect(find.byType(VoiceActionButton), findsOneWidget);
-      expect(VoiceActionButton.size, 72);
+      expect(VoiceActionButton.size, 64);
 
       await tester.tap(find.byIcon(Icons.mic));
       await tester.pump(const Duration(milliseconds: 300));
@@ -232,6 +315,7 @@ void main() {
       tester,
     ) async {
       await pump(tester);
+      final l = await AppLocalizations.delegate.load(defaultLocale);
 
       final gesture = await tester.startGesture(
         tester.getCenter(find.byIcon(Icons.mic)),
@@ -241,6 +325,10 @@ void main() {
 
       dictation.speakAt(0.8);
       await tester.pump(const Duration(milliseconds: 120));
+      // While it is open the example gives way to the waveform, in the same
+      // place — nothing moves under her thumb.
+      expect(find.text(l.voiceListening), findsOneWidget);
+      expect(find.text(l.voiceExample), findsNothing);
       expect(find.text(voiceTimer(Duration.zero)), findsOneWidget);
 
       await gesture.up();
@@ -248,7 +336,8 @@ void main() {
       // Released: nothing left animating, which is what "no idle animation"
       // has to mean in practice.
       await tester.pumpAndSettle();
-      expect(find.textContaining(':0'), findsNothing);
+      expect(find.text(l.voiceListening), findsNothing);
+      expect(find.text(l.voiceExample), findsOneWidget);
     });
 
     testWidgets('a heard sentence is shown back before anything is written', (

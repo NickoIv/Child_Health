@@ -37,7 +37,7 @@ class VoiceActionButton extends ConsumerStatefulWidget {
   /// held button is a walkie-talkie, and everyone already knows how one of
   /// those works. It also makes the accident impossible — a phone in a pocket
   /// cannot hold its own button down.
-  static const size = 72.0;
+  static const size = 64.0;
 
   /// A ceiling rather than a target: releasing ends it sooner, which is the
   /// normal case. Long enough for "покормила левой пятнадцать минут".
@@ -82,54 +82,114 @@ class _VoiceActionButtonState extends ConsumerState<VoiceActionButton> {
     // A viewer has nothing to write, so there is nothing here for him to say.
     if (ref.watch(isReadOnlyProvider)) return const SizedBox.shrink();
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        if (_listening) ...[
-          _ListeningPanel(levels: _levels, elapsed: _elapsed),
-          const SizedBox(height: 12),
-        ],
-        Semantics(
-          button: true,
-          label: l.voiceQuickHint,
-          child: GestureDetector(
-            // A long press is what she means to do; a drag off the button is
-            // what her thumb does when the baby moves. Either ending closes
-            // the microphone.
-            onLongPressStart: (_) => _start(),
-            onLongPressEnd: (_) => _stop(),
-            onLongPressCancel: _stop,
-            onTap: () => _hint(l),
-            child: MicPulse(
-              listening: _listening,
-              color: Warm.accent,
-              child: Container(
-                width: VoiceActionButton.size,
-                height: VoiceActionButton.size,
-                decoration: BoxDecoration(
-                  gradient: Warm.accentGradient,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Warm.accent.withValues(
-                        alpha: _listening ? 0.45 : 0.28,
+    final theme = Theme.of(context);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 14, 18, 14),
+      decoration: BoxDecoration(
+        color: Warm.card(theme.brightness),
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: Warm.shadow(theme.brightness),
+      ),
+      child: Row(
+        children: [
+          Semantics(
+            button: true,
+            label: l.voiceQuickHint,
+            child: GestureDetector(
+              // A long press is what she means to do; a drag off the button is
+              // what her thumb does when the baby moves. Either ending closes
+              // the microphone.
+              onLongPressStart: (_) => _start(),
+              onLongPressEnd: (_) => _stop(),
+              onLongPressCancel: _stop,
+              onTap: () => _hint(l),
+              child: MicPulse(
+                listening: _listening,
+                color: Warm.accent,
+                child: Container(
+                  width: VoiceActionButton.size,
+                  height: VoiceActionButton.size,
+                  decoration: BoxDecoration(
+                    gradient: Warm.accentGradient,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Warm.accent.withValues(
+                          alpha: _listening ? 0.45 : 0.28,
+                        ),
+                        blurRadius: _listening ? 28 : 16,
+                        offset: const Offset(0, 6),
                       ),
-                      blurRadius: _listening ? 28 : 16,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  _listening ? Icons.graphic_eq : Icons.mic,
-                  color: Colors.white,
-                  size: 30,
+                    ],
+                  ),
+                  child: Icon(
+                    _listening ? Icons.graphic_eq : Icons.mic,
+                    color: Colors.white,
+                    size: 28,
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      ],
+          const SizedBox(width: 14),
+          // The instruction and, once she is speaking, the room's own volume
+          // in the same place — so nothing moves under her thumb when the
+          // microphone opens.
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _listening ? l.voiceListening : l.voiceHoldHint,
+                  style: TextStyle(
+                    fontSize: 15.5,
+                    fontWeight: FontWeight.w700,
+                    height: 1.25,
+                    color: Warm.onCard(theme.brightness),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                if (_listening)
+                  SizedBox(
+                    height: 26,
+                    child: CustomPaint(
+                      painter: _WaveformPainter(
+                        levels: _levels,
+                        color: Warm.accent,
+                      ),
+                    ),
+                  )
+                else
+                  Text(
+                    l.voiceExample,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      height: 1.35,
+                      color: Warm.onCardSoft(theme.brightness),
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            voiceTimer(_elapsed),
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              fontFeatures: const [FontFeature.tabularFigures()],
+              color: _listening
+                  ? Warm.accent
+                  : Warm.onCardSoft(theme.brightness),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -194,7 +254,7 @@ class _VoiceActionButtonState extends ConsumerState<VoiceActionButton> {
       onLevel: (level) {
         if (!mounted || !_listening) return;
         _levels.add(level);
-        if (_levels.length > _ListeningPanel.bars) _levels.removeAt(0);
+        if (_levels.length > _WaveformPainter.bars) _levels.removeAt(0);
       },
       onSilence: () {
         if (!mounted) return;
@@ -238,54 +298,6 @@ class _VoiceActionButtonState extends ConsumerState<VoiceActionButton> {
   }
 }
 
-/// The panel above the microphone while it is open: a waveform and a timer.
-///
-/// It exists to answer one question — is this thing hearing me — and it
-/// answers it with the room's own volume rather than with a spinner. It draws
-/// only while a finger is down, so nothing here animates at rest.
-class _ListeningPanel extends StatelessWidget {
-  const _ListeningPanel({required this.levels, required this.elapsed});
-
-  final List<double> levels;
-  final Duration elapsed;
-
-  static const bars = 14;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Warm.card(theme.brightness),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: Warm.shadow(theme.brightness),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(
-            height: 26,
-            width: bars * 6.0,
-            child: CustomPaint(
-              painter: _WaveformPainter(levels: levels, color: Warm.accent),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            voiceTimer(elapsed),
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: Warm.onCardSoft(theme.brightness),
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 /// `mm:ss`, because a recording is a length of time and that is how one is
 /// written down. Kept out of the widget so a test can read it.
 String voiceTimer(Duration elapsed) {
@@ -305,6 +317,10 @@ class _WaveformPainter extends CustomPainter {
   final List<double> levels;
   final Color color;
 
+  /// Short on purpose: a waveform with a long memory is a chart, and this is
+  /// a sign of life.
+  static const bars = 14;
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
@@ -312,7 +328,7 @@ class _WaveformPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round
       ..strokeWidth = 3;
 
-    const count = _ListeningPanel.bars;
+    const count = bars;
     final step = size.width / count;
     for (var i = 0; i < count; i++) {
       // Right-aligned, so the newest level is the rightmost bar and the empty

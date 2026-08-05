@@ -1018,6 +1018,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get voiceHoldHint => 'Hold the button and speak';
 
   @override
+  String get voiceExample => '“fed on the left for 15 minutes”';
+
+  @override
   String get voiceHeard => 'Heard';
 
   @override
