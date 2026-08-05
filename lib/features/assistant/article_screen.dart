@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../core/theme/app_theme.dart';
 import '../../knowledge/knowledge_base.dart';
 import '../shared/widgets.dart';
@@ -17,23 +18,24 @@ class ArticleScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final article = articleById(articleId);
     if (article == null) {
       return PageBody(
         children: [
           SectionCard(
-            title: 'Статья не найдена',
+            title: l.articleNotFound,
             icon: Icons.help_outline,
             child: Column(
               children: [
-                const EmptyState(
+                EmptyState(
                   icon: Icons.menu_book_outlined,
-                  message: 'Такой статьи в базе нет',
+                  message: l.articleNotFoundBody,
                 ),
                 const SizedBox(height: 8),
                 FilledButton.tonal(
                   onPressed: () => context.go('/assistant'),
-                  child: const Text('К списку тем'),
+                  child: Text(l.articleToList),
                 ),
               ],
             ),
@@ -50,7 +52,7 @@ class ArticleScreen extends StatelessWidget {
             IconButton(
               onPressed: () => context.go('/assistant'),
               icon: const Icon(Icons.arrow_back),
-              tooltip: 'Назад',
+              tooltip: l.commonBack,
             ),
             Expanded(
               child: Text(
@@ -75,7 +77,7 @@ class ArticleScreen extends StatelessWidget {
 
         if (article.emergency.isNotEmpty) ...[
           _Block(
-            title: 'Скорая помощь — 103',
+            title: l.articleEmergency,
             icon: Icons.emergency_outlined,
             color: StatusColors.alert,
             items: article.emergency,
@@ -85,7 +87,7 @@ class ArticleScreen extends StatelessWidget {
         ],
 
         _Block(
-          title: 'Что делать сейчас',
+          title: l.articleWhatToDo,
           icon: Icons.play_circle_outline,
           color: theme.colorScheme.primary,
           items: article.doNow,
@@ -93,7 +95,7 @@ class ArticleScreen extends StatelessWidget {
         const SizedBox(height: 16),
 
         _Block(
-          title: 'Когда обратиться к врачу',
+          title: l.articleWhenDoctor,
           icon: Icons.local_hospital_outlined,
           color: StatusColors.warning,
           items: article.callDoctor,
@@ -102,7 +104,7 @@ class ArticleScreen extends StatelessWidget {
         if (article.details.isNotEmpty) ...[
           const SizedBox(height: 16),
           SectionCard(
-            title: 'Подробнее',
+            title: l.commonMore,
             icon: Icons.info_outline,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -118,7 +120,7 @@ class ArticleScreen extends StatelessWidget {
 
         const SizedBox(height: 16),
         SectionCard(
-          title: 'Источники',
+          title: l.articleSources,
           icon: Icons.library_books_outlined,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -156,9 +158,7 @@ class ArticleScreen extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'Это справочная информация, а не диагноз и не назначение. '
-                  'Если что-то беспокоит — обратитесь к педиатру. '
-                  'При тревожных признаках звоните 103.',
+                  l.articleDisclaimer,
                   style: theme.textTheme.bodySmall,
                 ),
               ),

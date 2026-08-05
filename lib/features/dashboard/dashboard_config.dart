@@ -1,21 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../l10n/app_localizations.dart';
+
 /// The widgets a parent can place on the home screen, per requirement 2.7.
 enum DashboardWidgetKind {
-  now('Сейчас', Icons.bolt_outlined),
-  summary('Сводка о ребёнке', Icons.child_care_outlined),
-  growth('Рост и вес', Icons.show_chart_outlined),
-  vaccinations('Ближайшие прививки', Icons.vaccines_outlined),
-  illness('Заболеваемость', Icons.thermostat_outlined),
-  milestones('Вехи развития', Icons.star_outline),
-  recentEntries('Последние записи', Icons.auto_stories_outlined),
-  upcoming('Ближайшие события', Icons.event_outlined);
+  now(Icons.bolt_outlined),
+  summary(Icons.child_care_outlined),
+  growth(Icons.show_chart_outlined),
+  vaccinations(Icons.vaccines_outlined),
+  illness(Icons.thermostat_outlined),
+  milestones(Icons.star_outline),
+  recentEntries(Icons.auto_stories_outlined),
+  upcoming(Icons.event_outlined);
 
-  const DashboardWidgetKind(this.label, this.icon);
+  const DashboardWidgetKind(this.icon);
 
-  final String label;
   final IconData icon;
+
+  String label(AppLocalizations l) => switch (this) {
+    DashboardWidgetKind.now => l.widgetNow,
+    DashboardWidgetKind.summary => l.widgetSummary,
+    DashboardWidgetKind.growth => l.widgetGrowth,
+    DashboardWidgetKind.vaccinations => l.widgetVaccinations,
+    DashboardWidgetKind.illness => l.widgetIllness,
+    DashboardWidgetKind.milestones => l.widgetMilestones,
+    DashboardWidgetKind.recentEntries => l.widgetRecent,
+    DashboardWidgetKind.upcoming => l.widgetUpcoming,
+  };
 }
 
 /// Which widgets are shown and in what order.

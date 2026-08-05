@@ -56,7 +56,7 @@ class ProviderAuthRepository implements AuthRepository {
 }
 
 void main() {
-  setUpAll(() => initializeDateFormatting('ru_RU'));
+  setUpAll(() => initializeDateFormatting());
 
   Future<void> openSettings(WidgetTester tester, AuthUser user) async {
     tester.view.physicalSize = const Size(1400, 2400);
@@ -112,10 +112,21 @@ void main() {
     expect(find.text('Текущий пароль'), findsOneWidget);
   });
 
+  /// The account section is the last thing on a page that keeps growing, so
+  /// it has to be scrolled to rather than assumed on screen.
+  Future<void> openDeleteDialog(WidgetTester tester) async {
+    // ensureVisible rather than scrollUntilVisible: the list builds its lower
+    // cards before they are on screen, so the finder is satisfied while the
+    // button is still below the fold and the tap lands on nothing.
+    await tester.ensureVisible(find.text('Удалить учётную запись'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Удалить учётную запись'));
+    await tester.pumpAndSettle();
+  }
+
   testWidgets('deleting a Google account asks for no password', (tester) async {
     await openSettings(tester, googleUser);
-
-    await tester.tap(find.text('Удалить учётную запись'));
+    await openDeleteDialog(tester);
     await tester.pumpAndSettle();
 
     expect(find.text('Ваш пароль'), findsNothing);
@@ -134,9 +145,7 @@ void main() {
     tester,
   ) async {
     await openSettings(tester, emailUser);
-
-    await tester.tap(find.text('Удалить учётную запись'));
-    await tester.pumpAndSettle();
+    await openDeleteDialog(tester);
 
     expect(find.text('Ваш пароль'), findsOneWidget);
   });

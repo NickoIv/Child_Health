@@ -3,7 +3,9 @@ import 'package:flutter/foundation.dart'
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/l10n/auth_errors.dart';
 import '../../data/auth_repository.dart';
+import '../../l10n/app_localizations.dart';
 import '../../providers.dart';
 
 enum _Mode { signIn, register }
@@ -43,6 +45,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l = AppLocalizations.of(context);
     final isRegister = _mode == _Mode.register;
 
     return Scaffold(
@@ -67,15 +70,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'Календарь развития\nи здоровья ребёнка',
+                        l.appTitle,
                         textAlign: TextAlign.center,
                         style: theme.textTheme.titleLarge,
                       ),
                       const SizedBox(height: 8),
                       Text(
                         isRegister
-                            ? 'Создайте учётную запись родителя'
-                            : 'Войдите, чтобы продолжить',
+                            ? l.authRegisterSubtitle
+                            : l.authSignInSubtitle,
                         textAlign: TextAlign.center,
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
@@ -87,9 +90,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         autofocus: true,
                         keyboardType: TextInputType.emailAddress,
                         autofillHints: const [AutofillHints.email],
-                        decoration: const InputDecoration(
-                          labelText: 'Email',
-                          prefixIcon: Icon(Icons.alternate_email),
+                        decoration: InputDecoration(
+                          labelText: l.authEmail,
+                          prefixIcon: const Icon(Icons.alternate_email),
                         ),
                         validator: _validateEmail,
                       ),
@@ -99,7 +102,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         obscureText: _obscure,
                         autofillHints: const [AutofillHints.password],
                         decoration: InputDecoration(
-                          labelText: 'Пароль',
+                          labelText: l.authPassword,
                           prefixIcon: const Icon(Icons.lock_outline),
                           suffixIcon: IconButton(
                             onPressed: () =>
@@ -153,21 +156,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   strokeWidth: 2,
                                 ),
                               )
-                            : Text(isRegister ? 'Зарегистрироваться' : 'Войти'),
+                            : Text(isRegister ? l.authRegister : l.authSignIn),
                       ),
                       const SizedBox(height: 8),
                       TextButton(
                         onPressed: _busy ? null : _toggleMode,
                         child: Text(
                           isRegister
-                              ? 'Уже есть учётная запись — войти'
-                              : 'Нет учётной записи — зарегистрироваться',
+                              ? l.authToSignIn
+                              : l.authToRegister,
                         ),
                       ),
                       if (!isRegister)
                         TextButton(
                           onPressed: _busy ? null : _resetPassword,
-                          child: const Text('Забыли пароль?'),
+                          child: Text(l.authForgotPassword),
                         ),
                       const SizedBox(height: 8),
                       Row(
@@ -176,7 +179,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 12),
                             child: Text(
-                              'или',
+                              l.authOr,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: theme.colorScheme.onSurfaceVariant,
                               ),
@@ -191,7 +194,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ? null
                             : () => _signInWith(SocialProvider.google),
                         icon: const Icon(Icons.g_mobiledata, size: 28),
-                        label: const Text('Войти через Google'),
+                        label: Text(l.authWithGoogle),
                       ),
                       // Apple only wants its button where its own sheet
                       // exists; on Android it would lead nowhere.
@@ -202,7 +205,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               ? null
                               : () => _signInWith(SocialProvider.apple),
                           icon: const Icon(Icons.apple, size: 22),
-                          label: const Text('Войти через Apple'),
+                          label: Text(l.authWithApple),
                         ),
                       ],
                     ],
@@ -217,21 +220,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   String? _validateEmail(String? value) {
+    final l = AppLocalizations.of(context);
     final email = value?.trim() ?? '';
-    if (email.isEmpty) return 'Введите email';
+    if (email.isEmpty) return l.authEmailRequired;
     // Deliberately loose: Firebase does the authoritative check, and an
     // over-strict regex rejects valid addresses.
     if (!email.contains('@') || !email.contains('.')) {
-      return 'Похоже, адрес неполный';
+      return l.authEmailIncomplete;
     }
     return null;
   }
 
   String? _validatePassword(String? value) {
+    final l = AppLocalizations.of(context);
     final password = value ?? '';
-    if (password.isEmpty) return 'Введите пароль';
+    if (password.isEmpty) return l.authPasswordRequired;
     if (_mode == _Mode.register && password.length < 6) {
-      return 'Минимум 6 символов';
+      return l.authPasswordTooShort;
     }
     return null;
   }
@@ -263,9 +268,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       // Navigation is driven by the router's auth redirect, so there is
       // nothing to push here.
     } on AuthException catch (e) {
-      if (mounted) setState(() => _error = e.message);
+      if (mounted) {
+        setState(
+          () => _error = authErrorText(AppLocalizations.of(context), e),
+        );
+      }
     } catch (e) {
-      if (mounted) setState(() => _error = 'Неожиданная ошибка: $e');
+      if (mounted) {
+        setState(
+          () => _error = AppLocalizations.of(context).authUnexpected('$e'),
+        );
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -283,9 +296,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     } on AuthCancelled {
       // Backing out of the provider's window is not a failure.
     } on AuthException catch (e) {
-      if (mounted) setState(() => _error = e.message);
+      if (mounted) {
+        setState(
+          () => _error = authErrorText(AppLocalizations.of(context), e),
+        );
+      }
     } catch (e) {
-      if (mounted) setState(() => _error = 'Неожиданная ошибка: $e');
+      if (mounted) {
+        setState(
+          () => _error = AppLocalizations.of(context).authUnexpected('$e'),
+        );
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -294,7 +315,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _resetPassword() async {
     final email = _email.text.trim();
     if (_validateEmail(email) != null) {
-      setState(() => _error = 'Введите email, на него придёт ссылка');
+      setState(() => _error = AppLocalizations.of(context).authResetNeedsEmail);
       return;
     }
     setState(() {
@@ -305,11 +326,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       await ref.read(authRepositoryProvider).sendPasswordReset(email);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Письмо для сброса пароля отправлено на $email')),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).authResetSent(email)),
+          ),
         );
       }
     } on AuthException catch (e) {
-      if (mounted) setState(() => _error = e.message);
+      if (mounted) {
+        setState(
+          () => _error = authErrorText(AppLocalizations.of(context), e),
+        );
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../core/l10n/labels.dart';
+import '../../l10n/app_localizations.dart';
 import '../../core/photos/compression.dart';
 import '../../models/medical_record.dart';
 import '../../providers.dart';
@@ -129,13 +131,12 @@ class _MedicalRecordFormState extends ConsumerState<MedicalRecordForm> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
 
     return AlertDialog(
       title: Text(
-        widget.existing == null
-            ? 'Медицинская запись'
-            : 'Изменить запись',
+        widget.existing == null ? l.medicalRecordTitle : l.diaryEditEntry,
       ),
       content: SizedBox(
         width: 560,
@@ -149,48 +150,44 @@ class _MedicalRecordFormState extends ConsumerState<MedicalRecordForm> {
                 TextFormField(
                   controller: _diagnosis,
                   autofocus: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Диагноз или причина визита',
+                  decoration: InputDecoration(
+                    labelText: l.medicalDiagnosis,
                   ),
                   validator: (v) => (v == null || v.trim().isEmpty)
-                      ? 'Укажите диагноз или причину визита'
+                      ? l.medicalDiagnosisRequired
                       : null,
                 ),
                 const SizedBox(height: 12),
-                InkWell(
-                  onTap: _pickDate,
-                  borderRadius: BorderRadius.circular(12),
-                  child: InputDecorator(
-                    decoration: const InputDecoration(labelText: 'Дата'),
-                    child: Text(shortDate.format(_date)),
-                  ),
+                DateTimeField(
+                  value: _date,
+                  onChanged: (v) => setState(() => _date = v),
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _doctor,
-                  decoration: const InputDecoration(
-                    labelText: 'Врач и учреждение',
-                    hintText: 'Педиатр, поликлиника №2',
+                  decoration: InputDecoration(
+                    labelText: l.medicalDoctor,
+                    hintText: l.medicalDoctorHint,
                   ),
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _prescriptions,
                   maxLines: 3,
-                  decoration: const InputDecoration(
-                    labelText: 'Назначения',
+                  decoration: InputDecoration(
+                    labelText: l.medicalPrescriptions,
                   ),
                 ),
 
                 const SizedBox(height: 20),
                 Row(
                   children: [
-                    Text('Анализы', style: theme.textTheme.labelLarge),
+                    Text(l.medicalLabs, style: theme.textTheme.labelLarge),
                     const Spacer(),
                     TextButton.icon(
                       onPressed: () => setState(() => _labs.add(_LabDraft())),
                       icon: const Icon(Icons.add, size: 18),
-                      label: const Text('Добавить строку'),
+                      label: Text(l.medicalAddRow),
                     ),
                   ],
                 ),
@@ -203,8 +200,7 @@ class _MedicalRecordFormState extends ConsumerState<MedicalRecordForm> {
                         : () => setState(() => _labs.removeAt(i).dispose()),
                   ),
                 Text(
-                  'Референсные значения не обязательны, но без них приложение '
-                  'не сможет отметить отклонение.',
+                  l.medicalReferenceHint,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -226,25 +222,17 @@ class _MedicalRecordFormState extends ConsumerState<MedicalRecordForm> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Отмена'),
+          child: Text(l.commonCancel),
         ),
-        FilledButton(onPressed: _submit, child: const Text('Сохранить')),
+        FilledButton(onPressed: _submit, child: Text(l.commonSave)),
       ],
     );
   }
 
-  Future<void> _pickDate() async {
-    final now = DateTime.now();
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _date,
-      firstDate: DateTime(now.year - 18),
-      lastDate: now,
-    );
-    if (picked != null) setState(() => _date = picked);
-  }
-
   Future<void> _pickScans() async {
+    // Read before the picker: it hands control to the system UI, and after
+    // that this context may no longer be mounted.
+    final l = AppLocalizations.of(context);
     final files = await ImagePicker().pickMultiImage(imageQuality: 90);
     if (files.isEmpty) return;
 
@@ -259,14 +247,22 @@ class _MedicalRecordFormState extends ConsumerState<MedicalRecordForm> {
         final photo = await repository.upload(
           childId: widget.childId,
           bytes: await file.readAsBytes(),
-          caption: 'Скан бланка',
+          caption: l.medicalScan,
         );
         if (!mounted) return;
         setState(() => _fileIds.add(photo.id));
       } on PhotoTooLargeException catch (e) {
-        if (mounted) setState(() => _photoError = e.message);
+        if (mounted) {
+          setState(
+            () => _photoError = photoProblemText(l, e.problem),
+          );
+        }
       } catch (e) {
-        if (mounted) setState(() => _photoError = 'Не удалось загрузить: $e');
+        if (mounted) {
+          setState(
+            () => _photoError = l.medicalUploadFailed('$e'),
+          );
+        }
       }
     }
 
@@ -292,8 +288,9 @@ class _MedicalRecordFormState extends ConsumerState<MedicalRecordForm> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Проверьте строку «${draft.name.text.trim()}»: '
-              'нужно название и числовое значение.',
+              AppLocalizations.of(
+                context,
+              ).medicalRowInvalid(draft.name.text.trim()),
             ),
           ),
         );
@@ -326,6 +323,7 @@ class _LabRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
@@ -335,8 +333,8 @@ class _LabRow extends StatelessWidget {
             flex: 3,
             child: TextFormField(
               controller: draft.name,
-              decoration: const InputDecoration(
-                labelText: 'Показатель',
+              decoration: InputDecoration(
+                labelText: l.medicalIndicator,
                 isDense: true,
               ),
             ),
@@ -349,8 +347,8 @@ class _LabRow extends StatelessWidget {
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
-              decoration: const InputDecoration(
-                labelText: 'Значение',
+              decoration: InputDecoration(
+                labelText: l.medicalValue,
                 isDense: true,
               ),
             ),
@@ -360,8 +358,8 @@ class _LabRow extends StatelessWidget {
             flex: 2,
             child: TextFormField(
               controller: draft.unit,
-              decoration: const InputDecoration(
-                labelText: 'Ед.',
+              decoration: InputDecoration(
+                labelText: l.medicalUnitShort,
                 isDense: true,
               ),
             ),
@@ -374,8 +372,8 @@ class _LabRow extends StatelessWidget {
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
-              decoration: const InputDecoration(
-                labelText: 'от',
+              decoration: InputDecoration(
+                labelText: l.medicalFrom,
                 isDense: true,
               ),
             ),
@@ -388,8 +386,8 @@ class _LabRow extends StatelessWidget {
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
-              decoration: const InputDecoration(
-                labelText: 'до',
+              decoration: InputDecoration(
+                labelText: l.medicalTo,
                 isDense: true,
               ),
             ),
@@ -397,7 +395,7 @@ class _LabRow extends StatelessWidget {
           IconButton(
             onPressed: onRemove,
             icon: const Icon(Icons.close, size: 18),
-            tooltip: 'Убрать строку',
+            tooltip: l.medicalRemoveRow,
           ),
         ],
       ),
@@ -422,13 +420,14 @@ class _ScanPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Text('Сканы бланков', style: theme.textTheme.labelLarge),
+            Text(l.medicalScans, style: theme.textTheme.labelLarge),
             const Spacer(),
             if (uploading)
               const SizedBox(
@@ -440,7 +439,7 @@ class _ScanPicker extends StatelessWidget {
               TextButton.icon(
                 onPressed: onAdd,
                 icon: const Icon(Icons.attach_file, size: 18),
-                label: const Text('Прикрепить'),
+                label: Text(l.medicalAttach),
               ),
           ],
         ),
@@ -459,7 +458,7 @@ class _ScanPicker extends StatelessWidget {
                       top: -6,
                       child: IconButton(
                         iconSize: 18,
-                        tooltip: 'Удалить',
+                        tooltip: l.commonDelete,
                         onPressed: () => onRemove(id),
                         icon: const Icon(Icons.cancel),
                       ),

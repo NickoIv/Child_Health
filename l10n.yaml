@@ -1,0 +1,8 @@
+arb-dir: lib/l10n
+template-arb-file: app_ru.arb
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+# Russian is the template, so a key missing from en or kk falls back to the
+# Russian text rather than crashing or showing the key.
+untranslated-messages-file: l10n_missing.txt
+nullable-getter: false

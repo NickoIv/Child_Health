@@ -2,6 +2,8 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../l10n/app_localizations.dart';
+import '../../core/l10n/labels.dart';
 import '../../core/growth/who_standards.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/units/units.dart';
@@ -25,6 +27,7 @@ class _GrowthScreenState extends ConsumerState<GrowthScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final child = ref.watch(selectedChildProvider);
     if (child == null) return const NoChildPlaceholder();
 
@@ -35,7 +38,7 @@ class _GrowthScreenState extends ConsumerState<GrowthScreen> {
       return PageBody(
         children: [
           SectionCard(
-            title: 'Динамика показателей',
+            title: l.growthChartTitle,
             icon: Icons.show_chart_outlined,
             child: ErrorState(
               error: logsAsync.error!,
@@ -60,28 +63,27 @@ class _GrowthScreenState extends ConsumerState<GrowthScreen> {
           initialType: LogType.measurement,
         ),
         icon: const Icon(Icons.add),
-        label: const Text('Добавить измерение'),
+        label: Text(l.growthAddMeasurement),
       ),
       body: PageBody(
         children: [
         SectionCard(
-          title: 'Динамика показателей',
+          title: l.growthChartTitle,
           icon: Icons.show_chart_outlined,
           action: SegmentedButton<GrowthMetric>(
             segments: [
               for (final m in GrowthMetric.values)
-                ButtonSegment(value: m, label: Text(m.label)),
+                ButtonSegment(value: m, label: Text(m.localizedLabel(l))),
             ],
             selected: {_metric},
             showSelectedIcon: false,
             onSelectionChanged: (s) => setState(() => _metric = s.first),
           ),
           child: points.isEmpty
-              ? const EmptyState(
+              ? EmptyState(
                   icon: Icons.straighten,
-                  message: 'Пока нечего показать на графике',
-                  hint: 'Добавьте рост и вес в дневнике — кривая появится '
-                      'после первого измерения, а нормы ВОЗ уже ждут',
+                  message: l.growthEmpty,
+                  hint: l.growthEmptyHint,
                 )
               : SizedBox(
                   height: 320,
@@ -156,6 +158,7 @@ class _GrowthChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
     // The axis must always cover the child's own data. Capping it at the
     // reference range would push every measurement past 5 years off-screen,
@@ -215,7 +218,7 @@ class _GrowthChart extends StatelessWidget {
                 topTitles: const AxisTitles(),
                 rightTitles: const AxisTitles(),
                 bottomTitles: AxisTitles(
-                  axisNameWidget: const Text('возраст, месяцев'),
+                  axisNameWidget: Text(l.growthAxisAge),
                   axisNameSize: 22,
                   sideTitles: SideTitles(
                     showTitles: true,
@@ -250,7 +253,7 @@ class _GrowthChart extends StatelessWidget {
                     if (s.barIndex != 3) return null;
                     return LineTooltipItem(
                       '${s.y.toStringAsFixed(1)} $_unitLabel\n'
-                      '${s.x.toInt()} мес.',
+                      '${l.monthsShort(s.x.toInt())}',
                       theme.textTheme.labelMedium ?? const TextStyle(),
                     );
                   }).toList(),
@@ -292,14 +295,14 @@ class _GrowthChart extends StatelessWidget {
             _LegendDot(color: _seriesColor(theme), label: child.name),
             // Only advertise the reference when it is actually on the chart.
             if (median.isNotEmpty)
-              const _LegendDot(
+              _LegendDot(
                 color: VizPalette.muted,
-                label: 'медиана ВОЗ',
+                label: l.growthWhoMedian,
               ),
             if (lower.isNotEmpty)
               _LegendDot(
                 color: VizPalette.axis(theme.brightness),
-                label: 'коридор ±2 SD',
+                label: l.growthWhoBand,
                 dashed: true,
               ),
           ],
@@ -307,8 +310,7 @@ class _GrowthChart extends StatelessWidget {
         if (lastMonth > referenceMaxMonth) ...[
           const SizedBox(height: 8),
           Text(
-            'Нормы ВОЗ определены до 5 лет, поэтому справочные кривые '
-            'обрываются на 60 месяцах.',
+            l.growthWhoLimit,
             style: theme.textTheme.labelSmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -387,17 +389,18 @@ class _LatestAssessment extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     if (points.isEmpty) return const SizedBox.shrink();
     final units = ref.watch(unitSystemProvider);
     final last = points.last;
     final z = zScore(metric, child.gender, last.month, last.value);
     if (z == null) {
-      return const SectionCard(
-        title: 'Оценка по нормам ВОЗ',
+      return SectionCard(
+        title: l.growthWhoAssessment,
         icon: Icons.analytics_outlined,
         child: EmptyState(
           icon: Icons.help_outline,
-          message: 'Возраст вне диапазона справочных таблиц (0–60 месяцев)',
+          message: l.growthAgeOutOfRange,
         ),
       );
     }
@@ -410,7 +413,7 @@ class _LatestAssessment extends ConsumerWidget {
     };
 
     return SectionCard(
-      title: 'Оценка по нормам ВОЗ',
+      title: l.growthWhoAssessment,
       icon: Icons.analytics_outlined,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -430,16 +433,19 @@ class _LatestAssessment extends ConsumerWidget {
                     units,
                   ),
                 },
-                caption: '${metric.label}, ${dayMonth.format(last.date)}',
+                caption: l.growthMetricWithDate(
+                  metric.localizedLabel(l),
+                  dayMonth.format(last.date),
+                ),
               ),
               StatTile(
-                value: '${percentile.round()}-й',
-                caption: 'перцентиль',
+                value: l.growthPercentileOrdinal(percentile.round()),
+                caption: l.growthPercentileWord,
                 color: color,
               ),
               StatTile(
                 value: z.toStringAsFixed(2),
-                caption: 'z-оценка',
+                caption: l.growthZScore,
                 color: color,
               ),
             ],
@@ -461,15 +467,13 @@ class _LatestAssessment extends ConsumerWidget {
                   size: 20,
                 ),
                 const SizedBox(width: 10),
-                Expanded(child: Text(verdict.label)),
+                Expanded(child: Text(verdict.localizedLabel(l))),
               ],
             ),
           ),
           const SizedBox(height: 12),
           Text(
-            'Расчёт по нормам ВОЗ для детей 0–5 лет. Перцентиль показывает '
-            'положение среди сверстников, а не диагноз: отклонение может быть '
-            'и особенностью конкретного ребёнка. Оценивает врач.',
+            l.growthDisclaimer,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
@@ -491,25 +495,26 @@ class _MeasurementHistory extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     if (measurements.isEmpty) return const SizedBox.shrink();
     final units = ref.watch(unitSystemProvider);
     final rows = measurements.reversed.toList();
     return SectionCard(
-      title: 'История измерений',
+      title: l.growthHistory,
       icon: Icons.table_rows_outlined,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: DataTable(
           columnSpacing: 28,
           columns: [
-            const DataColumn(label: Text('Дата')),
-            const DataColumn(label: Text('Возраст')),
+            DataColumn(label: Text(l.commonDate)),
+            DataColumn(label: Text(l.commonAge)),
             DataColumn(
-              label: Text('Вес, ${Units.weightUnit(units)}'),
+              label: Text(l.fieldWeight(Units.weightUnit(units))),
               numeric: true,
             ),
             DataColumn(
-              label: Text('Рост, ${Units.heightUnit(units)}'),
+              label: Text(l.fieldHeight(Units.heightUnit(units))),
               numeric: true,
             ),
           ],
@@ -518,7 +523,7 @@ class _MeasurementHistory extends ConsumerWidget {
               DataRow(
                 cells: [
                   DataCell(Text(shortDate.format(m.date))),
-                  DataCell(Text('${child.ageInMonthsAt(m.date)} мес.')),
+                  DataCell(Text(l.monthsShort(child.ageInMonthsAt(m.date)))),
                   DataCell(
                     Text(
                       m.metrics.weightKg == null

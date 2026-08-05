@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/l10n/labels.dart';
 import '../../core/theme/app_theme.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/reminder.dart';
 import '../../providers.dart';
 import '../shared/widgets.dart';
@@ -19,6 +21,7 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final child = ref.watch(selectedChildProvider);
     if (child == null) return const NoChildPlaceholder();
 
@@ -27,7 +30,7 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
       return PageBody(
         children: [
           SectionCard(
-            title: 'Напоминания',
+            title: l.navReminders,
             icon: Icons.notifications_outlined,
             child: ErrorState(
               error: remindersAsync.error!,
@@ -49,17 +52,14 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
           children: [
             Expanded(
               child: Text(
-                plural(
+                l.remindersActiveCount(
                   all.where((r) => !r.isCompleted).length,
-                  'активное напоминание',
-                  'активных напоминания',
-                  'активных напоминаний',
                 ),
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             ),
             FilterChip(
-              label: const Text('Показать выполненные'),
+              label: Text(AppLocalizations.of(context).remindersShowCompleted),
               selected: _showCompleted,
               onSelected: (v) => setState(() => _showCompleted = v),
             ),
@@ -96,11 +96,7 @@ class _TypeSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
     return SectionCard(
-      title: switch (type) {
-        ReminderType.vaccination => 'Календарь прививок',
-        ReminderType.medication => 'Приём лекарств',
-        ReminderType.appointment => 'Визиты к врачу',
-      },
+      title: type.sectionTitle(AppLocalizations.of(context)),
       icon: switch (type) {
         ReminderType.vaccination => Icons.vaccines_outlined,
         ReminderType.medication => Icons.medication_outlined,
@@ -112,9 +108,9 @@ class _TypeSection extends StatelessWidget {
         ReminderType.appointment => VizPalette.slot(6, brightness),
       },
       child: reminders.isEmpty
-          ? const EmptyState(
+          ? EmptyState(
               icon: Icons.done_all,
-              message: 'Ничего не запланировано',
+              message: AppLocalizations.of(context).remindersNothingPlanned,
             )
           : Column(
               children: [
@@ -139,15 +135,16 @@ class _ReminderRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final days = reminder.daysUntil;
     final overdue = reminder.isOverdue;
 
     final when = switch (days) {
-      0 => 'сегодня',
-      1 => 'завтра',
-      _ when days < 0 => 'просрочено на ${plural(-days, 'день', 'дня', 'дней')}',
-      _ => 'через ${plural(days, 'день', 'дня', 'дней')}',
+      0 => l.commonToday,
+      1 => l.commonTomorrow,
+      _ when days < 0 => l.remindersOverdue(-days),
+      _ => l.remindersInDays(days),
     };
 
     return Row(
@@ -163,7 +160,9 @@ class _ReminderRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                reminder.title,
+                reminder.type == ReminderType.vaccination
+                    ? localizedVaccinationName(l, reminder.title)
+                    : reminder.title,
                 style: theme.textTheme.bodyLarge?.copyWith(
                   decoration: reminder.isCompleted
                       ? TextDecoration.lineThrough
@@ -175,7 +174,7 @@ class _ReminderRow extends StatelessWidget {
               ),
               if (reminder.details.isNotEmpty)
                 Text(
-                  reminder.details,
+                  localizedVaccinationDetails(l, reminder.details),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -202,7 +201,9 @@ class _ReminderRow extends StatelessWidget {
               ),
             if (reminder.recurrence != Recurrence.none)
               Text(
-                reminder.recurrence.label,
+                reminder.recurrence.localizedLabel(
+                  AppLocalizations.of(context),
+                ),
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: theme.colorScheme.outline,
                 ),

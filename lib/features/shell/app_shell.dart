@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/l10n/labels.dart';
 import '../../core/router/app_router.dart';
+import '../../l10n/app_localizations.dart';
 import '../../core/theme/theme_mode.dart';
 import '../../models/child.dart';
 import '../../providers.dart';
+import '../dashboard/voice_action_button.dart';
+import '../family/invite_banner.dart';
 import '../shared/photo_widgets.dart';
 
 /// Navigation chrome shared by every screen.
@@ -48,8 +52,10 @@ class AppShell extends ConsumerWidget {
     final isWide = MediaQuery.sizeOf(context).width >= 900;
     return Scaffold(
       appBar: AppBar(
-        title: Text(appDestinations[_index].label),
+        title: Text(appDestinations[_index].label(AppLocalizations.of(context))),
         actions: const [
+          RoleChip(),
+          SizedBox(width: 8),
           _ChildSwitcher(),
           SizedBox(width: 4),
           _AccountMenu(),
@@ -65,8 +71,24 @@ class AppShell extends ConsumerWidget {
               ],
             )
           : child,
+      // Home only. The microphone is a shortcut to the four buttons directly
+      // above it; on the diary or the settings it would be a floating control
+      // with nothing to do.
+      floatingActionButton: _index == 0 ? const _HomeVoiceButton() : null,
       bottomNavigationBar: isWide ? null : _BottomBar(index: _index),
     );
+  }
+}
+
+/// The microphone, once there is a child to record anything about.
+class _HomeVoiceButton extends ConsumerWidget {
+  const _HomeVoiceButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final child = ref.watch(selectedChildProvider);
+    if (child == null) return const SizedBox.shrink();
+    return VoiceActionButton(childId: child.id);
   }
 }
 
@@ -80,13 +102,20 @@ class _Rail extends StatelessWidget {
     return NavigationRail(
       selectedIndex: index,
       labelType: NavigationRailLabelType.all,
+      // Narrower than the default 80: on a laptop the rail is a way to move
+      // between screens, not a feature of the design, and every pixel it
+      // gives back goes to the content.
+      minWidth: 68,
+      groupAlignment: -0.9,
+      selectedLabelTextStyle: Theme.of(context).textTheme.labelSmall,
+      unselectedLabelTextStyle: Theme.of(context).textTheme.labelSmall,
       onDestinationSelected: (i) => context.go(appDestinations[i].path),
       destinations: [
         for (final d in appDestinations)
           NavigationRailDestination(
             icon: Icon(d.icon),
             selectedIcon: Icon(d.selectedIcon),
-            label: Text(d.label),
+            label: Text(d.label(AppLocalizations.of(context))),
           ),
       ],
     );
@@ -118,11 +147,11 @@ class _BottomBar extends StatelessWidget {
           NavigationDestination(
             icon: Icon(d.icon),
             selectedIcon: Icon(d.selectedIcon),
-            label: d.label,
+            label: d.label(AppLocalizations.of(context)),
           ),
-        const NavigationDestination(
-          icon: Icon(Icons.more_horiz),
-          label: 'Ещё',
+        NavigationDestination(
+          icon: const Icon(Icons.more_horiz),
+          label: AppLocalizations.of(context).navMore,
         ),
       ],
     );
@@ -138,7 +167,7 @@ class _BottomBar extends StatelessWidget {
             for (final d in appDestinations.skip(AppShell._primaryCount))
               ListTile(
                 leading: Icon(d.icon),
-                title: Text(d.label),
+                title: Text(d.label(AppLocalizations.of(context))),
                 onTap: () {
                   Navigator.of(sheetContext).pop();
                   context.go(d.path);
@@ -159,7 +188,7 @@ class _AccountMenu extends ConsumerWidget {
     final user = ref.watch(authStateProvider).value;
     if (user == null) return const SizedBox.shrink();
     return PopupMenuButton<String>(
-      tooltip: 'Учётная запись',
+      tooltip: AppLocalizations.of(context).accountMenu,
       icon: const Icon(Icons.account_circle_outlined),
       onSelected: (value) {
         if (value == 'signOut') {
@@ -185,12 +214,12 @@ class _AccountMenu extends ConsumerWidget {
           ),
         ),
         const PopupMenuDivider(),
-        const PopupMenuItem(
+        PopupMenuItem(
           value: 'settings',
           child: ListTile(
             contentPadding: EdgeInsets.zero,
-            leading: Icon(Icons.settings_outlined),
-            title: Text('Профиль и настройки'),
+            leading: const Icon(Icons.settings_outlined),
+            title: Text(AppLocalizations.of(context).settingsTitle),
           ),
         ),
         const PopupMenuDivider(),
@@ -198,15 +227,15 @@ class _AccountMenu extends ConsumerWidget {
           CheckedPopupMenuItem(
             value: t.name,
             checked: ref.watch(themePreferenceProvider) == t,
-            child: Text(t.hint.isEmpty ? t.label : '${t.label} · ${t.hint}'),
+            child: Text(t.menuLabel(AppLocalizations.of(context))),
           ),
         const PopupMenuDivider(),
-        const PopupMenuItem(
+        PopupMenuItem(
           value: 'signOut',
           child: ListTile(
             contentPadding: EdgeInsets.zero,
-            leading: Icon(Icons.logout),
-            title: Text('Выйти'),
+            leading: const Icon(Icons.logout),
+            title: Text(AppLocalizations.of(context).settingsSignOut),
           ),
         ),
       ],

@@ -104,7 +104,7 @@ class FakeAuthRepository implements AuthRepository {
 }
 
 void main() {
-  setUpAll(() => initializeDateFormatting('ru_RU'));
+  setUpAll(() => initializeDateFormatting());
 
   late FakeAuthRepository auth;
 

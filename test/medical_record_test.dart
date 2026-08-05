@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 void main() {
-  setUpAll(() => initializeDateFormatting('ru_RU'));
+  setUpAll(() => initializeDateFormatting());
 
   Future<void> openMedical(WidgetTester tester) async {
     tester.view.physicalSize = const Size(1400, 2400);

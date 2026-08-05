@@ -9,6 +9,20 @@
          restores them. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.VIBRATE"/>
+    <!-- Dictating a note. Asked for at the moment the microphone beside the
+         note field is tapped, never before, and refused is a supported answer:
+         the keyboard is the primary way in and stays that way. Nothing is
+         recorded to a file and no audio leaves the device. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+
+    <!-- Android 11+ hides the speech recogniser from apps that do not declare
+         they talk to it, and the plugin then reports "not available" rather
+         than failing loudly. -->
+    <queries>
+        <intent>
+            <action android:name="android.speech.RecognitionService"/>
+        </intent>
+    </queries>
 
     <application
         android:label="child_health_tracker"

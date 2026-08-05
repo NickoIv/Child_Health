@@ -6,7 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 void main() {
-  setUpAll(() => initializeDateFormatting('ru_RU'));
+  setUpAll(() => initializeDateFormatting());
 
   Future<void> pumpApp(WidgetTester tester) async {
     // The default 800x600 surface is too short for the dashboard: its ListView
@@ -29,8 +29,15 @@ void main() {
     expect(find.text('Демо-профиль'), findsWidgets);
   });
 
-  testWidgets('dashboard renders every configured widget', (tester) async {
+  testWidgets('every configured widget renders, on the assistant tab', (
+    tester,
+  ) async {
     await pumpApp(tester);
+    // The blocks are still the parent's to arrange from settings; they are
+    // read on the assistant tab now rather than passed on the way to logging
+    // a feed — see DashboardScreen.
+    await tester.tap(find.text('Помощник').last);
+    await tester.pumpAndSettle();
 
     // The summary card is titled with the child's name, so check the rest by
     // their own headings.
@@ -41,10 +48,15 @@ void main() {
       'Последние записи',
       'Ближайшие события',
     ]) {
+      await tester.scrollUntilVisible(
+        find.text(title),
+        400,
+        scrollable: find.byType(Scrollable).first,
+      );
       expect(
         find.text(title),
         findsWidgets,
-        reason: 'dashboard should show "$title"',
+        reason: 'the assistant tab should show "$title"',
       );
     }
   });
@@ -55,6 +67,9 @@ void main() {
 
       await tester.tap(find.widgetWithText(InkWell, 'Температура'));
       await tester.pumpAndSettle();
+      // Step one is always the same question: now, or a time of my own.
+      await tester.tap(find.text('Сейчас'));
+      await tester.pumpAndSettle();
 
       expect(find.text('37.0 °C'), findsOneWidget);
     });
@@ -62,6 +77,9 @@ void main() {
     testWidgets('stepping up crosses into fever and warns', (tester) async {
       await pumpApp(tester);
       await tester.tap(find.widgetWithText(InkWell, 'Температура'));
+      await tester.pumpAndSettle();
+      // Step one is always the same question: now, or a time of my own.
+      await tester.tap(find.text('Сейчас'));
       await tester.pumpAndSettle();
 
       expect(find.textContaining('Это лихорадка'), findsNothing);
@@ -81,6 +99,9 @@ void main() {
     ) async {
       await pumpApp(tester);
       await tester.tap(find.widgetWithText(InkWell, 'Температура'));
+      await tester.pumpAndSettle();
+      // Step one is always the same question: now, or a time of my own.
+      await tester.tap(find.text('Сейчас'));
       await tester.pumpAndSettle();
 
       for (var i = 0; i < 15; i++) {

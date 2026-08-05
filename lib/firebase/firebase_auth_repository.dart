@@ -85,6 +85,7 @@ class FirebaseAuthRepository implements AuthRepository {
     if (idToken == null) {
       throw const AuthException(
         'Google не вернул токен входа. Попробуйте ещё раз',
+        code: AuthErrorCode.googleNoToken,
       );
     }
     await _auth.signInWithCredential(
@@ -120,7 +121,10 @@ class FirebaseAuthRepository implements AuthRepository {
   }) async {
     final current = _auth.currentUser;
     if (current == null) {
-      throw const AuthException('Сначала войдите в свою учётную запись');
+      throw const AuthException(
+        'Сначала войдите в свою учётную запись',
+        code: AuthErrorCode.signInFirst,
+      );
     }
     if (!_providersOf(current).contains(passwordProvider)) {
       // Firebase can set a password on such an account, but that would quietly
@@ -129,6 +133,7 @@ class FirebaseAuthRepository implements AuthRepository {
       throw const AuthException(
         'У этой учётной записи нет пароля: вход выполняется через Google. '
         'Пароль меняется в настройках аккаунта Google',
+        code: AuthErrorCode.noPassword,
       );
     }
     final user = await _reauthenticate(currentPassword);
@@ -153,14 +158,20 @@ class FirebaseAuthRepository implements AuthRepository {
   Future<fb.User> _reauthenticate(String password) async {
     final user = _auth.currentUser;
     if (user == null) {
-      throw const AuthException('Сначала войдите в свою учётную запись');
+      throw const AuthException(
+        'Сначала войдите в свою учётную запись',
+        code: AuthErrorCode.signInFirst,
+      );
     }
     final providers = _providersOf(user);
 
     if (providers.contains(passwordProvider)) {
       final email = user.email;
       if (email == null || email.isEmpty) {
-        throw const AuthException('Сначала войдите в свою учётную запись');
+        throw const AuthException(
+          'Сначала войдите в свою учётную запись',
+          code: AuthErrorCode.signInFirst,
+        );
       }
       await _guard(
         () => user.reauthenticateWithCredential(
@@ -188,6 +199,7 @@ class FirebaseAuthRepository implements AuthRepository {
     throw const AuthException(
       'Не удалось подтвердить личность: неизвестный способ входа. '
       'Выйдите и войдите заново',
+      code: AuthErrorCode.unknownProvider,
     );
   }
 
@@ -209,6 +221,7 @@ class FirebaseAuthRepository implements AuthRepository {
     if (idToken == null) {
       throw const AuthException(
         'Google не вернул токен входа. Попробуйте ещё раз',
+        code: AuthErrorCode.googleNoToken,
       );
     }
     await user.reauthenticateWithCredential(
@@ -234,12 +247,12 @@ class FirebaseAuthRepository implements AuthRepository {
       return await action();
     } on fb.FirebaseAuthException catch (e) {
       if (_cancellationCodes.contains(e.code)) throw const AuthCancelled();
-      throw AuthException(_messageFor(e));
+      throw AuthException(_messageFor(e), code: _codeFor(e));
     } on gs.GoogleSignInException catch (e) {
       if (e.code == gs.GoogleSignInExceptionCode.canceled) {
         throw const AuthCancelled();
       }
-      throw AuthException(_googleMessageFor(e));
+      throw AuthException(_googleMessageFor(e), code: _googleCodeFor(e));
     }
   }
 
@@ -261,6 +274,32 @@ class FirebaseAuthRepository implements AuthRepository {
           'Вход через Google прервался. Проверьте связь и попробуйте ещё раз',
         _ => 'Не удалось войти через Google: ${e.description ?? e.code.name}',
       };
+
+  /// Firebase's code turned into one of ours, for the interface to translate.
+  static String? _codeFor(fb.FirebaseAuthException e) => switch (e.code) {
+    'invalid-credential' ||
+    'wrong-password' ||
+    'user-not-found' => AuthErrorCode.invalidCredentials,
+    'invalid-email' => AuthErrorCode.invalidEmail,
+    'email-already-in-use' => AuthErrorCode.emailInUse,
+    'weak-password' => AuthErrorCode.weakPassword,
+    'user-disabled' => AuthErrorCode.userDisabled,
+    'requires-recent-login' => AuthErrorCode.requiresRecentLogin,
+    'too-many-requests' => AuthErrorCode.tooManyRequests,
+    'network-request-failed' => AuthErrorCode.network,
+    'operation-not-allowed' => AuthErrorCode.operationNotAllowed,
+    _ => null,
+  };
+
+  static String? _googleCodeFor(gs.GoogleSignInException e) => switch (e.code) {
+    gs.GoogleSignInExceptionCode.clientConfigurationError =>
+      AuthErrorCode.googleNotConfigured,
+    gs.GoogleSignInExceptionCode.providerConfigurationError =>
+      AuthErrorCode.googleProvider,
+    gs.GoogleSignInExceptionCode.interrupted =>
+      AuthErrorCode.googleInterrupted,
+    _ => null,
+  };
 
   static String _messageFor(fb.FirebaseAuthException e) => switch (e.code) {
     // Modern Firebase returns invalid-credential for both a wrong password

@@ -3,6 +3,9 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:child_health_tracker/core/photos/compression.dart';
+import 'package:child_health_tracker/core/l10n/app_locale.dart';
+import 'package:child_health_tracker/core/l10n/labels.dart';
+import 'package:child_health_tracker/l10n/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 
@@ -123,13 +126,19 @@ void main() {
       );
     });
 
-    test('the failure message is in Russian and actionable', () {
+    test('the failure says which problem it was, in every language', () async {
       try {
         preparePhoto(Uint8List.fromList([0, 0, 0]));
         fail('should have thrown');
       } on PhotoTooLargeException catch (e) {
-        expect(e.message, contains('изображение'));
-        expect(e.message, isNot(contains('Exception')));
+        expect(e.problem, PhotoProblem.notAnImage);
+
+        // The sentence a parent sees is looked up per locale rather than
+        // carried on the exception, so none of them may be blank.
+        for (final locale in supportedLocales) {
+          final l = await AppLocalizations.delegate.load(locale);
+          expect(photoProblemText(l, e.problem).trim(), isNotEmpty);
+        }
       }
     });
   });

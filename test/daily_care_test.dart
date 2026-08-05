@@ -1,5 +1,8 @@
 import 'package:child_health_tracker/core/analytics/daily_care.dart';
 import 'package:child_health_tracker/models/development_log.dart';
+import 'package:child_health_tracker/core/l10n/app_locale.dart';
+import 'package:child_health_tracker/core/l10n/labels.dart';
+import 'package:child_health_tracker/l10n/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 final _today = DateTime(2026, 7, 26);
@@ -154,12 +157,20 @@ void main() {
     });
   });
 
-  group('formatDuration', () {
-    test('reads as hours and minutes', () {
-      expect(formatDuration(0), '—');
-      expect(formatDuration(45), '45 мин');
-      expect(formatDuration(60), '1 ч');
-      expect(formatDuration(135), '2 ч 15 мин');
+  group('durations', () {
+    // The unlocalized formatter is gone; the words come from the ARB now, so
+    // the shape is asserted in every language rather than only in Russian.
+    test('read as hours and minutes, in whichever language', () async {
+      for (final locale in supportedLocales) {
+        final l = await AppLocalizations.delegate.load(locale);
+        expect(localizedDuration(l, 0), '—');
+        expect(localizedDuration(l, 45), contains('45'));
+        expect(localizedDuration(l, 60), contains('1'));
+
+        final long = localizedDuration(l, 135);
+        expect(long, contains('2'));
+        expect(long, contains('15'));
+      }
     });
   });
 }

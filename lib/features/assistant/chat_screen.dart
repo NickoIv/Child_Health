@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../ai/assistant_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../knowledge/article.dart';
 import '../../providers.dart';
+import '../../core/care/conversation_memory.dart';
 import '../shared/widgets.dart';
+import 'context_block.dart';
+import 'continue_block.dart';
 
 class _Turn {
   const _Turn.question(this.text) : reply = null;
@@ -42,6 +46,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final child = ref.watch(selectedChildProvider);
     final service = ref.watch(assistantServiceProvider);
@@ -53,14 +58,21 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             IconButton(
               onPressed: () => context.go('/assistant'),
               icon: const Icon(Icons.arrow_back),
-              tooltip: 'Назад',
+              tooltip: l.commonBack,
             ),
             Expanded(
-              child: Text('Спросить помощника', style: theme.textTheme.titleLarge),
+              child: Text(l.chatTitle, style: theme.textTheme.titleLarge),
             ),
           ],
         ),
         const SizedBox(height: 12),
+
+        // The same five facts the assistant screen opens with, then the
+        // thread she was in the middle of. Both sit above the conversation
+        // and disappear entirely when there is nothing to say.
+        const ChildContextBlock(),
+        const SizedBox(height: 12),
+        ContinueBlock(onResume: _resume),
 
         if (!service.isConfigured) ...[
           const _SetupCard(),
@@ -95,8 +107,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 onSubmitted: (_) => _send(_input.text),
                 decoration: InputDecoration(
                   hintText: child == null
-                      ? 'Спросите что-нибудь о здоровье ребёнка'
-                      : 'Спросите про ${child.name}: сон, еда, температура…',
+                      ? l.chatEmpty
+                      : l.chatHint(child.name),
                 ),
               ),
             ),
@@ -104,14 +116,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             IconButton.filled(
               onPressed: _busy ? null : () => _send(_input.text),
               icon: const Icon(Icons.arrow_upward),
-              tooltip: 'Отправить',
+              tooltip: l.chatSend,
             ),
           ],
         ),
         const SizedBox(height: 12),
         Text(
-          'Помощник отвечает только по проверенной базе приложения и не ставит '
-          'диагнозов. Решение всегда за врачом.',
+          l.chatDisclaimer,
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -120,9 +131,21 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     );
   }
 
+  /// Puts the question back in the field rather than sending it: she may
+  /// want to change a word now that she has a moment.
+  void _resume(String question) {
+    setState(() {
+      _input.text = question;
+      _input.selection = TextSelection.collapsed(offset: question.length);
+    });
+  }
+
   Future<void> _send(String raw) async {
     final question = raw.trim();
     if (question.isEmpty || _busy) return;
+
+    // Only ever the latest one, and only on this phone.
+    ref.read(conversationMemoryProvider.notifier).remember(question);
 
     setState(() {
       _turns.add(_Turn.question(question));
@@ -214,6 +237,7 @@ class _EmergencyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
     return Card(
       color: StatusColors.alert.withValues(alpha: 0.12),
@@ -236,7 +260,7 @@ class _EmergencyCard extends StatelessWidget {
                 const SizedBox(width: 14),
                 Expanded(
                   child: Text(
-                    'Вызывайте скорую — 103',
+                    l.chatEmergency,
                     style: theme.textTheme.titleLarge?.copyWith(
                       color: StatusColors.alert,
                       fontWeight: FontWeight.w700,
@@ -247,9 +271,7 @@ class _EmergencyCard extends StatelessWidget {
             ),
             const SizedBox(height: 14),
             Text(
-              'В вашем вопросе есть признак, при котором нельзя ждать. '
-              'Я намеренно не передаю такие вопросы ИИ — здесь нужен не совет, '
-              'а немедленная помощь.',
+              l.chatEmergencyBody,
               style: theme.textTheme.bodyMedium,
             ),
             const SizedBox(height: 12),
@@ -270,7 +292,7 @@ class _EmergencyCard extends StatelessWidget {
             FilledButton.icon(
               onPressed: () => context.go('/assistant/article/red-flags'),
               icon: const Icon(Icons.list_alt),
-              label: const Text('Что делать до приезда скорой'),
+              label: Text(l.chatWhatToDo),
             ),
           ],
         ),
@@ -287,6 +309,7 @@ class _AnswerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
     return Card(
       child: Padding(
@@ -298,7 +321,7 @@ class _AnswerCard extends StatelessWidget {
             if (sources.isNotEmpty) ...[
               const SizedBox(height: 16),
               Text(
-                'Ответ построен по статьям:',
+                l.chatSources,
                 style: theme.textTheme.labelMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -335,9 +358,10 @@ class _UnavailableCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
     return Card(
-      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+      color: Warm.soft(theme.brightness),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Row(
@@ -358,7 +382,7 @@ class _UnavailableCard extends StatelessWidget {
                   const SizedBox(height: 10),
                   FilledButton.tonal(
                     onPressed: () => context.go('/assistant'),
-                    child: const Text('Открыть базу знаний'),
+                    child: Text(l.chatOpenKb),
                   ),
                 ],
               ),
@@ -375,23 +399,21 @@ class _SetupCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
     return SectionCard(
-      title: 'ИИ-помощник пока не подключён',
+      title: l.chatAiOff,
       icon: Icons.smart_toy_outlined,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'База знаний и проверка тревожных признаков работают без него — '
-            'они не требуют интернета вообще.',
+            l.chatAiOffBody,
             style: theme.textTheme.bodyMedium,
           ),
           const SizedBox(height: 12),
           Text(
-            'Чтобы включить ИИ, нужно развернуть бесплатный прокси на '
-            'Cloudflare Workers и пересобрать приложение с его адресом. '
-            'Инструкция — в файле worker/README.md.',
+            l.chatAiOffHow,
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -407,24 +429,25 @@ class _Suggestions extends StatelessWidget {
 
   final ValueChanged<String> onPick;
 
-  static const _examples = [
-    'Температура 38.5, что делать',
-    'Сколько должен спать ребёнок в 6 месяцев',
-    'Когда начинать прикорм',
-    'Можно ли мне антибиотик при ГВ',
-    'Ребёнок не какал два дня',
+  static List<String> _examples(AppLocalizations l) => [
+    l.chatSuggestion1,
+    l.chatSuggestion2,
+    l.chatSuggestion3,
+    l.chatSuggestion4,
+    l.chatSuggestion5,
   ];
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return SectionCard(
-      title: 'О чём спрашивают чаще всего',
+      title: l.chatSuggestionsTitle,
       icon: Icons.forum_outlined,
       child: Wrap(
         spacing: 8,
         runSpacing: 8,
         children: [
-          for (final e in _examples)
+          for (final e in _examples(l))
             ActionChip(label: Text(e), onPressed: () => onPick(e)),
         ],
       ),

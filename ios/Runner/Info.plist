@@ -16,6 +16,14 @@
 	<string>6.0</string>
 	<key>CFBundleName</key>
 	<string>child_health_tracker</string>
+	<!-- Both are required before iOS will let the note field be dictated into,
+	     and both are shown verbatim in the system dialog — so they say what the
+	     microphone is for and where the words go, which is: into a text field
+	     the parent then reads and saves herself. -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Чтобы продиктовать заметку вместо того, чтобы набирать её одной рукой. Запись не сохраняется.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Чтобы распознать продиктованную заметку и вставить её в поле. Текст остаётся на устройстве.</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

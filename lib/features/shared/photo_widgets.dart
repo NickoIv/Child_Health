@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/child.dart';
-import '../../models/photo.dart';
 import '../../providers.dart';
 
 /// Thumbnail that fetches its own bytes.
@@ -12,10 +12,19 @@ import '../../providers.dart';
 /// it is built. The provider keeps the result alive, so scrolling back and
 /// forth does not re-read the document.
 class PhotoThumb extends ConsumerWidget {
-  const PhotoThumb({required this.photoId, this.size = 72, super.key});
+  const PhotoThumb({
+    required this.photoId,
+    this.size = 72,
+    this.album = const [],
+    super.key,
+  });
 
   final String photoId;
   final double size;
+
+  /// Every photo of the entry this thumbnail belongs to, so the viewer can
+  /// swipe between them. Empty for a thumbnail that stands alone.
+  final List<String> album;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -29,7 +38,7 @@ class PhotoThumb extends ConsumerWidget {
         height: size,
         child: photo.when(
           loading: () => Container(
-            color: theme.colorScheme.surfaceContainerHighest,
+            color: Warm.soft(theme.brightness),
             child: const Center(
               child: SizedBox(
                 width: 18,
@@ -39,7 +48,7 @@ class PhotoThumb extends ConsumerWidget {
             ),
           ),
           error: (_, _) => Container(
-            color: theme.colorScheme.surfaceContainerHighest,
+            color: Warm.soft(theme.brightness),
             child: Icon(
               Icons.broken_image_outlined,
               color: theme.colorScheme.outline,
@@ -47,14 +56,14 @@ class PhotoThumb extends ConsumerWidget {
           ),
           data: (p) => p == null
               ? Container(
-                  color: theme.colorScheme.surfaceContainerHighest,
+                  color: Warm.soft(theme.brightness),
                   child: Icon(
                     Icons.image_not_supported_outlined,
                     color: theme.colorScheme.outline,
                   ),
                 )
               : InkWell(
-                  onTap: () => _open(context, p),
+                  onTap: () => _open(context),
                   child: Image.memory(p.bytes, fit: BoxFit.cover),
                 ),
         ),
@@ -62,42 +71,220 @@ class PhotoThumb extends ConsumerWidget {
     );
   }
 
-  void _open(BuildContext context, Photo photo) {
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) => Dialog(
-        insetPadding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Flexible(
-              child: InteractiveViewer(
-                maxScale: 5,
-                child: Image.memory(photo.bytes),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      photo.caption.isEmpty
-                          ? '${photo.width}×${photo.height}'
-                          : photo.caption,
-                      style: Theme.of(dialogContext).textTheme.bodySmall,
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () => Navigator.of(dialogContext).pop(),
-                    child: const Text('Закрыть'),
-                  ),
-                ],
-              ),
-            ),
-          ],
+  void _open(BuildContext context) {
+    final ids = album.contains(photoId) ? album : [photoId];
+    showPhotoViewer(
+      context,
+      photoIds: ids,
+      initialIndex: ids.indexOf(photoId),
+    );
+  }
+}
+
+/// Opens the full-screen viewer.
+///
+/// A route rather than a dialog: a photo filling the screen wants the back
+/// gesture and the system back button to close it, which is what popping a
+/// route gives for free.
+void showPhotoViewer(
+  BuildContext context, {
+  required List<String> photoIds,
+  int initialIndex = 0,
+}) {
+  if (photoIds.isEmpty) return;
+  Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      fullscreenDialog: true,
+      builder: (_) => _PhotoViewer(
+        photoIds: photoIds,
+        initialIndex: initialIndex.clamp(0, photoIds.length - 1),
+      ),
+    ),
+  );
+}
+
+class _PhotoViewer extends StatefulWidget {
+  const _PhotoViewer({required this.photoIds, required this.initialIndex});
+
+  final List<String> photoIds;
+  final int initialIndex;
+
+  @override
+  State<_PhotoViewer> createState() => _PhotoViewerState();
+}
+
+class _PhotoViewerState extends State<_PhotoViewer> {
+  late final PageController _pages = PageController(
+    initialPage: widget.initialIndex,
+  );
+  late int _index = widget.initialIndex;
+
+  /// While a photo is zoomed in, dragging has to pan it rather than turn the
+  /// page — otherwise the first drag after pinching flicks to the next photo.
+  bool _zoomed = false;
+
+  @override
+  void dispose() {
+    _pages.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final many = widget.photoIds.length > 1;
+
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          tooltip: l.commonClose,
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: many
+            ? Text(
+                '${_index + 1} / ${widget.photoIds.length}',
+                style: const TextStyle(fontSize: 16),
+              )
+            : null,
+      ),
+      body: PageView.builder(
+        controller: _pages,
+        physics: _zoomed
+            ? const NeverScrollableScrollPhysics()
+            : const PageScrollPhysics(),
+        onPageChanged: (i) => setState(() {
+          _index = i;
+          _zoomed = false;
+        }),
+        itemCount: widget.photoIds.length,
+        itemBuilder: (context, i) => _ZoomablePhoto(
+          key: ValueKey(widget.photoIds[i]),
+          photoId: widget.photoIds[i],
+          onZoomChanged: (zoomed) {
+            if (zoomed != _zoomed) setState(() => _zoomed = zoomed);
+          },
         ),
       ),
+    );
+  }
+}
+
+class _ZoomablePhoto extends ConsumerStatefulWidget {
+  const _ZoomablePhoto({
+    required this.photoId,
+    required this.onZoomChanged,
+    super.key,
+  });
+
+  final String photoId;
+  final ValueChanged<bool> onZoomChanged;
+
+  @override
+  ConsumerState<_ZoomablePhoto> createState() => _ZoomablePhotoState();
+}
+
+class _ZoomablePhotoState extends ConsumerState<_ZoomablePhoto> {
+  final _transform = TransformationController();
+
+  @override
+  void initState() {
+    super.initState();
+    _transform.addListener(_reportZoom);
+  }
+
+  @override
+  void dispose() {
+    _transform.removeListener(_reportZoom);
+    _transform.dispose();
+    super.dispose();
+  }
+
+  void _reportZoom() {
+    // Row 0 of the matrix carries the horizontal scale; a hair above 1 counts
+    // as zoomed, so a stray pinch does not leave the page unswipeable.
+    widget.onZoomChanged(_transform.value.getMaxScaleOnAxis() > 1.01);
+  }
+
+  /// Double tap zooms to the point touched, and again to go back — the
+  /// gesture every photo viewer has, and the only one that works one-handed.
+  void _toggleZoom(TapDownDetails details) {
+    if (_transform.value.getMaxScaleOnAxis() > 1.01) {
+      _transform.value = Matrix4.identity();
+      return;
+    }
+    const scale = 2.5;
+    final position = details.localPosition;
+    _transform.value = Matrix4.identity()
+      ..translateByDouble(
+        -position.dx * (scale - 1),
+        -position.dy * (scale - 1),
+        0,
+        1,
+      )
+      ..scaleByDouble(scale, scale, scale, 1);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final photo = ref.watch(photoProvider(widget.photoId));
+
+    return photo.when(
+      loading: () => const Center(
+        child: CircularProgressIndicator(color: Colors.white),
+      ),
+      error: (_, _) => const Center(
+        child: Icon(Icons.broken_image_outlined, color: Colors.white54),
+      ),
+      data: (p) {
+        if (p == null) {
+          return const Center(
+            child: Icon(Icons.image_not_supported_outlined,
+                color: Colors.white54),
+          );
+        }
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            GestureDetector(
+              onDoubleTapDown: _toggleZoom,
+              // The handler lives on the down event; without this the double
+              // tap never registers as one.
+              onDoubleTap: () {},
+              child: InteractiveViewer(
+                transformationController: _transform,
+                minScale: 1,
+                maxScale: 5,
+                child: Center(child: Image.memory(p.bytes)),
+              ),
+            ),
+            if (p.caption.isNotEmpty)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: Container(
+                  color: Colors.black54,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  child: Text(
+                    p.caption,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }
@@ -188,7 +375,9 @@ class PhotoStrip extends StatelessWidget {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: [for (final id in photoIds) PhotoThumb(photoId: id)],
+      children: [
+        for (final id in photoIds) PhotoThumb(photoId: id, album: photoIds),
+      ],
     );
   }
 }

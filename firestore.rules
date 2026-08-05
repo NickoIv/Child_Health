@@ -31,6 +31,97 @@ service cloud.firestore {
       return ownsExisting() && ownsIncoming();
     }
 
+    // --- Family mode, phase one -------------------------------------------
+    //
+    // A second parent may be invited to *look*. Every rule below grants read
+    // and nothing else: there is no viewer write anywhere in this file, which
+    // is the property to check when reading it. The client refuses the same
+    // writes before they leave the device; this is what makes it true rather
+    // than merely likely.
+
+    // The address on the caller's verified token, lowercased. Never anything
+    // the client sent — an invitation is matched against who Firebase says
+    // the caller is.
+    function callerEmail() {
+      return signedIn() && request.auth.token.email != null
+        ? request.auth.token.email.lower()
+        : '';
+    }
+
+    // One tiny document per (owner, viewer) pair, written when an invitation
+    // is accepted. Its whole reason to exist is that this check has to be one
+    // lookup on a path derivable from the document being read, rather than a
+    // walk into a subcollection on every log, photo and reminder.
+    function readsAsFamily(ownerUid) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/family_access/$(ownerUid + '_' + request.auth.uid));
+    }
+
+    // Readable by the owner, or by someone the owner has let in.
+    function canRead() {
+      return ownsExisting() || readsAsFamily(resource.data.parent_uid);
+    }
+
+    match /children/{childId}/family_members/{memberEmail} {
+      // The owner manages the list. Nobody else can add themselves to it,
+      // which is the hinge the whole feature turns on.
+      function ownsThisChild() {
+        return signedIn()
+          && get(/databases/$(database)/documents/children/$(childId)).data.parent_uid == request.auth.uid;
+      }
+
+      // The invited person reads their own invitation and no one else's.
+      // This also authorises the collection-group query the app runs on
+      // sign-in, because it filters on exactly this field.
+      allow read: if ownsThisChild()
+                  || (callerEmail() != '' && resource.data.email == callerEmail());
+
+      allow create, delete: if ownsThisChild();
+
+      // Two ways to update. The owner may change anything. The invited person
+      // may only accept: the address, the role and the owner are pinned to
+      // what they already were, so accepting cannot turn a viewer into an
+      // owner or move the invitation to another account.
+      allow update: if ownsThisChild()
+                    || (
+                      callerEmail() != ''
+                      && resource.data.email == callerEmail()
+                      && request.resource.data.email == resource.data.email
+                      && request.resource.data.role == resource.data.role
+                      && request.resource.data.owner_uid == resource.data.owner_uid
+                      && request.resource.data.child_id == resource.data.child_id
+                      && request.resource.data.status == 'accepted'
+                      && request.resource.data.viewer_uid == request.auth.uid
+                    );
+    }
+
+    match /family_access/{grantId} {
+      // Readable by either side of the grant, so the owner can see it is
+      // there and the viewer can see they still have access.
+      allow read: if signedIn()
+                  && (resource.data.owner_uid == request.auth.uid
+                      || resource.data.viewer_uid == request.auth.uid);
+
+      // The viewer creates their own grant, and only against an invitation
+      // that is already accepted and already names them. The invitation is
+      // the authorisation; only the owner could have written it.
+      allow create: if signedIn()
+                    && grantId == request.resource.data.owner_uid + '_' + request.auth.uid
+                    && request.resource.data.viewer_uid == request.auth.uid
+                    && callerEmail() != ''
+                    && request.resource.data.email == callerEmail()
+                    && get(/databases/$(database)/documents/children/$(request.resource.data.child_id)/family_members/$(callerEmail())).data.status == 'accepted'
+                    && get(/databases/$(database)/documents/children/$(request.resource.data.child_id)/family_members/$(callerEmail())).data.viewer_uid == request.auth.uid
+                    && get(/databases/$(database)/documents/children/$(request.resource.data.child_id)/family_members/$(callerEmail())).data.owner_uid == request.resource.data.owner_uid;
+
+      // A grant is never edited. Withdrawing access is the owner deleting it,
+      // and a viewer may hand back their own.
+      allow update: if false;
+      allow delete: if signedIn()
+                    && (resource.data.owner_uid == request.auth.uid
+                        || resource.data.viewer_uid == request.auth.uid);
+    }
+
     // Parent profile: readable and writable only by its owner. The document id
     // is the uid, so no parent_uid field is needed here.
     match /users/{uid} {
@@ -38,28 +129,30 @@ service cloud.firestore {
     }
 
     match /children/{childId} {
-      allow read: if ownsExisting();
+      // A viewer finds the child through the same query the owner uses, which
+      // filters on parent_uid — see dataOwnerUidProvider in the client.
+      allow read: if ownsExisting() || readsAsFamily(resource.data.parent_uid);
       allow create: if ownsIncoming();
       allow update: if isChildOwned();
       allow delete: if ownsExisting();
     }
 
     match /development_logs/{logId} {
-      allow read: if ownsExisting();
+      allow read: if canRead();
       allow create: if ownsIncoming();
       allow update: if isChildOwned();
       allow delete: if ownsExisting();
     }
 
     match /medical_records/{recordId} {
-      allow read: if ownsExisting();
+      allow read: if canRead();
       allow create: if ownsIncoming();
       allow update: if isChildOwned();
       allow delete: if ownsExisting();
     }
 
     match /reminders/{reminderId} {
-      allow read: if ownsExisting();
+      allow read: if canRead();
       allow create: if ownsIncoming();
       allow update: if isChildOwned();
       allow delete: if ownsExisting();
@@ -70,7 +163,8 @@ service cloud.firestore {
     // held as base64. Immutable once written — a photo is never edited, so
     // update is denied outright and a change means delete plus re-upload.
     match /photos/{photoId} {
-      allow read: if ownsExisting();
+      // Seeing the child is most of why the invitation exists.
+      allow read: if canRead();
       allow create: if ownsIncoming()
                     && request.resource.data.data is string
                     && request.resource.data.data.size() < 1000000;

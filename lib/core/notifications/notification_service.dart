@@ -5,7 +5,9 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
+import '../../l10n/app_localizations.dart';
 import '../../models/reminder.dart';
+import '../l10n/labels.dart';
 import 'notification_plan.dart';
 
 /// Reminders the device raises by itself.
@@ -15,17 +17,27 @@ import 'notification_plan.dart';
 /// send, this fires what the parent has already planned, and the two can be on
 /// at the same time. Nothing here talks to Firebase.
 class NotificationService {
-  NotificationService([FlutterLocalNotificationsPlugin? plugin])
+  NotificationService([FlutterLocalNotificationsPlugin? plugin, this._l10n])
     : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
 
   final FlutterLocalNotificationsPlugin _plugin;
+
+  /// Resolved from the saved language before the first frame, because a
+  /// notification channel is named once, when it is created, and the text can
+  /// be sitting in the phone's settings long after the app is closed.
+  ///
+  /// Null in tests and in the offline demo, where nothing is scheduled anyway.
+  final AppLocalizations? _l10n;
 
   /// One channel for everything: a parent who silences "reminders" means all
   /// of them, and three near-identical rows in Android settings would only be
   /// something else to get wrong.
   static const _channelId = 'child_health_reminders';
-  static const _channelName = 'Напоминания';
-  static const _channelDescription =
+
+  String get _channelName => _l10n?.notificationChannelName ?? 'Напоминания';
+
+  String get _channelDescription =>
+      _l10n?.notificationChannelDescription ??
       'Прививки, приём лекарств и визиты к врачу';
 
   bool _ready = false;
@@ -69,7 +81,7 @@ class NotificationService {
             AndroidFlutterLocalNotificationsPlugin
           >()
           ?.createNotificationChannel(
-            const AndroidNotificationChannel(
+            AndroidNotificationChannel(
               _channelId,
               _channelName,
               description: _channelDescription,
@@ -136,7 +148,7 @@ class NotificationService {
   Future<void> syncReminder(Reminder reminder) async {
     if (!_ready || !supportsScheduling) return;
     await cancelReminder(reminder.id);
-    for (final slot in slotsFor(reminder)) {
+    for (final slot in slotsFor(reminder, typeLabel: _typeLabel)) {
       await _zonedSchedule(slot);
     }
   }
@@ -158,8 +170,13 @@ class NotificationService {
     await _plugin.cancelAll();
   }
 
+  /// Falls back to the model's own Russian label when no localizations were
+  /// handed in, which is the offline demo and the tests.
+  String _typeLabel(ReminderType type) =>
+      _l10n == null ? type.label : type.localizedLabel(_l10n);
+
   Future<void> _zonedSchedule(NotificationSlot slot) async {
-    final details = const NotificationDetails(
+    final details = NotificationDetails(
       android: AndroidNotificationDetails(
         _channelId,
         _channelName,
@@ -167,7 +184,7 @@ class NotificationService {
         importance: Importance.high,
         priority: Priority.high,
       ),
-      iOS: DarwinNotificationDetails(),
+      iOS: const DarwinNotificationDetails(),
     );
 
     Future<void> attempt(AndroidScheduleMode mode) => _plugin.zonedSchedule(

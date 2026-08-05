@@ -2,28 +2,46 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/theme/app_theme.dart';
+import '../../l10n/app_localizations.dart';
 import '../children/children_screen.dart';
 
-final dayMonth = DateFormat('d MMMM', 'ru_RU');
-final dayMonthYear = DateFormat('d MMMM y', 'ru_RU');
-final shortDate = DateFormat('dd.MM.yyyy', 'ru_RU');
-final timeOfDay = DateFormat('HH:mm', 'ru_RU');
+/// Dates and times in the language the parent chose.
+///
+/// These were pinned to `ru_RU` when Russian was the only language, and every
+/// one of them kept speaking Russian after the interface stopped — a Kazakh
+/// screen with «15 сентября» on it is the single most obvious way an app
+/// admits it was translated rather than built to be translated.
+///
+/// [Intl.defaultLocale] is set from the chosen locale as the app builds, so
+/// these read it at call time rather than at import time.
+DateFormat get dayMonth => DateFormat('d MMMM', Intl.defaultLocale);
+DateFormat get dayMonthYear => DateFormat('d MMMM y', Intl.defaultLocale);
+DateFormat get shortDate => DateFormat('dd.MM.yyyy', Intl.defaultLocale);
+
+/// Twenty-four hour everywhere: this is a medical record, and "3:15" without
+/// am/pm is ambiguous in exactly the entries that matter most.
+DateFormat get timeOfDay => DateFormat('HH:mm', Intl.defaultLocale);
 
 /// Page padding that keeps content readable on a wide browser window instead
 /// of stretching a single column across 2000 px.
 class PageBody extends StatelessWidget {
-  const PageBody({required this.children, super.key});
+  const PageBody({required this.children, this.maxWidth = 1080, super.key});
 
   final List<Widget> children;
+
+  /// Screens that read as a single column — the diary timeline — set this
+  /// narrower than the dashboard's grid of cards.
+  final double maxWidth;
 
   @override
   Widget build(BuildContext context) {
     return Align(
       alignment: Alignment.topCenter,
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1100),
+        constraints: BoxConstraints(maxWidth: maxWidth),
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
           children: children,
         ),
       ),
@@ -56,7 +74,7 @@ class SectionCard extends StatelessWidget {
     final accent = accentColor ?? theme.colorScheme.primary;
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(Warm.majorGap),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -72,17 +90,22 @@ class SectionCard extends StatelessWidget {
                       // A tinted chip rather than a bare glyph: it gives each
                       // card a recognisable identity when scrolling past.
                       Container(
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(9),
                         decoration: BoxDecoration(
                           color: accent.withValues(alpha: 0.13),
-                          borderRadius: BorderRadius.circular(11),
+                          borderRadius: BorderRadius.circular(
+                            Warm.chipRadius,
+                          ),
                         ),
-                        child: Icon(icon, size: 18, color: accent),
+                        child: Icon(icon, size: 19, color: accent),
                       ),
                       const SizedBox(width: 12),
                     ],
                     Expanded(
-                      child: Text(title, style: theme.textTheme.titleMedium),
+                      // The section size, not the body size. A card heading
+                      // that matches the text under it makes the reader find
+                      // the structure instead of being handed it.
+                      child: Text(title, style: theme.textTheme.titleLarge),
                     ),
                   ],
                 );
@@ -109,11 +132,124 @@ class SectionCard extends StatelessWidget {
                 );
               },
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: Warm.cardGap),
             child,
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Date and time of an event, as two fields side by side.
+///
+/// One control for both, used everywhere something is recorded, because the
+/// two are always changed for the same reason: the feed happened at three in
+/// the morning and is being written down at nine. Defaults to whatever the
+/// caller passes, which is now for a new entry — so the common case needs no
+/// taps at all.
+class DateTimeField extends StatelessWidget {
+  const DateTimeField({
+    required this.value,
+    required this.onChanged,
+    this.dateLabel,
+    this.timeLabel,
+    super.key,
+  });
+
+  final DateTime value;
+  final ValueChanged<DateTime> onChanged;
+
+  /// Default to the plain "Date" and "Time" of the interface language; the
+  /// night sheet overrides them with "fell asleep" and "woke up".
+  final String? dateLabel;
+  final String? timeLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final dateLabel = this.dateLabel ?? l.commonDate;
+    final timeLabel = this.timeLabel ?? l.commonTime;
+
+    final date = InkWell(
+      onTap: () => _pickDate(context),
+      borderRadius: BorderRadius.circular(12),
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: dateLabel,
+          prefixIcon: const Icon(Icons.event_outlined, size: 20),
+        ),
+        child: Text(
+          shortDate.format(value),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
+    );
+
+    final time = InkWell(
+      onTap: () => _pickTime(context),
+      borderRadius: BorderRadius.circular(12),
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: timeLabel,
+          prefixIcon: const Icon(Icons.schedule_outlined, size: 20),
+        ),
+        child: Text(
+          timeOfDay.format(value),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
+    );
+
+    // Side by side where there is room, stacked where there is not. Inside a
+    // dialog on a phone the pair gets barely 250px, and two labelled fields
+    // with prefix icons do not fit in that — they overflowed rather than
+    // shrank, which is the one thing a form must never do.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 320) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [date, const SizedBox(height: 12), time],
+          );
+        }
+        return Row(
+          children: [
+            Expanded(flex: 3, child: date),
+            const SizedBox(width: 12),
+            Expanded(flex: 2, child: time),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _pickDate(BuildContext context) async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: value,
+      firstDate: DateTime(now.year - 18),
+      // Nothing recorded here has happened in the future.
+      lastDate: now,
+    );
+    if (picked == null) return;
+    // Only the calendar day moves; the clock time stays as it was.
+    onChanged(
+      DateTime(picked.year, picked.month, picked.day, value.hour, value.minute),
+    );
+  }
+
+  Future<void> _pickTime(BuildContext context) async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(value),
+    );
+    if (picked == null) return;
+    onChanged(
+      DateTime(value.year, value.month, value.day, picked.hour, picked.minute),
     );
   }
 }
@@ -162,6 +298,7 @@ class EmptyState extends StatelessWidget {
     required this.icon,
     required this.message,
     this.hint,
+    this.compact = false,
     super.key,
   });
 
@@ -169,33 +306,38 @@ class EmptyState extends StatelessWidget {
   final String message;
   final String? hint;
 
+  /// Inside a dashboard card, where the full-page version left a hand's width
+  /// of nothing above and below a single line of text.
+  final bool compact;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final circle = compact ? 40.0 : 68.0;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 32),
+      padding: EdgeInsets.symmetric(vertical: compact ? 10 : 32),
       child: Column(
         children: [
           Container(
-            width: 68,
-            height: 68,
+            width: circle,
+            height: circle,
             decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withValues(alpha: 0.08),
+              color: Warm.accent.withValues(alpha: 0.10),
               shape: BoxShape.circle,
             ),
             child: Icon(
               icon,
-              size: 30,
-              color: theme.colorScheme.primary.withValues(alpha: 0.7),
+              size: compact ? 20 : 30,
+              color: Warm.accent.withValues(alpha: 0.85),
             ),
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: compact ? 8 : 14),
           Text(
             message,
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyLarge?.copyWith(
               fontWeight: FontWeight.w600,
-              color: theme.colorScheme.onSurface,
+              color: Warm.onCard(theme.brightness),
             ),
           ),
           if (hint != null) ...[
@@ -204,7 +346,7 @@ class EmptyState extends StatelessWidget {
               hint!,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.outline,
+                color: Warm.onCardSoft(theme.brightness),
               ),
             ),
           ],
@@ -218,23 +360,17 @@ class EmptyState extends StatelessWidget {
 ///
 /// Firestore reports problems as English exception dumps with a console URL
 /// in them; showing that raw is no help to anyone.
-String friendlyError(Object error) {
+String friendlyError(AppLocalizations l, Object error) {
   final text = error.toString();
   if (text.contains('failed-precondition') && text.contains('index')) {
-    return 'База данных достраивает индексы. Это занимает несколько минут '
-        'после первого развёртывания — обновите страницу чуть позже.';
+    return l.errorIndexBuilding;
   }
-  if (text.contains('permission-denied')) {
-    return 'Нет доступа к этим данным. Попробуйте выйти и войти заново.';
-  }
+  if (text.contains('permission-denied')) return l.errorPermission;
   if (text.contains('unavailable') || text.contains('network')) {
-    return 'Нет связи с сервером. Изменения сохранятся локально и '
-        'синхронизируются, когда соединение вернётся.';
+    return l.errorOffline;
   }
-  if (text.contains('unauthenticated')) {
-    return 'Сессия истекла. Войдите в учётную запись заново.';
-  }
-  return 'Не удалось загрузить данные. Попробуйте обновить страницу.';
+  if (text.contains('unauthenticated')) return l.errorSession;
+  return l.errorGeneric;
 }
 
 /// Error panel with the human-readable message up front and the raw text
@@ -248,6 +384,7 @@ class ErrorState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 24),
       child: Column(
@@ -259,7 +396,7 @@ class ErrorState extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            friendlyError(error),
+            friendlyError(l, error),
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium,
           ),
@@ -268,15 +405,12 @@ class ErrorState extends StatelessWidget {
             FilledButton.tonalIcon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh),
-              label: const Text('Повторить'),
+              label: Text(l.commonRetry),
             ),
           ],
           const SizedBox(height: 12),
           ExpansionTile(
-            title: Text(
-              'Техническая информация',
-              style: theme.textTheme.labelSmall,
-            ),
+            title: Text(l.commonTechnical, style: theme.textTheme.labelSmall),
             shape: const Border(),
             collapsedShape: const Border(),
             children: [
@@ -308,6 +442,7 @@ class NoChildPlaceholder extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     return Center(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -316,31 +451,20 @@ class NoChildPlaceholder extends ConsumerWidget {
           children: [
             // Warmer than "profile not created". The parent has not failed to
             // do something; the app simply does not know the child yet.
-            const EmptyState(
+            EmptyState(
               icon: Icons.child_care_outlined,
-              message: 'Давайте познакомимся',
-              hint: 'Расскажите о малыше — дальше приложение подстроится '
-                  'под его возраст и само составит календарь прививок',
+              message: l.noChildTitle,
+              hint: l.noChildHint,
             ),
             const SizedBox(height: 20),
             FilledButton.icon(
               onPressed: () => addChildFlow(context, ref),
               icon: const Icon(Icons.add),
-              label: const Text('Добавить ребёнка'),
+              label: Text(l.addChild),
             ),
           ],
         ),
       ),
     );
   }
-}
-
-/// Russian noun agreement: 1 день / 2 дня / 5 дней.
-String plural(int n, String one, String few, String many) {
-  final mod100 = n % 100;
-  final mod10 = n % 10;
-  if (mod100 >= 11 && mod100 <= 14) return '$n $many';
-  if (mod10 == 1) return '$n $one';
-  if (mod10 >= 2 && mod10 <= 4) return '$n $few';
-  return '$n $many';
 }

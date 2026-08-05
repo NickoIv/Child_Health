@@ -5,16 +5,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'ai/ai_config.dart';
 import 'ai/assistant_service.dart';
 import 'core/analytics/daily_care.dart';
+import 'core/analytics/daily_digest.dart';
 import 'core/analytics/illness_stats.dart';
+import 'core/analytics/shared_moments.dart';
+import 'core/analytics/weekly_story.dart';
 import 'core/notifications/notification_service.dart';
+import 'core/voice/dictation.dart';
 import 'data/auth_repository.dart';
+import 'data/family_repository.dart';
 import 'data/memory_repository.dart';
 import 'data/photo_repository.dart';
+import 'data/read_only_repositories.dart';
 import 'data/repositories.dart';
 import 'data/user_repository.dart';
 import 'models/app_user.dart';
 import 'models/child.dart';
 import 'models/development_log.dart';
+import 'models/family_member.dart';
 import 'models/medical_record.dart';
 import 'models/photo.dart';
 import 'models/reminder.dart';
@@ -43,29 +50,125 @@ final memoryDatabaseProvider = Provider<MemoryDatabase>((ref) {
   return db;
 });
 
-// --- Repositories ---------------------------------------------------------
-// Swapping these four overrides for Firestore implementations is the whole
-// migration, as far as the UI is concerned.
+// --- Family access --------------------------------------------------------
+// Who is holding the phone, and what they are allowed to do with it.
 
-final childRepositoryProvider = Provider<ChildRepository>(
+final familyRepositoryProvider = Provider<FamilyRepository>((ref) {
+  final repository = MemoryFamilyRepository();
+  ref.onDispose(repository.dispose);
+  return repository;
+});
+
+/// Address of the signed-in account, lowercased. Empty while signed out.
+final currentEmailProvider = Provider<String>((ref) {
+  return normalizeEmail(ref.watch(authStateProvider).value?.email ?? '');
+});
+
+/// Every invitation addressed to this account, pending and accepted.
+final myInvitationsProvider = StreamProvider<List<FamilyMember>>((ref) {
+  final email = ref.watch(currentEmailProvider);
+  if (email.isEmpty) return Stream.value(const []);
+  return ref.watch(familyRepositoryProvider).watchInvitationsFor(email);
+});
+
+/// The invitation this account has taken up, if any.
+///
+/// One, not a list: phase one gives a viewer access to the family that
+/// invited them, and a father who has been invited by two different mothers
+/// is a problem to have later rather than a case to design for now.
+final familyAccessProvider = Provider<FamilyMember?>((ref) {
+  final invitations =
+      ref.watch(myInvitationsProvider).value ?? const <FamilyMember>[];
+  for (final invitation in invitations) {
+    if (invitation.isAccepted) return invitation;
+  }
+  return null;
+});
+
+/// Invitations still waiting on an answer from this account.
+final pendingInvitationsProvider = Provider<List<FamilyMember>>((ref) {
+  final invitations =
+      ref.watch(myInvitationsProvider).value ?? const <FamilyMember>[];
+  return invitations.where((invitation) => invitation.isPending).toList();
+});
+
+/// Whose data this session is looking at.
+///
+/// The viewer's own uid owns nothing; every document he is allowed to see
+/// carries the *inviter's* uid, so that is what the queries are scoped to.
+/// This one line is what makes read access work without a second code path
+/// through every repository.
+final dataOwnerUidProvider = Provider<String>((ref) {
+  return ref.watch(familyAccessProvider)?.ownerUid ??
+      ref.watch(currentUidProvider);
+});
+
+final accessRoleProvider = Provider<FamilyRole>((ref) {
+  return ref.watch(familyAccessProvider) == null
+      ? FamilyRole.owner
+      : FamilyRole.viewer;
+});
+
+/// The single question the interface asks before offering any control that
+/// writes something.
+final isReadOnlyProvider = Provider<bool>((ref) {
+  return ref.watch(accessRoleProvider) == FamilyRole.viewer;
+});
+
+// --- Repositories ---------------------------------------------------------
+// Swapping the raw overrides for Firestore implementations is the whole
+// migration, as far as the UI is concerned.
+//
+// Each public provider is the raw one behind a read-only wrapper. The split
+// is deliberate: `main.dart` overrides the raw providers, so a viewer cannot
+// be handed a writable repository by a stack that forgot to wrap it.
+
+final rawChildRepositoryProvider = Provider<ChildRepository>(
   (ref) => MemoryChildRepository(ref.watch(memoryDatabaseProvider)),
 );
 
-final logRepositoryProvider = Provider<DevelopmentLogRepository>(
+final childRepositoryProvider = Provider<ChildRepository>((ref) {
+  final raw = ref.watch(rawChildRepositoryProvider);
+  return ref.watch(isReadOnlyProvider) ? ReadOnlyChildRepository(raw) : raw;
+});
+
+final rawLogRepositoryProvider = Provider<DevelopmentLogRepository>(
   (ref) => MemoryDevelopmentLogRepository(ref.watch(memoryDatabaseProvider)),
 );
 
-final medicalRepositoryProvider = Provider<MedicalRecordRepository>(
+final logRepositoryProvider = Provider<DevelopmentLogRepository>((ref) {
+  final raw = ref.watch(rawLogRepositoryProvider);
+  return ref.watch(isReadOnlyProvider) ? ReadOnlyLogRepository(raw) : raw;
+});
+
+final rawMedicalRepositoryProvider = Provider<MedicalRecordRepository>(
   (ref) => MemoryMedicalRecordRepository(ref.watch(memoryDatabaseProvider)),
 );
 
-final reminderRepositoryProvider = Provider<ReminderRepository>(
+final medicalRepositoryProvider = Provider<MedicalRecordRepository>((ref) {
+  final raw = ref.watch(rawMedicalRepositoryProvider);
+  return ref.watch(isReadOnlyProvider)
+      ? ReadOnlyMedicalRecordRepository(raw)
+      : raw;
+});
+
+final rawReminderRepositoryProvider = Provider<ReminderRepository>(
   (ref) => MemoryReminderRepository(ref.watch(memoryDatabaseProvider)),
 );
 
-final photoRepositoryProvider = Provider<PhotoRepository>(
+final reminderRepositoryProvider = Provider<ReminderRepository>((ref) {
+  final raw = ref.watch(rawReminderRepositoryProvider);
+  return ref.watch(isReadOnlyProvider) ? ReadOnlyReminderRepository(raw) : raw;
+});
+
+final rawPhotoRepositoryProvider = Provider<PhotoRepository>(
   (ref) => MemoryPhotoRepository(),
 );
+
+final photoRepositoryProvider = Provider<PhotoRepository>((ref) {
+  final raw = ref.watch(rawPhotoRepositoryProvider);
+  return ref.watch(isReadOnlyProvider) ? ReadOnlyPhotoRepository(raw) : raw;
+});
 
 final userRepositoryProvider = Provider<UserRepository>(
   (ref) => MemoryUserRepository(),
@@ -85,6 +188,16 @@ final unitSystemProvider = Provider<UnitSystem>((ref) {
       UnitSystem.metric;
 });
 
+/// The microphone behind the note field.
+///
+/// Unavailable by default, exactly like the repositories above: a widget test
+/// gets a recogniser that politely declines and the button hides itself,
+/// rather than a platform channel that is not there. `main.dart` overrides
+/// this with the real one.
+final dictationProvider = Provider<Dictation>(
+  (ref) => const UnavailableDictation(),
+);
+
 /// One photo, fetched on demand.
 ///
 /// A photo never changes after it is written, so this is a plain future
@@ -98,9 +211,18 @@ final photoProvider = FutureProvider.family<Photo?, String>((ref, id) async {
 // --- Queries --------------------------------------------------------------
 
 final childrenProvider = StreamProvider<List<Child>>((ref) {
+  // Scoped to whoever owns the record, which for an invited viewer is not
+  // himself. See [dataOwnerUidProvider].
   return ref
       .watch(childRepositoryProvider)
-      .watchChildren(ref.watch(currentUidProvider));
+      .watchChildren(ref.watch(dataOwnerUidProvider));
+});
+
+/// Everyone with access to the child currently on screen.
+final familyMembersProvider = StreamProvider<List<FamilyMember>>((ref) {
+  final child = ref.watch(selectedChildProvider);
+  if (child == null) return Stream.value(const []);
+  return ref.watch(familyRepositoryProvider).watchMembers(child.id);
 });
 
 /// Id of the child currently being viewed. Null means "not chosen yet", in
@@ -246,6 +368,38 @@ final measurementsProvider = Provider<List<DevelopmentLog>>((ref) {
 /// Today's feeds, nappies and sleep for the selected child.
 final dailyCareProvider = Provider<DailyCare>((ref) {
   return dailyCareFor(
+    ref.watch(logsProvider).value ?? const <DevelopmentLog>[],
+    DateTime.now(),
+  );
+});
+
+/// Today, condensed for someone who was not there.
+///
+/// Built from the same logs the diary draws, so there is no second store to
+/// keep in step and nothing to backfill — see `core/analytics/daily_digest`.
+final dailyDigestProvider = Provider<DailyDigest>((ref) {
+  return buildDailyDigest(
+    ref.watch(logsProvider).value ?? const <DevelopmentLog>[],
+    DateTime.now(),
+  );
+});
+
+/// Today's photographs, newest first and never more than three.
+///
+/// Same logs, same photo ids as the diary and the digest — see
+/// `core/analytics/shared_moments`.
+final recentMomentsProvider = Provider<List<Moment>>((ref) {
+  return recentMoments(
+    ref.watch(logsProvider).value ?? const <DevelopmentLog>[],
+    DateTime.now(),
+  );
+});
+
+/// The last seven days, for the card both parents keep.
+///
+/// Nothing is stored for it — see `core/analytics/weekly_story`.
+final weeklyStoryProvider = Provider<WeeklyStory>((ref) {
+  return buildWeeklyStory(
     ref.watch(logsProvider).value ?? const <DevelopmentLog>[],
     DateTime.now(),
   );

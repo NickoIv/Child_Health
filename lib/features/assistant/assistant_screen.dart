@@ -2,11 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../core/theme/app_theme.dart';
 import '../../knowledge/article.dart';
 import '../../knowledge/knowledge_base.dart';
 import '../../providers.dart';
+import '../dashboard/dashboard_screen.dart';
+import '../dashboard/pattern_card.dart';
+import '../dashboard/reflection_card.dart';
+import '../family/digest_card.dart';
+import '../family/moments_card.dart';
+import '../family/weekly_story_card.dart';
+import '../reports/export_sheet.dart';
 import '../shared/widgets.dart';
+import 'context_block.dart';
 
 /// Home of the knowledge base: search, red-flag check, and material picked
 /// for the child's current age.
@@ -35,26 +44,87 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
 
     return PageBody(
       children: [
+        // Above the search field: the facts a question about a child usually
+        // starts with, so she does not have to go and look them up first.
+        const ChildContextBlock(),
+        const SizedBox(height: Warm.majorGap),
         _SearchField(
           controller: _controller,
           onChanged: (v) => setState(() => _query = v),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: Warm.majorGap),
         if (_query.trim().isNotEmpty)
           _SearchResults(query: _query, results: results)
         else ...[
+          // One gap between stacked cards, everywhere on this tab. The old
+          // mix of 12, 16 and 24 read as three different screens scrolled
+          // into one.
           const _RedFlagCard(),
-          const SizedBox(height: 12),
+          const SizedBox(height: Warm.majorGap),
           const _AskCard(),
-          const SizedBox(height: 16),
+          const SizedBox(height: Warm.majorGap),
           if (ageMonths != null) ...[
             _ForAgeCard(ageMonths: ageMonths, childName: child!.name),
-            const SizedBox(height: 16),
+            const SizedBox(height: Warm.majorGap),
           ],
           const _SectionsCard(),
+          const SizedBox(height: 28),
+          // Everything the home screen used to carry and no longer does.
+          // It lives here because this is the tab a parent opens to read
+          // rather than to log — see [DashboardScreen].
+          const _InsightsSection(),
           const SizedBox(height: 16),
           const _Disclaimer(),
         ],
+      ],
+    );
+  }
+}
+
+/// The reading half of the app, in one place.
+///
+/// Patterns, the evening reflection, the day for the parent who was out, the
+/// week worth keeping, today's photographs, the eight configurable blocks and
+/// the exports. Each of these draws nothing when it has nothing to say, so on
+/// a quiet Tuesday this section is a heading and a button.
+class _InsightsSection extends ConsumerWidget {
+  const _InsightsSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final child = ref.watch(selectedChildProvider);
+    if (child == null) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(l.assistantInsights, style: theme.textTheme.titleLarge),
+        const SizedBox(height: Warm.majorGap),
+
+        // For the parent who was not in the room, and nothing for the one who
+        // was: both of these draw themselves only for a viewer.
+        const DigestCard(),
+        const MomentsCard(),
+
+        const PatternCard(),
+        const ReflectionCard(),
+        const SizedBox(height: Warm.majorGap),
+
+        const WeeklyStoryCard(),
+
+        // The blocks a parent arranged in settings, still hers to arrange.
+        const DashboardBlocks(),
+
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: () => showExportSheet(context, childId: child.id),
+            icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
+            label: Text(l.reportExport),
+          ),
+        ),
       ],
     );
   }
@@ -68,12 +138,13 @@ class _SearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return TextField(
       controller: controller,
       onChanged: onChanged,
       textInputAction: TextInputAction.search,
       decoration: InputDecoration(
-        hintText: 'Температура, сыпь, не спит, прикорм…',
+        hintText: l.assistantSearchHint,
         prefixIcon: const Icon(Icons.search),
         suffixIcon: controller.text.isEmpty
             ? null
@@ -97,22 +168,23 @@ class _SearchResults extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     if (results.isEmpty) {
       return SectionCard(
-        title: 'Ничего не нашлось',
+        title: l.assistantNothingFound,
         icon: Icons.search_off,
         child: EmptyState(
           icon: Icons.help_outline,
-          message: 'По запросу «$query» в базе пока нет статьи',
-          hint: 'Попробуйте другое слово — например, «температура» или «сыпь»',
+          message: l.assistantNoArticle(query),
+          hint: l.assistantTryAnother,
         ),
       );
     }
     return SectionCard(
-      title: 'Найдено',
+      title: l.assistantFound,
       icon: Icons.search,
       action: Text(
-        plural(results.length, 'статья', 'статьи', 'статей'),
+        l.assistantArticlesCount(results.length),
         style: Theme.of(context).textTheme.bodySmall,
       ),
       child: Column(
@@ -130,6 +202,7 @@ class _RedFlagCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
     return Card(
       color: StatusColors.alert.withValues(alpha: 0.10),
@@ -158,14 +231,14 @@ class _RedFlagCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Проверить тревожные признаки',
+                      l.assistantTriage,
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Несколько вопросов — и понятно, ждать или звонить 103',
+                      l.assistantTriageHint,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -188,6 +261,7 @@ class _AskCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final configured = ref.watch(assistantServiceProvider).isConfigured;
     return Card(
@@ -216,7 +290,7 @@ class _AskCard extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Спросить своими словами',
+                      l.assistantChat,
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
@@ -224,8 +298,8 @@ class _AskCard extends ConsumerWidget {
                     const SizedBox(height: 2),
                     Text(
                       configured
-                          ? 'Ответ по базе приложения, со ссылками на статьи'
-                          : 'ИИ пока не подключён — откройте, чтобы узнать как',
+                          ? l.assistantChatHint
+                          : l.assistantChatOff,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -250,6 +324,7 @@ class _ForAgeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final relevant = articlesForAge(ageMonths)
         .where((a) => a.section != KbSection.urgent)
         .take(5)
@@ -257,10 +332,10 @@ class _ForAgeCard extends StatelessWidget {
     if (relevant.isEmpty) return const SizedBox.shrink();
 
     return SectionCard(
-      title: 'Актуально сейчас',
+      title: l.assistantRelevant,
       icon: Icons.auto_awesome_outlined,
       action: Text(
-        '$childName, $ageMonths мес.',
+        l.assistantChildAge(childName, ageMonths),
         style: Theme.of(context).textTheme.bodySmall,
       ),
       child: Column(
@@ -275,9 +350,10 @@ class _SectionsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
     return SectionCard(
-      title: 'Все темы',
+      title: l.assistantAllTopics,
       icon: Icons.menu_book_outlined,
       child: Column(
         children: [
@@ -388,13 +464,12 @@ class _Disclaimer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(
-          alpha: 0.5,
-        ),
+        color: Warm.soft(theme.brightness),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -408,9 +483,7 @@ class _Disclaimer extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Материалы основаны на рекомендациях ВОЗ, NICE и Американской '
-              'академии педиатрии. Это справочная информация для родителей, '
-              'а не замена осмотру. Окончательное решение всегда за врачом.',
+              l.assistantDisclaimer,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),

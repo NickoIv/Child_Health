@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/l10n/app_locale.dart';
+import '../../core/l10n/auth_errors.dart';
+import '../../core/l10n/labels.dart';
 import '../../core/theme/app_theme.dart';
+import '../../l10n/app_localizations.dart';
 import '../../data/auth_repository.dart';
 import '../dashboard/dashboard_screen.dart';
 import '../../core/theme/theme_mode.dart';
@@ -35,6 +39,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l = AppLocalizations.of(context);
     final auth = ref.watch(authStateProvider).value;
     final profile = ref.watch(userProfileProvider).value;
     final settings = profile?.settings ?? const UserSettings();
@@ -53,10 +58,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             IconButton(
               onPressed: () => context.go('/'),
               icon: const Icon(Icons.arrow_back),
-              tooltip: 'Назад',
+              tooltip: l.commonBack,
             ),
             Expanded(
-              child: Text('Профиль и настройки',
+              child: Text(l.settingsTitle,
                   style: theme.textTheme.titleLarge),
             ),
           ],
@@ -64,14 +69,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         const SizedBox(height: 12),
 
         SectionCard(
-          title: 'Родитель',
+          title: l.settingsParent,
           icon: Icons.person_outline,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               TextField(
                 controller: _name,
-                decoration: const InputDecoration(labelText: 'Как вас зовут'),
+                decoration: InputDecoration(labelText: l.settingsYourName),
                 onSubmitted: (_) => _save(settings),
                 onTapOutside: (_) => _save(settings),
               ),
@@ -100,7 +105,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         const SizedBox(height: 16),
 
         SectionCard(
-          title: 'Единицы измерения',
+          title: l.settingsUnits,
           icon: Icons.straighten,
           accentColor: VizPalette.slot(0, theme.brightness),
           child: Column(
@@ -111,9 +116,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   for (final u in UnitSystem.values)
                     ButtonSegment(
                       value: u,
-                      label: Text(
-                        u == UnitSystem.metric ? 'см, кг' : 'in, lb',
-                      ),
+                      label: Text(u.localizedLabel(l)),
                     ),
                 ],
                 selected: {settings.unitSystem},
@@ -123,17 +126,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                'Измерения всегда хранятся в метрических единицах и '
-                'пересчитываются только для показа — поэтому переключение '
-                'ничего не портит в уже введённых данных.',
+                l.settingsUnitsHint,
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
               const SizedBox(height: 6),
               Text(
-                'Температура остаётся в °C в обеих системах: все пороги в '
-                'приложении и в рекомендациях указаны в градусах Цельсия.',
+                l.settingsTemperatureHint,
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -144,7 +144,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         const SizedBox(height: 16),
 
         SectionCard(
-          title: 'Оформление',
+          title: l.settingsAppearance,
           icon: Icons.palette_outlined,
           accentColor: VizPalette.slot(6, theme.brightness),
           child: RadioGroup<ThemePreference>(
@@ -158,8 +158,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   RadioListTile<ThemePreference>(
                     contentPadding: EdgeInsets.zero,
                     value: t,
-                    title: Text(t.label),
-                    subtitle: t.hint.isEmpty ? null : Text(t.hint),
+                    title: Text(t.localizedLabel(l)),
+                    subtitle: t == ThemePreference.auto
+                        ? Text(l.themeAutoHint)
+                        : null,
                   ),
               ],
             ),
@@ -171,7 +173,37 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         const SizedBox(height: 16),
 
         SectionCard(
-          title: 'Уведомления',
+          title: l.settingsLanguage,
+          icon: Icons.translate_outlined,
+          accentColor: VizPalette.slot(4, theme.brightness),
+          child: RadioGroup<Locale>(
+            groupValue: ref.watch(localeProvider),
+            onChanged: (value) {
+              if (value != null) ref.read(localeProvider.notifier).set(value);
+            },
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (final locale in supportedLocales)
+                  RadioListTile<Locale>(
+                    contentPadding: EdgeInsets.zero,
+                    value: locale,
+                    // Each language names itself: a parent looking for Kazakh
+                    // is looking for «Қазақша», not for its Russian name.
+                    title: Text(switch (locale.languageCode) {
+                      'en' => l.languageEnglish,
+                      'kk' => l.languageKazakh,
+                      _ => l.languageRussian,
+                    }),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        SectionCard(
+          title: l.settingsNotifications,
           icon: Icons.notifications_outlined,
           accentColor: VizPalette.slot(2, theme.brightness),
           child: Column(
@@ -183,10 +215,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 onChanged: _busyWithPush
                     ? null
                     : (v) => _toggleNotifications(settings, v),
-                title: const Text('Напоминать о прививках и лекарствах'),
-                subtitle: _busyWithPush
-                    ? const Text('Подключаю…')
-                    : null,
+                title: Text(l.settingsRemindMe),
+                subtitle: _busyWithPush ? Text(l.settingsConnecting) : null,
               ),
               if (_pushMessage != null) ...[
                 const SizedBox(height: 4),
@@ -201,10 +231,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ],
               const SizedBox(height: 8),
               Text(
-                'Работает, пока приложение установлено на домашний экран '
-                'или открыто в браузере. Разрешение спрашивает сам браузер — '
-                'если откажете, включить снова можно будет только в его '
-                'настройках сайта.',
+                l.settingsNotificationsHint,
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -215,7 +242,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         const SizedBox(height: 16),
 
         SectionCard(
-          title: 'Учётная запись',
+          title: l.accountMenu,
           icon: Icons.manage_accounts_outlined,
           accentColor: StatusColors.serious,
           child: Column(
@@ -231,28 +258,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   FilledButton.tonalIcon(
                     onPressed: _changePassword,
                     icon: const Icon(Icons.key_outlined),
-                    label: const Text('Сменить пароль'),
+                    label: Text(l.settingsChangePassword),
                   ),
                   FilledButton.tonalIcon(
                     onPressed: () =>
                         ref.read(authRepositoryProvider).signOut(),
                     icon: const Icon(Icons.logout),
-                    label: const Text('Выйти'),
+                    label: Text(l.settingsSignOut),
                   ),
                 ],
               ),
               const SizedBox(height: 20),
               const Divider(),
               const SizedBox(height: 12),
-              Text(
-                'Удаление учётной записи',
-                style: theme.textTheme.titleSmall,
-              ),
+              Text(l.settingsDeleteSection, style: theme.textTheme.titleSmall),
               const SizedBox(height: 6),
               Text(
-                'Вместе с записью безвозвратно удаляются все дети, дневник, '
-                'медкарта и напоминания. Отменить это будет нельзя, поэтому '
-                'сначала выгрузите PDF-отчёт, если он вам нужен.',
+                l.settingsDeleteWarning,
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -266,7 +288,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     foregroundColor: theme.colorScheme.error,
                   ),
                   icon: const Icon(Icons.delete_forever_outlined),
-                  label: const Text('Удалить учётную запись'),
+                  label: Text(l.settingsDeleteAccount),
                 ),
               ),
             ],
@@ -277,15 +299,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Future<void> _changePassword() async {
+    final l = AppLocalizations.of(context);
     // Asked before the dialog opens: a form whose only possible outcome is a
     // refusal is worse than a sentence explaining why.
     final user = ref.read(authStateProvider).value;
     if (user != null && !user.hasPassword) {
-      _tell(
-        'У этой учётной записи нет пароля: вход выполняется через Google. '
-        'Пароль меняется в настройках аккаунта Google',
-        error: true,
-      );
+      _tell(l.authErrorNoPassword, error: true);
       return;
     }
 
@@ -302,9 +321,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             currentPassword: result.current,
             newPassword: result.next,
           );
-      _tell('Пароль изменён');
+      _tell(l.passwordChanged);
     } on AuthException catch (e) {
-      _tell(e.message, error: true);
+      _tell(authErrorText(l, e), error: true);
     }
   }
 
@@ -337,7 +356,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       // No message: the router has already thrown us back to the login
       // screen, and this widget is gone.
     } on AuthException catch (e) {
-      _tell(e.message, error: true);
+      if (mounted) {
+        _tell(authErrorText(AppLocalizations.of(context), e), error: true);
+      }
     }
   }
 
@@ -359,6 +380,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   /// denied forever, and on the web a denial can only be undone in the
   /// browser's own site settings.
   Future<void> _toggleNotifications(UserSettings settings, bool enable) async {
+    final l = AppLocalizations.of(context);
     setState(() {
       _busyWithPush = true;
       _pushMessage = null;
@@ -378,7 +400,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         setState(() {
           _busyWithPush = false;
           _pushOk = false;
-          _pushMessage = 'Уведомления выключены';
+          _pushMessage = l.settingsNotificationsOff;
         });
       }
       return;
@@ -407,8 +429,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         _busyWithPush = false;
         _pushOk = localGranted;
         _pushMessage = localGranted
-            ? 'Напоминания на этом устройстве включены. '
-                  'Push пока недоступен: ${result.status.message}'
+            ? l.settingsLocalOnly(result.status.message)
             : result.status.message;
       });
       return;
@@ -483,8 +504,9 @@ class _PasswordDialogState extends State<_PasswordDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return AlertDialog(
-      title: const Text('Сменить пароль'),
+      title: Text(l.settingsChangePassword),
       content: Form(
         key: _form,
         child: Column(
@@ -494,30 +516,27 @@ class _PasswordDialogState extends State<_PasswordDialog> {
               controller: _current,
               obscureText: true,
               autofocus: true,
-              decoration: const InputDecoration(labelText: 'Текущий пароль'),
+              decoration: InputDecoration(labelText: l.passwordCurrent),
               validator: (v) =>
-                  (v ?? '').isEmpty ? 'Введите текущий пароль' : null,
+                  (v ?? '').isEmpty ? l.passwordCurrentRequired : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _next,
               obscureText: true,
-              decoration: const InputDecoration(labelText: 'Новый пароль'),
+              decoration: InputDecoration(labelText: l.passwordNew),
               // Firebase's own floor. Checking here saves a round trip and an
               // error message that arrives after the dialog has closed.
-              validator: (v) => (v ?? '').length < 6
-                  ? 'Минимум 6 символов'
-                  : null,
+              validator: (v) =>
+                  (v ?? '').length < 6 ? l.authPasswordTooShort : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _repeat,
               obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'Новый пароль ещё раз',
-              ),
+              decoration: InputDecoration(labelText: l.passwordRepeat),
               validator: (v) =>
-                  v == _next.text ? null : 'Пароли не совпадают',
+                  v == _next.text ? null : l.passwordsDoNotMatch,
             ),
           ],
         ),
@@ -525,7 +544,7 @@ class _PasswordDialogState extends State<_PasswordDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Отмена'),
+          child: Text(l.commonCancel),
         ),
         FilledButton(
           onPressed: () {
@@ -535,7 +554,7 @@ class _PasswordDialogState extends State<_PasswordDialog> {
               _PasswordChange(_current.text, _next.text),
             );
           },
-          child: const Text('Сменить'),
+          child: Text(l.settingsChangeButton),
         ),
       ],
     );
@@ -560,7 +579,7 @@ class _DeleteAccountDialog extends StatefulWidget {
 }
 
 class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
-  static const _word = 'УДАЛИТЬ';
+  late final _word = AppLocalizations.of(context).deleteAccountWord;
 
   final _password = TextEditingController();
   final _confirm = TextEditingController();
@@ -575,19 +594,19 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l = AppLocalizations.of(context);
     final ready =
         (!widget.requiresPassword || _password.text.isNotEmpty) &&
         _confirm.text.trim().toUpperCase() == _word;
 
     return AlertDialog(
-      title: const Text('Удалить учётную запись?'),
+      title: Text(l.deleteAccountTitle),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Все данные о детях будут удалены навсегда. Восстановить их '
-            'не сможем ни мы, ни вы.',
+            l.deleteAccountWarning,
             style: theme.textTheme.bodyMedium,
           ),
           const SizedBox(height: 16),
@@ -596,14 +615,13 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
               controller: _password,
               obscureText: true,
               autofocus: true,
-              decoration: const InputDecoration(labelText: 'Ваш пароль'),
+              decoration: InputDecoration(labelText: l.deleteAccountPassword),
               onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: 12),
           ] else ...[
             Text(
-              'После подтверждения Google попросит вас войти ещё раз — '
-              'так проверяется, что удаляете именно вы.',
+              l.deleteAccountGoogleNote,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -612,8 +630,8 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
           ],
           TextField(
             controller: _confirm,
-            decoration: const InputDecoration(
-              labelText: 'Напишите $_word',
+            decoration: InputDecoration(
+              labelText: l.deleteAccountWriteWord(_word),
             ),
             onChanged: (_) => setState(() {}),
           ),
@@ -622,7 +640,7 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Отмена'),
+          child: Text(l.commonCancel),
         ),
         FilledButton(
           onPressed: ready
@@ -632,7 +650,7 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
             backgroundColor: theme.colorScheme.error,
             foregroundColor: theme.colorScheme.onError,
           ),
-          child: const Text('Удалить навсегда'),
+          child: Text(l.deleteAccountConfirm),
         ),
       ],
     );

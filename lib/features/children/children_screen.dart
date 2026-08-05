@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../core/theme/app_theme.dart';
+import '../../l10n/app_localizations.dart';
+import '../../core/l10n/labels.dart';
 import '../../core/photos/compression.dart';
 import '../../core/vaccination/national_calendar.dart';
 import '../../models/child.dart';
@@ -16,6 +19,7 @@ class ChildrenScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     final children = ref.watch(childrenProvider);
     final selected = ref.watch(selectedChildProvider);
 
@@ -25,7 +29,7 @@ class ChildrenScreen extends ConsumerWidget {
         error: (e, _) => PageBody(
           children: [
             SectionCard(
-              title: 'Профили детей',
+              title: l.childrenTitle,
               icon: Icons.family_restroom_outlined,
               child: ErrorState(
                 error: e,
@@ -37,18 +41,18 @@ class ChildrenScreen extends ConsumerWidget {
         data: (list) => PageBody(
           children: [
             if (list.isEmpty)
-              const SectionCard(
-                title: 'Профили детей',
+              SectionCard(
+                title: l.childrenTitle,
                 icon: Icons.family_restroom_outlined,
                 child: EmptyState(
                   icon: Icons.child_care_outlined,
-                  message: 'Пока нет ни одного профиля',
-                  hint: 'Нажмите «Добавить ребёнка», чтобы начать',
+                  message: l.childrenEmpty,
+                  hint: l.childrenEmptyHint,
                 ),
               )
             else
               SectionCard(
-                title: 'Профили детей',
+                title: l.childrenTitle,
                 icon: Icons.family_restroom_outlined,
                 child: Column(
                   children: [
@@ -71,7 +75,7 @@ class ChildrenScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openForm(context, ref),
         icon: const Icon(Icons.add),
-        label: const Text('Добавить ребёнка'),
+        label: Text(l.addChild),
       ),
     );
   }
@@ -81,23 +85,20 @@ class ChildrenScreen extends ConsumerWidget {
     WidgetRef ref,
     Child child,
   ) async {
+    final l = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Удалить профиль?'),
-        content: Text(
-          'Профиль «${child.name}» будет удалён вместе со всеми записями '
-          'дневника, измерениями, медицинскими записями и напоминаниями. '
-          'Действие необратимо.',
-        ),
+        title: Text(l.childDeleteTitle),
+        content: Text(l.childDeleteBody(child.name)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Отмена'),
+            child: Text(l.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Удалить'),
+            child: Text(l.commonDelete),
           ),
         ],
       ),
@@ -182,7 +183,10 @@ Future<void> _attachPhoto(
   Child child,
   Uint8List bytes,
 ) async {
+  // Both resolved before the first await: the dialog that owns this context
+  // is usually gone by the time an upload fails.
   final messenger = ScaffoldMessenger.maybeOf(context);
+  final l = AppLocalizations.of(context);
   final photos = ref.read(photoRepositoryProvider);
   final previous = child.photoUrl;
 
@@ -195,11 +199,11 @@ Future<void> _attachPhoto(
       await photos.delete(previous);
     }
   } on PhotoTooLargeException catch (e) {
-    messenger?.showSnackBar(SnackBar(content: Text(e.message)));
-  } catch (e) {
     messenger?.showSnackBar(
-      SnackBar(content: Text('Не удалось сохранить фото: $e')),
+      SnackBar(content: Text(photoProblemText(l, e.problem))),
     );
+  } catch (e) {
+    messenger?.showSnackBar(SnackBar(content: Text(l.photoSaveFailed('$e'))));
   }
 }
 
@@ -220,6 +224,7 @@ class _ChildTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
@@ -230,26 +235,26 @@ class _ChildTile extends StatelessWidget {
       leading: ChildAvatar(child: child),
       title: Text(child.name, style: theme.textTheme.titleSmall),
       subtitle: Text(
-        '${child.ageLabel} · ${shortDate.format(child.birthDate)} · '
-        '${child.gender.label.toLowerCase()}',
+        '${localizedAge(l, child)} · ${shortDate.format(child.birthDate)} · '
+        '${child.gender.localizedLabel(l).toLowerCase()}',
       ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (isSelected)
             Chip(
-              label: const Text('Выбран'),
+              label: Text(l.childSelected),
               visualDensity: VisualDensity.compact,
               backgroundColor: scheme.primaryContainer,
               side: BorderSide.none,
             ),
           IconButton(
-            tooltip: 'Изменить',
+            tooltip: l.commonEdit,
             onPressed: onEdit,
             icon: const Icon(Icons.edit_outlined),
           ),
           IconButton(
-            tooltip: 'Удалить',
+            tooltip: l.commonDelete,
             onPressed: onDelete,
             icon: const Icon(Icons.delete_outline),
           ),
@@ -307,10 +312,11 @@ class _ChildFormDialogState extends State<_ChildFormDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final editing = widget.existing != null;
 
     return AlertDialog(
-      title: Text(editing ? 'Профиль ребёнка' : 'Новый профиль'),
+      title: Text(editing ? l.childProfileEdit : l.childProfileNew),
       content: SizedBox(
         width: 380,
         child: Form(
@@ -330,9 +336,9 @@ class _ChildFormDialogState extends State<_ChildFormDialog> {
               TextFormField(
                 controller: _nameController,
                 autofocus: true,
-                decoration: const InputDecoration(labelText: 'Имя'),
+                decoration: InputDecoration(labelText: l.childName),
                 validator: (v) => (v == null || v.trim().isEmpty)
-                    ? 'Укажите имя'
+                    ? l.childNameRequired
                     : null,
               ),
               const SizedBox(height: 12),
@@ -340,12 +346,10 @@ class _ChildFormDialogState extends State<_ChildFormDialog> {
                 onTap: _pickDate,
                 borderRadius: BorderRadius.circular(12),
                 child: InputDecorator(
-                  decoration: const InputDecoration(
-                    labelText: 'Дата рождения',
-                  ),
+                  decoration: InputDecoration(labelText: l.childBirthDate),
                   child: Text(
                     _birthDate == null
-                        ? 'Выберите дату'
+                        ? l.childPickDate
                         : shortDate.format(_birthDate!),
                   ),
                 ),
@@ -354,7 +358,7 @@ class _ChildFormDialogState extends State<_ChildFormDialog> {
               SegmentedButton<Gender>(
                 segments: [
                   for (final g in Gender.values)
-                    ButtonSegment(value: g, label: Text(g.label)),
+                    ButtonSegment(value: g, label: Text(g.localizedLabel(l))),
                 ],
                 selected: {_gender},
                 onSelectionChanged: (s) => setState(() => _gender = s.first),
@@ -366,11 +370,11 @@ class _ChildFormDialogState extends State<_ChildFormDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Отмена'),
+          child: Text(l.commonCancel),
         ),
         FilledButton(
           onPressed: _submit,
-          child: Text(editing ? 'Сохранить' : 'Создать'),
+          child: Text(editing ? l.commonSave : l.commonCreate),
         ),
       ],
     );
@@ -397,7 +401,7 @@ class _ChildFormDialogState extends State<_ChildFormDialog> {
       initialDate: _birthDate ?? now,
       firstDate: DateTime(now.year - 18),
       lastDate: now,
-      helpText: 'Дата рождения',
+      helpText: AppLocalizations.of(context).childBirthDate,
     );
     if (picked != null) setState(() => _birthDate = picked);
   }
@@ -406,7 +410,11 @@ class _ChildFormDialogState extends State<_ChildFormDialog> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_birthDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Укажите дату рождения')),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context).childBirthDateRequired,
+          ),
+        ),
       );
       return;
     }
@@ -437,6 +445,7 @@ class _PhotoField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
     const size = 96.0;
 
@@ -464,7 +473,7 @@ class _PhotoField extends StatelessWidget {
                   width: size,
                   height: size,
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerHighest,
+                    color: Warm.soft(theme.brightness),
                     borderRadius: BorderRadius.circular(size / 3),
                   ),
                   child: Icon(
@@ -494,7 +503,7 @@ class _PhotoField extends StatelessWidget {
         const SizedBox(height: 8),
         TextButton(
           onPressed: onClear ?? onPick,
-          child: Text(onClear != null ? 'Убрать фото' : 'Добавить фото'),
+          child: Text(onClear != null ? l.photoRemove : l.photoAdd),
         ),
       ],
     );

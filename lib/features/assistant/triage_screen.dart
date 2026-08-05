@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../l10n/app_localizations.dart';
+import '../../core/l10n/labels.dart';
 import '../../core/theme/app_theme.dart';
 import '../../knowledge/triage.dart';
 import '../../providers.dart';
@@ -28,6 +30,7 @@ class _TriageScreenState extends ConsumerState<TriageScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final child = ref.watch(selectedChildProvider);
     final ageMonths = child?.ageInMonths ?? 0;
     final questions = questionsForAge(ageMonths);
@@ -48,11 +51,11 @@ class _TriageScreenState extends ConsumerState<TriageScreen> {
             IconButton(
               onPressed: () => context.go('/assistant'),
               icon: const Icon(Icons.arrow_back),
-              tooltip: 'Назад',
+              tooltip: l.commonBack,
             ),
             Expanded(
               child: Text(
-                'Проверка тревожных признаков',
+                l.triageTitle,
                 style: theme.textTheme.titleLarge,
               ),
             ),
@@ -61,13 +64,13 @@ class _TriageScreenState extends ConsumerState<TriageScreen> {
         const SizedBox(height: 12),
 
         if (child == null)
-          const SectionCard(
-            title: 'Нужен профиль ребёнка',
+          SectionCard(
+            title: l.triageNeedChild,
             icon: Icons.child_care_outlined,
             child: EmptyState(
               icon: Icons.child_care_outlined,
-              message: 'Возраст влияет на оценку — особенно до 3 месяцев',
-              hint: 'Создайте профиль в разделе «Дети»',
+              message: l.triageNeedChildHint,
+              hint: l.triageNeedChildAction,
             ),
           )
         else ...[
@@ -77,10 +80,10 @@ class _TriageScreenState extends ConsumerState<TriageScreen> {
           ],
 
           SectionCard(
-            title: 'Температура',
+            title: l.quickSheetTemperature,
             icon: Icons.thermostat_outlined,
             action: Text(
-              '${child.name}, ${child.ageLabel}',
+              '${child.name}, ${localizedAge(l, child)}',
               style: theme.textTheme.bodySmall,
             ),
             child: TextField(
@@ -89,8 +92,8 @@ class _TriageScreenState extends ConsumerState<TriageScreen> {
                 decimal: true,
               ),
               onChanged: (_) => setState(() {}),
-              decoration: const InputDecoration(
-                labelText: 'Если измеряли — введите, например 38.5',
+              decoration: InputDecoration(
+                labelText: l.triageTemperatureHint,
                 suffixText: '°C',
               ),
             ),
@@ -98,7 +101,7 @@ class _TriageScreenState extends ConsumerState<TriageScreen> {
           const SizedBox(height: 16),
 
           SectionCard(
-            title: 'Отметьте всё, что есть',
+            title: l.triageCheckAll,
             icon: Icons.checklist_outlined,
             child: Column(
               children: [
@@ -132,7 +135,7 @@ class _TriageScreenState extends ConsumerState<TriageScreen> {
           FilledButton.icon(
             onPressed: () => setState(() => _submitted = true),
             icon: const Icon(Icons.health_and_safety_outlined),
-            label: const Text('Оценить состояние'),
+            label: Text(l.triageEvaluate),
           ),
           const SizedBox(height: 10),
           if (_submitted)
@@ -142,7 +145,7 @@ class _TriageScreenState extends ConsumerState<TriageScreen> {
                 _temperature.clear();
                 _submitted = false;
               }),
-              child: const Text('Начать заново'),
+              child: Text(l.triageRestart),
             ),
         ],
       ],
@@ -163,6 +166,7 @@ class _ResultCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final color = switch (result.level) {
       TriageLevel.emergency => StatusColors.alert,
@@ -227,7 +231,7 @@ class _ResultCard extends StatelessWidget {
 
             if (result.reasons.isNotEmpty) ...[
               const SizedBox(height: 16),
-              Text('Что учтено:', style: theme.textTheme.labelLarge),
+              Text(l.triageConsidered, style: theme.textTheme.labelLarge),
               const SizedBox(height: 8),
               for (final r in result.reasons)
                 Padding(
@@ -254,9 +258,7 @@ class _ResultCard extends StatelessWidget {
 
             const SizedBox(height: 16),
             Text(
-              'Это не диагноз. Оценка построена по формальным признакам и '
-              'не заменяет осмотр. Если вам тревожно, а проверка показала '
-              '«наблюдать дома» — всё равно обратитесь к врачу.',
+              l.triageDisclaimer,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),

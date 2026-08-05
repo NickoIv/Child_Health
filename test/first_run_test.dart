@@ -57,7 +57,7 @@ class _EmptyChildRepository implements ChildRepository {
 }
 
 void main() {
-  setUpAll(() => initializeDateFormatting('ru_RU'));
+  setUpAll(() => initializeDateFormatting());
 
   Future<void> pumpEmpty(WidgetTester tester) async {
     tester.view.physicalSize = const Size(390, 844);
@@ -98,11 +98,15 @@ void main() {
     // Reaching the section that has the button is not the user's job; the
     // dead end was the whole complaint. Only four destinations fit the phone
     // bottom bar, so the rest are checked through the "Ещё" sheet.
-    for (final icon in const [
-      Icons.auto_stories_outlined, // Дневник
-      Icons.show_chart_outlined, // Развитие
+    for (final (icon, viaMore) in const [
+      (Icons.auto_stories_outlined, false), // Дневник
+      (Icons.show_chart_outlined, true), // Развитие, behind "Ещё"
     ]) {
       await pumpEmpty(tester);
+      if (viaMore) {
+        await tester.tap(find.text('Ещё'));
+        await tester.pumpAndSettle();
+      }
       await tester.tap(find.byIcon(icon).first);
       await tester.pumpAndSettle();
 

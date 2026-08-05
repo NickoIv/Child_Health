@@ -40,15 +40,21 @@ int notificationIdFor(String reminderId, [int occurrence = 0]) =>
 /// Returns nothing for a reminder that is done or whose single moment has
 /// passed — the caller cancels by id regardless, so an empty list is the
 /// instruction to hold nothing.
-List<NotificationSlot> slotsFor(Reminder reminder, {DateTime? now}) {
+List<NotificationSlot> slotsFor(
+  Reminder reminder, {
+  DateTime? now,
+  String Function(ReminderType)? typeLabel,
+}) {
   if (reminder.isCompleted) return const [];
 
   final at = reminder.scheduledTime;
   final moment = now ?? DateTime.now();
   final title = reminder.title;
+  // The parent's own words when they wrote any; otherwise the kind of
+  // reminder, in whichever language the interface is set to.
   final body = reminder.details.isNotEmpty
       ? reminder.details
-      : reminder.type.label;
+      : (typeLabel ?? (type) => type.label)(reminder.type);
 
   NotificationSlot slot(int occurrence, DateTime when, RepeatRule repeat) =>
       NotificationSlot(

@@ -1,0 +1,968 @@
+{
+  "@@locale": "ru",
+  "appTitle": "Календарь развития и здоровья ребёнка",
+  "navDashboard": "Обзор",
+  "navAssistant": "Помощник",
+  "navDiary": "Дневник",
+  "navGrowth": "Развитие",
+  "navIllness": "Болезни",
+  "navMedical": "Медкарта",
+  "navReminders": "Напоминания",
+  "navChildren": "Дети",
+  "navFamily": "Семья",
+  "navMore": "Ещё",
+  "authSignInSubtitle": "Войдите, чтобы продолжить",
+  "authRegisterSubtitle": "Создайте учётную запись родителя",
+  "authEmail": "Email",
+  "authPassword": "Пароль",
+  "authSignIn": "Войти",
+  "authRegister": "Зарегистрироваться",
+  "authToRegister": "Нет учётной записи — зарегистрироваться",
+  "authToSignIn": "Уже есть учётная запись — войти",
+  "authForgotPassword": "Забыли пароль?",
+  "authOr": "или",
+  "authWithGoogle": "Войти через Google",
+  "authWithApple": "Войти через Apple",
+  "authEmailRequired": "Введите email",
+  "authEmailIncomplete": "Похоже, адрес неполный",
+  "authPasswordRequired": "Введите пароль",
+  "authPasswordTooShort": "Минимум 6 символов",
+  "authResetNeedsEmail": "Введите email, на него придёт ссылка",
+  "authResetSent": "Письмо для сброса пароля отправлено на {email}",
+  "@authResetSent": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "authUnexpected": "Неожиданная ошибка: {error}",
+  "@authUnexpected": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "authErrorInvalidCredentials": "Неверный email или пароль",
+  "authErrorInvalidEmail": "Некорректный адрес электронной почты",
+  "authErrorEmailInUse": "Этот email уже зарегистрирован",
+  "authErrorWeakPassword": "Пароль слишком простой — минимум 6 символов",
+  "authErrorUserDisabled": "Учётная запись отключена",
+  "authErrorRequiresRecentLogin": "Для этого действия нужно войти заново. Выйдите и войдите ещё раз",
+  "authErrorTooManyRequests": "Слишком много попыток. Попробуйте через несколько минут",
+  "authErrorNetwork": "Нет связи с сервером. Проверьте интернет",
+  "authErrorOperationNotAllowed": "Вход по email и паролю выключен в консоли Firebase",
+  "authErrorUnknown": "Не удалось выполнить операцию: {code}",
+  "@authErrorUnknown": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "authErrorGoogleNotConfigured": "Вход через Google не настроен для этой сборки приложения",
+  "authErrorGoogleProvider": "Google не может подтвердить это приложение. Обратитесь в поддержку",
+  "authErrorGoogleInterrupted": "Вход через Google прервался. Проверьте связь и попробуйте ещё раз",
+  "authErrorGoogleFailed": "Не удалось войти через Google: {detail}",
+  "@authErrorGoogleFailed": {
+    "placeholders": {
+      "detail": {
+        "type": "String"
+      }
+    }
+  },
+  "authErrorGoogleNoToken": "Google не вернул токен входа. Попробуйте ещё раз",
+  "authErrorSignInFirst": "Сначала войдите в свою учётную запись",
+  "authErrorNoPassword": "У этой учётной записи нет пароля: вход выполняется через Google. Пароль меняется в настройках аккаунта Google",
+  "authErrorUnknownProvider": "Не удалось подтвердить личность: неизвестный способ входа. Выйдите и войдите заново",
+  "accountMenu": "Учётная запись",
+  "settingsTitle": "Профиль и настройки",
+  "settingsSignOut": "Выйти",
+  "settingsNotifications": "Уведомления",
+  "settingsChangePassword": "Сменить пароль",
+  "settingsDeleteAccount": "Удалить учётную запись",
+  "settingsLanguage": "Язык интерфейса",
+  "settingsNotificationsOff": "Уведомления выключены",
+  "settingsNotificationsOn": "Уведомления включены",
+  "settingsLocalOnly": "Напоминания на этом устройстве включены. Push пока недоступен: {reason}",
+  "@settingsLocalOnly": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsRemindMe": "Напоминать о прививках и лекарствах",
+  "settingsConnecting": "Подключаю…",
+  "settingsNotificationsHint": "Работает, пока приложение установлено на домашний экран или открыто в браузере. Разрешение спрашивает сам браузер — если откажете, включить снова можно будет только в его настройках сайта.",
+  "languageRussian": "Русский",
+  "languageEnglish": "English",
+  "languageKazakh": "Қазақша",
+  "themeAuto": "Автоматически",
+  "themeAutoHint": "Тёмная с 21:00 до 7:00",
+  "themeLight": "Светлая",
+  "themeDark": "Тёмная",
+  "passwordCurrent": "Текущий пароль",
+  "passwordNew": "Новый пароль",
+  "passwordRepeat": "Новый пароль ещё раз",
+  "passwordCurrentRequired": "Введите текущий пароль",
+  "passwordsDoNotMatch": "Пароли не совпадают",
+  "passwordChanged": "Пароль изменён",
+  "deleteAccountTitle": "Удалить учётную запись?",
+  "deleteAccountWarning": "Все данные о детях будут удалены навсегда. Восстановить их не сможем ни мы, ни вы.",
+  "deleteAccountPassword": "Ваш пароль",
+  "deleteAccountGoogleNote": "После подтверждения Google попросит вас войти ещё раз — так проверяется, что удаляете именно вы.",
+  "deleteAccountWord": "УДАЛИТЬ",
+  "deleteAccountWriteWord": "Напишите {word}",
+  "@deleteAccountWriteWord": {
+    "placeholders": {
+      "word": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteAccountConfirm": "Удалить навсегда",
+  "commonCancel": "Отмена",
+  "commonClose": "Закрыть",
+  "notificationChannelName": "Напоминания",
+  "notificationChannelDescription": "Прививки, приём лекарств и визиты к врачу",
+  "reminderTypeVaccination": "Прививка",
+  "reminderTypeMedication": "Лекарство",
+  "reminderTypeAppointment": "Визит к врачу",
+  "recurrenceNone": "Однократно",
+  "recurrenceDaily": "Ежедневно",
+  "recurrenceTwiceDaily": "Дважды в день",
+  "recurrenceWeekly": "Еженедельно",
+  "remindersVaccinations": "Календарь прививок",
+  "remindersMedications": "Приём лекарств",
+  "remindersAppointments": "Визиты к врачу",
+  "remindersNothingPlanned": "Ничего не запланировано",
+  "remindersShowCompleted": "Показать выполненные",
+  "quickFeed": "Покормила",
+  "quickNappy": "Подгузник",
+  "quickSleep": "Поспал",
+  "quickTemperature": "Температура",
+  "quickSheetFeeding": "Кормление",
+  "quickSheetNappy": "Подгузник",
+  "quickSheetSleep": "Сколько поспал",
+  "quickSheetSleepShort": "Сон",
+  "quickSheetTemperature": "Температура",
+  "quickTimeNow": "Сейчас",
+  "quickTimeChoose": "Выбрать время",
+  "quickNowHint": "Отметится текущим временем",
+  "quickSaveButton": "Записать",
+  "quickSaved": "Записано: {what}",
+  "@quickSaved": {
+    "placeholders": {
+      "what": {
+        "type": "String"
+      }
+    }
+  },
+  "quickSideLeft": "Левая",
+  "quickSideRight": "Правая",
+  "quickSideBottle": "Бутылочка",
+  "quickNappyWet": "Мокрый",
+  "quickNappyDirty": "Стул",
+  "quickNappyBoth": "Мокрый и стул",
+  "quickSleep30": "Полчаса",
+  "quickSleep60": "Час",
+  "quickSleep90": "Полтора часа",
+  "quickSleep120": "Два часа",
+  "quickSleep180": "Три часа",
+  "durationH": "{h} ч",
+  "@durationH": {
+    "placeholders": {
+      "h": {
+        "type": "int"
+      }
+    }
+  },
+  "durationM": "{m} мин",
+  "@durationM": {
+    "placeholders": {
+      "m": {
+        "type": "int"
+      }
+    }
+  },
+  "durationHM": "{h} ч {m} мин",
+  "@durationHM": {
+    "placeholders": {
+      "h": {
+        "type": "int"
+      },
+      "m": {
+        "type": "int"
+      }
+    }
+  },
+  "commonSave": "Сохранить",
+  "commonCreate": "Создать",
+  "commonDelete": "Удалить",
+  "commonEdit": "Изменить",
+  "commonAdd": "Добавить",
+  "commonRetry": "Повторить",
+  "commonAll": "Все",
+  "commonMore": "Подробнее",
+  "commonBack": "Назад",
+  "commonHide": "Скрыть",
+  "commonShow": "Показать",
+  "commonDate": "Дата",
+  "commonTime": "Время",
+  "commonAge": "Возраст",
+  "commonToday": "сегодня",
+  "commonTomorrow": "завтра",
+  "commonNumberInvalid": "Введите число",
+  "commonTechnical": "Техническая информация",
+  "logTypeMilestone": "Веха развития",
+  "logTypeMeasurement": "Измерение",
+  "logTypeIllness": "Болезнь",
+  "logTypeFeeding": "Кормление",
+  "logTypeNappy": "Подгузник",
+  "logTypeSleep": "Сон",
+  "logTypeQuestion": "Вопрос врачу",
+  "logTypeNote": "Запись",
+  "feedingLeft": "Левая",
+  "feedingRight": "Правая",
+  "feedingBottle": "Бутылочка",
+  "nappyWet": "Мокрый",
+  "nappyDirty": "Стул",
+  "nappyBoth": "Мокрый и стул",
+  "severityMild": "Лёгкая",
+  "severityModerate": "Средняя",
+  "severitySevere": "Тяжёлая",
+  "genderMale": "Мальчик",
+  "genderFemale": "Девочка",
+  "unitsMetric": "Метрическая (см, кг)",
+  "unitsImperial": "Имперская (in, lb)",
+  "nightWakingsCount": "пробуждений: {n}",
+  "@nightWakingsCount": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "nightFeedsCount": "кормлений: {n}",
+  "@nightFeedsCount": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "ageYears": "{n, plural, one{{n} год} few{{n} года} many{{n} лет} other{{n} года}}",
+  "@ageYears": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "ageMonths": "{n, plural, one{{n} месяц} few{{n} месяца} many{{n} месяцев} other{{n} месяца}}",
+  "@ageMonths": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "entriesCount": "{n, plural, one{{n} запись} few{{n} записи} many{{n} записей} other{{n} записи}}",
+  "@entriesCount": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "monthsShort": "{n} мес.",
+  "@monthsShort": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "dashLayoutTitle": "Блоки на главном экране",
+  "dashAllHidden": "Все блоки скрыты",
+  "dashAllHiddenHint": "Вернуть их можно в настройках",
+  "dashConfigure": "Настроить главный экран",
+  "dashNoneSelected": "Ни один блок не выбран",
+  "dashHiddenBlocks": "Скрытые блоки",
+  "dashReset": "Вернуть стандартный набор",
+  "widgetNow": "Сейчас",
+  "widgetSummary": "Сводка о ребёнке",
+  "widgetGrowth": "Рост и вес",
+  "widgetVaccinations": "Ближайшие прививки",
+  "widgetIllness": "Заболеваемость",
+  "widgetMilestones": "Вехи развития",
+  "widgetRecent": "Последние записи",
+  "widgetUpcoming": "Ближайшие события",
+  "summaryAge": "возраст",
+  "summaryBirthDate": "дата рождения",
+  "summaryMilestonesCount": "вех развития",
+  "summaryEntriesCount": "записей всего",
+  "growthNoMeasurements": "Измерений пока нет",
+  "growthWeight": "Вес",
+  "growthHeight": "Рост",
+  "growthLastMeasurement": "последнее измерение",
+  "growthPercentileWith": "{label} · {p}-й перцентиль",
+  "@growthPercentileWith": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "p": {
+        "type": "int"
+      }
+    }
+  },
+  "vaccinationsNone": "Предстоящих прививок нет",
+  "illnessDaysTotal": "дней болезни всего",
+  "illnessLast3Months": "за последние 3 месяца",
+  "milestonesEmpty": "Первое ещё впереди",
+  "milestonesEmptyHint": "Первая улыбка, первый зуб, первое слово — добавьте их в дневнике как «Веха развития»",
+  "recentEmpty": "Записей пока нет",
+  "upcomingEmptyHint": "Прививки появятся здесь сами, как только будет создан профиль ребёнка",
+  "greetingNight": "Доброй ночи",
+  "greetingMorning": "Доброе утро",
+  "greetingAfternoon": "Добрый день",
+  "greetingEvening": "Добрый вечер",
+  "statusSick": "Болеет",
+  "statusHealthy": "Здоров",
+  "statusLatest": "последняя",
+  "nowTodayReminder": "Сегодня: {title}",
+  "@nowTodayReminder": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "nowNoEntries": "Сегодня записей ещё нет. Кнопки ниже отмечают время сами.",
+  "nowSinceFeeding": "С последнего кормления — {duration}",
+  "@nowSinceFeeding": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "countFeedings": "кормлений",
+  "countWet": "мокрых",
+  "countDirty": "стул",
+  "countSleep": "сна",
+  "nightAsleepDate": "Уснул, дата",
+  "nightAwakeDate": "Проснулся, дата",
+  "nightWokeUp": "Просыпался",
+  "nightOfThoseFeeds": "Из них кормлений",
+  "nightTotal": "Всего сна: {duration}",
+  "@nightTotal": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "nightInvalid": "Проснулся должен быть позже, чем уснул",
+  "errorIndexBuilding": "База данных достраивает индексы. Это занимает несколько минут после первого развёртывания — обновите страницу чуть позже.",
+  "errorPermission": "Нет доступа к этим данным. Попробуйте выйти и войти заново.",
+  "errorOffline": "Нет связи с сервером. Изменения сохранятся локально и синхронизируются, когда соединение вернётся.",
+  "errorSession": "Сессия истекла. Войдите в учётную запись заново.",
+  "errorGeneric": "Не удалось загрузить данные. Попробуйте обновить страницу.",
+  "noChildTitle": "Давайте познакомимся",
+  "noChildHint": "Расскажите о малыше — дальше приложение подстроится под его возраст и само составит календарь прививок",
+  "addChild": "Добавить ребёнка",
+  "diaryFeed": "Лента событий",
+  "diaryEmpty": "Здесь будет история малыша",
+  "diaryEmptyHint": "Кормления и подгузники отмечаются кнопками на главной, а первое слово и первый зуб — здесь",
+  "diaryAddEntry": "Добавить запись",
+  "diaryDeleteTitle": "Удалить запись?",
+  "diaryDeleteBody": "Запись «{title}» будет удалена. Действие необратимо.",
+  "@diaryDeleteBody": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "diaryPhotos": "Фотографии",
+  "diaryNewEntry": "Новая запись",
+  "diaryEditEntry": "Изменить запись",
+  "diaryType": "Тип записи",
+  "diaryTitleField": "Заголовок",
+  "diaryTitleRequired": "Укажите заголовок",
+  "diaryDescription": "Описание",
+  "diaryTags": "Теги, через запятую",
+  "diaryTagsHint": "моторика, речь",
+  "fieldWeight": "Вес, {unit}",
+  "@fieldWeight": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "fieldHeight": "Рост, {unit}",
+  "@fieldHeight": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "fieldHead": "Окружность головы, {unit}",
+  "@fieldHead": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "fieldChest": "Окружность груди, {unit}",
+  "@fieldChest": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "fieldTemperature": "Температура, °C",
+  "fieldSeverity": "Тяжесть",
+  "pillHead": "голова {value}",
+  "@pillHead": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "pillChest": "грудь {value}",
+  "@pillChest": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "photoUploadFailed": "Не удалось загрузить фото: {error}",
+  "@photoUploadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "childrenTitle": "Профили детей",
+  "childrenEmpty": "Пока нет ни одного профиля",
+  "childrenEmptyHint": "Нажмите «Добавить ребёнка», чтобы начать",
+  "childDeleteTitle": "Удалить профиль?",
+  "childDeleteBody": "Профиль «{name}» будет удалён вместе со всеми записями дневника, измерениями, медицинскими записями и напоминаниями. Действие необратимо.",
+  "@childDeleteBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "childSelected": "Выбран",
+  "childProfileEdit": "Профиль ребёнка",
+  "childProfileNew": "Новый профиль",
+  "childName": "Имя",
+  "childNameRequired": "Укажите имя",
+  "childBirthDate": "Дата рождения",
+  "childPickDate": "Выберите дату",
+  "childBirthDateRequired": "Укажите дату рождения",
+  "photoAdd": "Добавить фото",
+  "photoRemove": "Убрать фото",
+  "photoSaveFailed": "Не удалось сохранить фото: {error}",
+  "@photoSaveFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "quickNoteOptional": "Заметка (необязательно)",
+  "quickAssistant": "Помощник",
+  "quickNightSleep": "Ночной сон",
+  "digestTitle": "Сегодня",
+  "digestSubtitle": "Коротко о дне",
+  "digestFeedings": "Кормлений",
+  "digestSleep": "Сон за день",
+  "digestNappies": "Подгузников",
+  "digestTemperature": "Температура",
+  "digestPhotos": "Новых фото",
+  "digestEmpty": "Сегодня записей пока нет",
+  "digestCalm": "Сегодня был спокойный день.",
+  "digestBusy": "Сегодня был насыщенный день.",
+  "digestHardNight": "Ночь была немного трудной.",
+  "momentsTitle": "Моменты дня",
+  "momentsLineOne": "Маленький момент сегодняшнего дня",
+  "momentsLineTwo": "Сегодня была новая улыбка",
+  "momentsLineMany": "Воспоминание, которое стоит сохранить",
+  "storyTitleCare": "Неделя заботы",
+  "storyTitleGrowing": "Растём вместе",
+  "storyTitleMoments": "Маленькие моменты, большая любовь",
+  "storyFeedings": "Кормлений",
+  "storySleep": "Сна за неделю",
+  "storyNappies": "Подгузников",
+  "storyBestNight": "Лучшая ночь",
+  "storyExport": "Сохранить PDF",
+  "storyPdfReady": "Страница недели готова",
+  "appreciationHeavyDay": "Сегодня был непростой день. Вы сделали очень много для малыша.",
+  "appreciationThanks": "Папа поблагодарил вас за сегодняшний день ❤️",
+  "appreciationThankButton": "Спасибо за сегодняшний день",
+  "appreciationThankSent": "Спасибо отправлено",
+  "voiceQuickHint": "Записать голосом",
+  "voiceHoldHint": "Удерживайте кнопку и говорите",
+  "voiceHeard": "Услышано",
+  "voiceMl": "мл",
+  "voiceAsNote": "Сохраним как заметку",
+  "homeRecent": "Последние события",
+  "homeNothingYet": "Пока ничего не записано",
+  "homeMore": "Всё остальное — во вкладке «Помощник»",
+  "assistantInsights": "Наблюдения и отчёты",
+  "familyTitle": "Семья",
+  "familySubtitle": "Кто ещё видит профиль ребёнка",
+  "familyInvite": "Пригласить",
+  "familyInviteEmail": "Электронная почта",
+  "familyInviteHint": "Адрес, которым он входит в приложение",
+  "familyInviteSent": "Приглашение отправлено",
+  "familyEmailInvalid": "Проверьте адрес",
+  "familyPending": "Ожидает подтверждения",
+  "familyAccepted": "Есть доступ",
+  "familyNobody": "Пока только вы",
+  "familyRemove": "Убрать доступ",
+  "familyRoleOwner": "Мама",
+  "familyRoleViewer": "Папа",
+  "familyReadOnly": "Только просмотр",
+  "familyReadOnlyHint": "Вы видите профиль, но не меняете записи",
+  "familyInviteBanner": "Вас пригласили в профиль ребёнка",
+  "familyAccept": "Принять",
+  "familyLater": "Позже",
+  "familyAcceptedToast": "Теперь вы видите профиль",
+  "familyOwnerOnly": "Это может изменить только владелец профиля",
+  "familyAlreadyMember": "У этого адреса уже есть доступ",
+  "familySelfInvite": "Это ваш собственный адрес",
+  "voiceListening": "Слушаю…",
+  "voiceSpeakNow": "Говорите",
+  "voiceFailed": "Не удалось распознать речь",
+  "voiceUnavailable": "Микрофон недоступен — заметку можно написать",
+  "voiceDictate": "Продиктовать заметку",
+  "voiceStop": "Остановить запись",
+  "quickFeedHint": "грудь или бутылочка",
+  "quickNappyHint": "мокрый или стул",
+  "quickSleepHint": "дневной отдых",
+  "quickNightSleepHint": "с пробуждениями",
+  "quickTemperatureHint": "одно измерение",
+  "quickAssistantHint": "спросить о малыше",
+  "phraseOfDay1": "Вы делаете достаточно.",
+  "phraseOfDay2": "Сегодня можно медленнее.",
+  "phraseOfDay3": "Малыш чувствует вашу заботу.",
+  "phraseOfDay4": "Отдых — это тоже забота.",
+  "phraseOfDay5": "Каждый день немного проще.",
+  "phraseOfDay6": "Вы рядом, и этого хватает.",
+  "quickFever": "Это лихорадка. День будет отмечен как день болезни.",
+  "quickFeverAction": "Что делать",
+  "growthChartTitle": "Динамика показателей",
+  "growthAddMeasurement": "Добавить измерение",
+  "growthEmpty": "Пока нечего показать на графике",
+  "growthEmptyHint": "Добавьте рост и вес в дневнике — кривая появится после первого измерения, а нормы ВОЗ уже ждут",
+  "growthAxisAge": "возраст, месяцев",
+  "growthWhoMedian": "медиана ВОЗ",
+  "growthWhoBand": "коридор ±2 SD",
+  "growthWhoLimit": "Нормы ВОЗ определены до 5 лет, поэтому справочные кривые обрываются на 60 месяцах.",
+  "growthWhoAssessment": "Оценка по нормам ВОЗ",
+  "growthAgeOutOfRange": "Возраст вне диапазона справочных таблиц (0–60 месяцев)",
+  "growthPercentileOrdinal": "{p}-й",
+  "@growthPercentileOrdinal": {
+    "placeholders": {
+      "p": {
+        "type": "int"
+      }
+    }
+  },
+  "growthPercentileWord": "перцентиль",
+  "growthZScore": "z-оценка",
+  "growthDisclaimer": "Расчёт по нормам ВОЗ для детей 0–5 лет. Перцентиль показывает положение среди сверстников, а не диагноз: отклонение может быть и особенностью конкретного ребёнка. Оценивает врач.",
+  "growthHistory": "История измерений",
+  "illnessTitle": "Статистика заболеваемости",
+  "illnessHeatmap": "Тепловая карта за {months} месяцев",
+  "@illnessHeatmap": {
+    "placeholders": {
+      "months": {
+        "type": "int"
+      }
+    }
+  },
+  "illnessEpisodes": "Эпизоды болезни",
+  "illnessEmpty": "Записей о болезнях нет",
+  "illnessEmptyHint": "Отметить день болезни можно в дневнике",
+  "illnessEpisodesCount": "эпизодов",
+  "illnessDays12": "дней за 12 месяцев",
+  "illnessDays3": "дней за 3 месяца",
+  "illnessWell": "здоров",
+  "illnessDayWell": "{date} — здоров",
+  "@illnessDayWell": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "remindersActiveCount": "{n, plural, one{{n} активное напоминание} few{{n} активных напоминания} many{{n} активных напоминаний} other{{n} активных напоминания}}",
+  "@remindersActiveCount": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "remindersOverdue": "{n, plural, one{просрочено на {n} день} few{просрочено на {n} дня} many{просрочено на {n} дней} other{просрочено на {n} дня}}",
+  "@remindersOverdue": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "remindersInDays": "{n, plural, one{через {n} день} few{через {n} дня} many{через {n} дней} other{через {n} дня}}",
+  "@remindersInDays": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "medicalTitle": "Медицинские записи",
+  "medicalEmpty": "Медицинских записей пока нет",
+  "medicalEmptyHint": "Добавьте визит к врачу или результаты анализов",
+  "medicalDeleteTitle": "Удалить запись?",
+  "medicalDeleteBody": "Запись «{diagnosis}» от {date} будет удалена вместе с результатами анализов. Действие необратимо.",
+  "@medicalDeleteBody": {
+    "placeholders": {
+      "diagnosis": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "medicalAskDoctor": "Спросить у врача",
+  "medicalWriteDown": "Записать",
+  "medicalQuestionsHint": "Запишите сюда всё, что хотите спросить. Список попадёт в отчёт для врача — не придётся вспоминать в кабинете.",
+  "medicalAsked": "Спросила",
+  "medicalQuestionHint": "Например: нормально ли, что срыгивает после каждого кормления",
+  "medicalReport": "Отчёт для врача",
+  "medicalReportHint": "Сводка на одном листе: антропометрия с оценкой по нормам ВОЗ, статистика болезней, анализы с отклонениями, статус вакцинации и вехи развития.",
+  "medicalReportBuilding": "Формирую…",
+  "medicalReportDownload": "Скачать PDF",
+  "medicalReportFailed": "Не удалось сформировать отчёт: {error}",
+  "@medicalReportFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "medicalPrescriptions": "Назначения",
+  "medicalLabResults": "Результаты анализов",
+  "medicalOutOfRange": "{n} вне нормы",
+  "@medicalOutOfRange": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "medicalScans": "Сканы бланков",
+  "medicalIndicator": "Показатель",
+  "medicalValue": "Значение",
+  "medicalReference": "Норма",
+  "medicalRecordTitle": "Медицинская запись",
+  "medicalDiagnosis": "Диагноз или причина визита",
+  "medicalDiagnosisRequired": "Укажите диагноз или причину визита",
+  "medicalDoctor": "Врач и учреждение",
+  "medicalDoctorHint": "Педиатр, поликлиника №2",
+  "medicalLabs": "Анализы",
+  "medicalAddRow": "Добавить строку",
+  "medicalReferenceHint": "Референсные значения не обязательны, но без них приложение не сможет отметить отклонение.",
+  "medicalScan": "Скан бланка",
+  "medicalUploadFailed": "Не удалось загрузить: {error}",
+  "@medicalUploadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "medicalRowInvalid": "Проверьте строку «{name}»: нужно название и числовое значение.",
+  "@medicalRowInvalid": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "medicalUnitShort": "Ед.",
+  "medicalFrom": "от",
+  "medicalTo": "до",
+  "medicalRemoveRow": "Убрать строку",
+  "medicalAttach": "Прикрепить",
+  "assistantSearchHint": "Температура, сыпь, не спит, прикорм…",
+  "assistantNothingFound": "Ничего не нашлось",
+  "assistantNoArticle": "По запросу «{query}» в базе пока нет статьи",
+  "@assistantNoArticle": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "assistantTryAnother": "Попробуйте другое слово — например, «температура» или «сыпь»",
+  "assistantFound": "Найдено",
+  "assistantArticlesCount": "{n, plural, one{{n} статья} few{{n} статьи} many{{n} статей} other{{n} статьи}}",
+  "@assistantArticlesCount": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "assistantTriage": "Проверить тревожные признаки",
+  "assistantTriageHint": "Несколько вопросов — и понятно, ждать или звонить 103",
+  "assistantChat": "Спросить своими словами",
+  "assistantChatHint": "Ответ по базе приложения, со ссылками на статьи",
+  "assistantChatOff": "ИИ пока не подключён — откройте, чтобы узнать как",
+  "assistantRelevant": "Актуально сейчас",
+  "assistantChildAge": "{name}, {months} мес.",
+  "@assistantChildAge": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "months": {
+        "type": "int"
+      }
+    }
+  },
+  "assistantAllTopics": "Все темы",
+  "assistantDisclaimer": "Материалы основаны на рекомендациях ВОЗ, NICE и Американской академии педиатрии. Это справочная информация для родителей, а не замена осмотру. Окончательное решение всегда за врачом.",
+  "chatTitle": "Спросить помощника",
+  "chatEmpty": "Спросите что-нибудь о здоровье ребёнка",
+  "chatHint": "Спросите про {name}: сон, еда, температура…",
+  "@chatHint": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "chatSend": "Отправить",
+  "chatDisclaimer": "Помощник отвечает только по проверенной базе приложения и не ставит диагнозов. Решение всегда за врачом.",
+  "chatEmergency": "Вызывайте скорую — 103",
+  "chatEmergencyBody": "В вашем вопросе есть признак, при котором нельзя ждать. Я намеренно не передаю такие вопросы ИИ — здесь нужен не совет, а немедленная помощь.",
+  "chatWhatToDo": "Что делать до приезда скорой",
+  "chatSources": "Ответ построен по статьям:",
+  "chatOpenKb": "Открыть базу знаний",
+  "chatAiOff": "ИИ-помощник пока не подключён",
+  "chatAiOffBody": "База знаний и проверка тревожных признаков работают без него — они не требуют интернета вообще.",
+  "chatAiOffHow": "Чтобы включить ИИ, нужно развернуть бесплатный прокси на Cloudflare Workers и пересобрать приложение с его адресом. Инструкция — в файле worker/README.md.",
+  "chatSuggestionsTitle": "О чём спрашивают чаще всего",
+  "chatSuggestion1": "Температура 38.5, что делать",
+  "chatSuggestion2": "Сколько должен спать ребёнок в 6 месяцев",
+  "chatSuggestion3": "Когда начинать прикорм",
+  "chatSuggestion4": "Можно ли мне антибиотик при ГВ",
+  "chatSuggestion5": "Ребёнок не какал два дня",
+  "triageTitle": "Проверка тревожных признаков",
+  "triageNeedChild": "Нужен профиль ребёнка",
+  "triageNeedChildHint": "Возраст влияет на оценку — особенно до 3 месяцев",
+  "triageNeedChildAction": "Создайте профиль в разделе «Дети»",
+  "triageTemperatureHint": "Если измеряли — введите, например 38.5",
+  "triageCheckAll": "Отметьте всё, что есть",
+  "triageEvaluate": "Оценить состояние",
+  "triageRestart": "Начать заново",
+  "triageConsidered": "Что учтено:",
+  "triageDisclaimer": "Это не диагноз. Оценка построена по формальным признакам и не заменяет осмотр. Если вам тревожно, а проверка показала «наблюдать дома» — всё равно обратитесь к врачу.",
+  "articleNotFound": "Статья не найдена",
+  "articleNotFoundBody": "Такой статьи в базе нет",
+  "articleToList": "К списку тем",
+  "articleEmergency": "Скорая помощь — 103",
+  "articleWhatToDo": "Что делать сейчас",
+  "articleWhenDoctor": "Когда обратиться к врачу",
+  "articleSources": "Источники",
+  "articleDisclaimer": "Это справочная информация, а не диагноз и не назначение. Если что-то беспокоит — обратитесь к педиатру. При тревожных признаках звоните 103.",
+  "settingsParent": "Родитель",
+  "settingsYourName": "Как вас зовут",
+  "settingsUnits": "Единицы измерения",
+  "settingsUnitsHint": "Измерения всегда хранятся в метрических единицах и пересчитываются только для показа — поэтому переключение ничего не портит в уже введённых данных.",
+  "settingsTemperatureHint": "Температура остаётся в °C в обеих системах: все пороги в приложении и в рекомендациях указаны в градусах Цельсия.",
+  "settingsAppearance": "Оформление",
+  "settingsDeleteSection": "Удаление учётной записи",
+  "settingsDeleteWarning": "Вместе с записью безвозвратно удаляются все дети, дневник, медкарта и напоминания. Отменить это будет нельзя, поэтому сначала выгрузите PDF-отчёт, если он вам нужен.",
+  "settingsChangeButton": "Сменить",
+  "growthVerdictSeverelyLow": "Значительно ниже нормы",
+  "growthVerdictLow": "Ниже нормы",
+  "growthVerdictNormal": "В пределах нормы",
+  "growthVerdictHigh": "Выше нормы",
+  "growthVerdictSeverelyHigh": "Значительно выше нормы",
+  "growthMetricWithDate": "{metric}, {date}",
+  "@growthMetricWithDate": {
+    "placeholders": {
+      "metric": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "medicalAdd": "Добавить запись",
+  "photoNotAnImage": "Не удалось прочитать изображение. Поддерживаются JPG, PNG и WebP.",
+  "photoStillTooLarge": "Изображение слишком большое даже после сжатия. Попробуйте снять кадр ближе или обрезать его.",
+  "nowLastFeeding": "Последнее кормление",
+  "nowLastSleep": "Последний сон",
+  "nowNothingYet": "пока нет",
+  "nowAgo": "{duration} назад",
+  "@nowAgo": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "suggestionAfterSleep": "Часто после сна бывает кормление",
+  "suggestionNappy": "Давно не отмечали подгузник",
+  "suggestionDismiss": "Скрыть",
+  "reflectionTitle": "Сегодня",
+  "reflectionSummary": "Сегодня было {feedings} кормлений и {sleep} сна. Это помогает видеть общую картину дня без подсчётов вручную.",
+  "@reflectionSummary": {
+    "placeholders": {
+      "feedings": {
+        "type": "int"
+      },
+      "sleep": {
+        "type": "String"
+      }
+    }
+  },
+  "reflectionSupport": "Вы записали все важные события дня. Это уже большая помощь себе и ребёнку.",
+  "reflectionNappies": "подгузников",
+  "patternSleepThenFeeding": "Похоже, после дневного сна кормление обычно появляется через 20–40 минут.",
+  "patternNightStart": "Ночной сон чаще всего начинается около {time}.",
+  "@patternNightStart": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "patternStableSleep": "Суммарный сон последние дни остаётся примерно одинаковым.",
+  "contextTitle": "Контекст ребёнка",
+  "contextNotRecorded": "Не отмечалась",
+  "chatContinueTitle": "Продолжить разговор",
+  "chatContinueLast": "Последний вопрос: «{question}»",
+  "@chatContinueLast": {
+    "placeholders": {
+      "question": {
+        "type": "String"
+      }
+    }
+  },
+  "chatContinueResume": "Продолжить",
+  "chatContinueNew": "Новый",
+  "checkInTitle": "Как вы себя чувствуете?",
+  "checkInHoldingUp": "Держусь",
+  "checkInTired": "Устала",
+  "checkInVeryHard": "Очень тяжело",
+  "checkInReplyHoldingUp": "Пусть сегодня у вас найдётся хотя бы один спокойный момент для себя.",
+  "checkInReplyTired": "Усталость после тяжёлой ночи очень понятна. Постарайтесь опираться на самое важное, а не на идеальный порядок.",
+  "checkInReplyVeryHard": "Если есть возможность, попросите кого-то побыть рядом хотя бы ненадолго. Забота о себе — тоже часть заботы о ребёнке.",
+  "vaccineHepB1": "Гепатит B (ВГВ) — первая доза",
+  "vaccineNoteHepB1": "В первые сутки жизни",
+  "vaccineBcg": "Туберкулёз (БЦЖ)",
+  "vaccineNoteBcg": "На 1-4 сутки жизни",
+  "vaccinePenta1": "Пентавакцина: АбКДС + Хиб + ВГВ + ИПВ — первая доза",
+  "vaccineNotePenta1": "Коклюш, дифтерия, столбняк, гемофильная инфекция, гепатит B, полиомиелит",
+  "vaccinePcv1": "Пневмококковая инфекция (ПНВ) — первая доза",
+  "vaccinePenta2": "АбКДС + Хиб + ИПВ — вторая доза",
+  "vaccinePenta3": "Пентавакцина: АбКДС + Хиб + ВГВ + ИПВ — третья доза",
+  "vaccinePcv2": "Пневмококковая инфекция (ПНВ) — вторая доза",
+  "vaccineMmr1": "Корь, краснуха, паротит (ККП) — первая доза",
+  "vaccineNoteMmr1": "В 12-15 месяцев",
+  "vaccinePcvBooster": "Пневмококковая инфекция (ПНВ) — ревакцинация",
+  "vaccineOpv": "Полиомиелит (ОПВ)",
+  "vaccinePentaBooster": "АбКДС + Хиб + ИПВ — ревакцинация",
+  "vaccineNotePentaBooster": "В 18 месяцев",
+  "vaccineHepA1": "Гепатит A (ВГА) — первая доза",
+  "vaccineNoteHepA1": "В 2 года",
+  "vaccineHepA2": "Гепатит A (ВГА) — вторая доза",
+  "vaccineNoteHepA2": "Через 6 месяцев",
+  "vaccineDtapBooster": "АбКДС — ревакцинация",
+  "vaccineNoteDtapBooster": "В 6 лет, перед школой",
+  "vaccineMmr2": "Корь, краснуха, паротит (ККП) — вторая доза",
+  "vaccineHpv1": "ВПЧ — первая доза (девочки)",
+  "vaccineNoteHpv1": "В 11 лет, по согласию родителей",
+  "vaccineHpv2": "ВПЧ — вторая доза (девочки)",
+  "vaccineNoteHpv2": "Через 6 месяцев",
+  "vaccineTdBooster": "АДС-М — ревакцинация",
+  "vaccineNoteTdBooster": "В 16 лет, далее каждые 10 лет",
+  "vaccineSource": "Календарь прививок РК",
+  "reportExport": "Экспорт PDF",
+  "reportPeriodDays": "{n, plural, one{{n} день} few{{n} дня} many{{n} дней} other{{n} дня}}",
+  "@reportPeriodDays": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "reportPeriod": "Период отчёта",
+  "reportRange": "{from} — {to}",
+  "@reportRange": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "reportTitle": "Отчёт для врача",
+  "reportNothing": "За этот период записей нет",
+  "reportPreparing": "Готовим PDF…",
+  "reportReady": "Отчёт готов",
+  "reportShareFailed": "Не удалось открыть отчёт",
+  "reportSectionSleep": "Сон",
+  "reportAvgNight": "Средний ночной сон",
+  "reportAvgDay": "Средний дневной сон",
+  "reportAvgWakings": "Среднее число пробуждений",
+  "reportSectionFeeding": "Кормление",
+  "reportFeedingsTotal": "Всего кормлений",
+  "reportBreast": "Грудь",
+  "reportBottle": "Бутылочка",
+  "reportSectionNappies": "Подгузники",
+  "reportSectionTemperature": "Температура",
+  "reportTempMax": "Максимум",
+  "reportTempMin": "Минимум",
+  "reportTempCount": "Измерений",
+  "reportSectionMedicines": "Лекарства",
+  "reportSectionNotes": "Заметки",
+  "reportDisclaimer": "Отчёт предназначен для удобства обсуждения с врачом и не является медицинским заключением.",
+  "reportPage": "Страница {page} из {total}",
+  "@reportPage": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  }
+}

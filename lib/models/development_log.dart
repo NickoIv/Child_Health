@@ -32,6 +32,19 @@ enum LogType {
   );
 }
 
+/// Titles the quick actions write for entries that have no type of their own.
+///
+/// A dose given and a worry noted are both [LogType.note] documents — the
+/// schema needs nothing added for them, and the title is what tells them
+/// apart. Kept here, in Russian, because these strings are stored: they are
+/// data written to Firestore, not interface, and translating them would orphan
+/// every document already saved.
+abstract final class LogTitles {
+  static const medicine = 'Лекарство';
+  static const alarm = 'Тревога';
+  static const temperature = 'Температура';
+}
+
 /// Which breast, or a bottle.
 enum FeedingSide {
   left('left', 'Левая'),
@@ -168,6 +181,8 @@ class DevelopmentLog {
     this.feedingSide,
     this.nappyKind,
     this.durationMinutes,
+    this.nightWakings,
+    this.nightFeeds,
   });
 
   final String id;
@@ -190,11 +205,36 @@ class DevelopmentLog {
   /// Minutes, for a feed or a stretch of sleep.
   final int? durationMinutes;
 
+  /// How many times the child surfaced during a night, and how many of those
+  /// ended in a feed.
+  ///
+  /// Present only on a night sleep, which is otherwise an ordinary
+  /// [LogType.sleep] entry: the same duration, on the same timeline, counted
+  /// by the same statistics. Nothing had to be added to the schema — a
+  /// document written before this existed simply has neither field.
+  final int? nightWakings;
+  final int? nightFeeds;
+
+  bool get isNightSleep => type == LogType.sleep && nightWakings != null;
+
+  /// Local copy of the duration wording, so the model stays free of imports
+  /// from the analytics layer.
+  static String _duration(int minutes) {
+    final hours = minutes ~/ 60;
+    final rest = minutes % 60;
+    if (hours == 0) return '$rest мин';
+    if (rest == 0) return '$hours ч';
+    return '$hours ч $rest мин';
+  }
+
   /// One-line summary for the feed, e.g. "Левая · 15 мин".
   String get routineSummary => [
     if (feedingSide != null) feedingSide!.label,
     if (nappyKind != null) nappyKind!.label,
-    if (durationMinutes != null) '$durationMinutes мин',
+    if (durationMinutes != null) _duration(durationMinutes!),
+    if ((nightWakings ?? 0) > 0)
+      'пробуждений: $nightWakings',
+    if ((nightFeeds ?? 0) > 0) 'кормлений: $nightFeeds',
   ].join(' · ');
 
   DevelopmentLog copyWith({
@@ -209,6 +249,8 @@ class DevelopmentLog {
     FeedingSide? feedingSide,
     NappyKind? nappyKind,
     int? durationMinutes,
+    int? nightWakings,
+    int? nightFeeds,
   }) {
     return DevelopmentLog(
       id: id,
@@ -224,6 +266,8 @@ class DevelopmentLog {
       feedingSide: feedingSide ?? this.feedingSide,
       nappyKind: nappyKind ?? this.nappyKind,
       durationMinutes: durationMinutes ?? this.durationMinutes,
+      nightWakings: nightWakings ?? this.nightWakings,
+      nightFeeds: nightFeeds ?? this.nightFeeds,
     );
   }
 
@@ -243,6 +287,8 @@ class DevelopmentLog {
     feedingSide: feedingSide,
     nappyKind: nappyKind,
     durationMinutes: durationMinutes,
+    nightWakings: nightWakings,
+    nightFeeds: nightFeeds,
   );
 
   Map<String, dynamic> toMap() => {
@@ -258,6 +304,8 @@ class DevelopmentLog {
     if (feedingSide != null) 'feeding_side': feedingSide!.code,
     if (nappyKind != null) 'nappy_kind': nappyKind!.code,
     if (durationMinutes != null) 'duration_minutes': durationMinutes,
+    if (nightWakings != null) 'night_wakings': nightWakings,
+    if (nightFeeds != null) 'night_feeds': nightFeeds,
   };
 
   factory DevelopmentLog.fromMap(String id, Map<String, dynamic> map) {
@@ -275,6 +323,8 @@ class DevelopmentLog {
       feedingSide: FeedingSide.fromCode(map['feeding_side'] as String?),
       nappyKind: NappyKind.fromCode(map['nappy_kind'] as String?),
       durationMinutes: (map['duration_minutes'] as num?)?.toInt(),
+      nightWakings: (map['night_wakings'] as num?)?.toInt(),
+      nightFeeds: (map['night_feeds'] as num?)?.toInt(),
     );
   }
 }

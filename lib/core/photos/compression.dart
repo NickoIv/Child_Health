@@ -68,13 +68,20 @@ class PreparedPhoto {
 }
 
 /// Raised when an image cannot be made to fit.
-class PhotoTooLargeException implements Exception {
-  const PhotoTooLargeException(this.message);
+/// Why a picked photo could not be stored.
+///
+/// A cause rather than a sentence: the message a parent reads has to follow
+/// the interface language, and this layer has no business knowing what that
+/// is. [photoProblemText] turns it into words.
+enum PhotoProblem { notAnImage, stillTooLarge }
 
-  final String message;
+class PhotoTooLargeException implements Exception {
+  const PhotoTooLargeException(this.problem);
+
+  final PhotoProblem problem;
 
   @override
-  String toString() => message;
+  String toString() => 'PhotoTooLargeException(${problem.name})';
 }
 
 /// Longest-edge-preserving target size for [width] x [height].
@@ -112,9 +119,7 @@ PreparedPhoto preparePhoto(Uint8List bytes) {
   }
 
   if (decoded == null) {
-    throw const PhotoTooLargeException(
-      'Не удалось прочитать изображение. Поддерживаются JPG, PNG и WebP.',
-    );
+    throw const PhotoTooLargeException(PhotoProblem.notAnImage);
   }
 
   final size = targetSize(decoded.width, decoded.height);
@@ -140,8 +145,5 @@ PreparedPhoto preparePhoto(Uint8List bytes) {
     }
   }
 
-  throw const PhotoTooLargeException(
-    'Изображение слишком большое даже после сжатия. '
-    'Попробуйте снять кадр ближе или обрезать его.',
-  );
+  throw const PhotoTooLargeException(PhotoProblem.stillTooLarge);
 }

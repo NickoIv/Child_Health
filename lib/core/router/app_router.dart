@@ -12,12 +12,14 @@ import '../../features/auth/login_screen.dart';
 import '../../features/children/children_screen.dart';
 import '../../features/dashboard/dashboard_screen.dart';
 import '../../features/diary/diary_screen.dart';
+import '../../features/family/family_screen.dart';
 import '../../features/growth/growth_screen.dart';
 import '../../features/illness/illness_screen.dart';
 import '../../features/medical/medical_screen.dart';
 import '../../features/reminders/reminders_screen.dart';
 import '../../features/settings/settings_screen.dart';
 import '../../features/shell/app_shell.dart';
+import '../../l10n/app_localizations.dart';
 import '../../providers.dart';
 
 /// One destination of the primary navigation.
@@ -31,65 +33,76 @@ class AppDestination {
   });
 
   final String path;
-  final String label;
+
+  /// Resolved against the chosen language rather than stored, so switching
+  /// language relabels the navigation without rebuilding this list.
+  final String Function(AppLocalizations) label;
+
   final IconData icon;
   final IconData selectedIcon;
   final Widget Function() builder;
 }
 
-const appDestinations = <AppDestination>[
+final appDestinations = <AppDestination>[
   AppDestination(
     path: '/',
-    label: 'Обзор',
+    label: (l) => l.navDashboard,
     icon: Icons.dashboard_outlined,
     selectedIcon: Icons.dashboard,
     builder: DashboardScreen.new,
   ),
   AppDestination(
-    path: '/assistant',
-    label: 'Помощник',
-    icon: Icons.lightbulb_outline,
-    selectedIcon: Icons.lightbulb,
-    builder: AssistantScreen.new,
-  ),
-  AppDestination(
     path: '/diary',
-    label: 'Дневник',
+    label: (l) => l.navDiary,
     icon: Icons.auto_stories_outlined,
     selectedIcon: Icons.auto_stories,
     builder: DiaryScreen.new,
   ),
   AppDestination(
+    path: '/assistant',
+    label: (l) => l.navAssistant,
+    icon: Icons.lightbulb_outline,
+    selectedIcon: Icons.lightbulb,
+    builder: AssistantScreen.new,
+  ),
+  AppDestination(
+    path: '/family',
+    label: (l) => l.navFamily,
+    icon: Icons.diversity_1_outlined,
+    selectedIcon: Icons.diversity_1,
+    builder: FamilyScreen.new,
+  ),
+  AppDestination(
     path: '/growth',
-    label: 'Развитие',
+    label: (l) => l.navGrowth,
     icon: Icons.show_chart_outlined,
     selectedIcon: Icons.show_chart,
     builder: GrowthScreen.new,
   ),
   AppDestination(
     path: '/illness',
-    label: 'Болезни',
+    label: (l) => l.navIllness,
     icon: Icons.thermostat_outlined,
     selectedIcon: Icons.thermostat,
     builder: IllnessScreen.new,
   ),
   AppDestination(
     path: '/medical',
-    label: 'Медкарта',
+    label: (l) => l.navMedical,
     icon: Icons.medical_information_outlined,
     selectedIcon: Icons.medical_information,
     builder: MedicalScreen.new,
   ),
   AppDestination(
     path: '/reminders',
-    label: 'Напоминания',
+    label: (l) => l.navReminders,
     icon: Icons.notifications_outlined,
     selectedIcon: Icons.notifications,
     builder: RemindersScreen.new,
   ),
   AppDestination(
     path: '/children',
-    label: 'Дети',
+    label: (l) => l.navChildren,
     icon: Icons.family_restroom_outlined,
     selectedIcon: Icons.family_restroom,
     builder: ChildrenScreen.new,

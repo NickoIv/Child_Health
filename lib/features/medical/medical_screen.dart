@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:printing/printing.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../core/theme/app_theme.dart';
-import '../../firebase/push_messaging.dart';
 import '../../models/development_log.dart';
 import '../../models/medical_record.dart';
 import '../../providers.dart';
-import '../reports/medical_report.dart';
-import '../reports/report_data.dart';
+import '../reports/export_sheet.dart';
 import '../shared/photo_widgets.dart';
 import '../shared/widgets.dart';
 import 'record_form.dart';
@@ -23,10 +21,10 @@ class MedicalScreen extends ConsumerStatefulWidget {
 }
 
 class _MedicalScreenState extends ConsumerState<MedicalScreen> {
-  bool _building = false;
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final child = ref.watch(selectedChildProvider);
     if (child == null) return const NoChildPlaceholder();
 
@@ -35,7 +33,7 @@ class _MedicalScreenState extends ConsumerState<MedicalScreen> {
       return PageBody(
         children: [
           SectionCard(
-            title: 'Медицинские записи',
+            title: l.medicalTitle,
             icon: Icons.medical_information_outlined,
             child: ErrorState(
               error: recordsAsync.error!,
@@ -53,16 +51,16 @@ class _MedicalScreenState extends ConsumerState<MedicalScreen> {
         children: [
           _QuestionsCard(onAdd: _addQuestion),
           const SizedBox(height: 16),
-          _ReportCard(building: _building, onGenerate: _generateReport),
+          _ReportCard(onExport: _openExport),
           const SizedBox(height: 16),
           if (records.isEmpty)
-            const SectionCard(
-              title: 'Медицинские записи',
+            SectionCard(
+              title: l.medicalTitle,
               icon: Icons.medical_information_outlined,
               child: EmptyState(
                 icon: Icons.folder_open_outlined,
-                message: 'Медицинских записей пока нет',
-                hint: 'Добавьте визит к врачу или результаты анализов',
+                message: l.medicalEmpty,
+                hint: l.medicalEmptyHint,
               ),
             )
           else
@@ -74,13 +72,12 @@ class _MedicalScreenState extends ConsumerState<MedicalScreen> {
               ),
               const SizedBox(height: 16),
             ],
-          const _PendingFeatures(),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _addRecord,
         icon: const Icon(Icons.add),
-        label: const Text('Добавить запись'),
+        label: Text(l.medicalAdd),
       ),
     );
   }
@@ -115,22 +112,25 @@ class _MedicalScreenState extends ConsumerState<MedicalScreen> {
   }
 
   Future<void> _confirmDelete(MedicalRecord record) async {
+    final l = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Удалить запись?'),
+        title: Text(l.medicalDeleteTitle),
         content: Text(
-          'Запись «${record.diagnosis}» от ${shortDate.format(record.date)} '
-          'будет удалена вместе с результатами анализов. Действие необратимо.',
+          l.medicalDeleteBody(
+            record.diagnosis,
+            shortDate.format(record.date),
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Отмена'),
+            child: Text(l.commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Удалить'),
+            child: Text(l.commonDelete),
           ),
         ],
       ),
@@ -163,41 +163,14 @@ class _MedicalScreenState extends ConsumerState<MedicalScreen> {
         );
   }
 
-  Future<void> _generateReport() async {
+  /// Which period, then the file. The choice lives in a sheet rather than on
+  /// the card: it is asked once, and a row of chips on a card a parent reads
+  /// every week would be three permanent buttons for a rare decision.
+  Future<void> _openExport() async {
     final child = ref.read(selectedChildProvider);
-    if (child == null || _building) return;
-
-    setState(() => _building = true);
-    try {
-      final data = buildReportData(
-        child: child,
-        logs: ref.read(logsProvider).value ?? const [],
-        records: ref.read(medicalRecordsProvider).value ?? const [],
-        reminders: ref.read(remindersProvider).value ?? const [],
-      );
-      final bytes = await buildMedicalReport(data);
-
-      // sharePdf rather than layoutPdf: on the web this hands the browser a
-      // download, which is what a parent wants before an appointment. A print
-      // preview would be an extra step between them and the file.
-      await Printing.sharePdf(
-        bytes: bytes,
-        filename: 'Отчёт_${child.name}_${_fileDate(data.generatedAt)}.pdf',
-      );
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Не удалось сформировать отчёт: $e')),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _building = false);
-    }
+    if (child == null) return;
+    await showExportSheet(context, childId: child.id);
   }
-
-  static String _fileDate(DateTime d) =>
-      '${d.year}-${d.month.toString().padLeft(2, '0')}-'
-      '${d.day.toString().padLeft(2, '0')}';
 }
 
 /// Questions to raise at the next appointment.
@@ -212,22 +185,22 @@ class _QuestionsCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final questions = ref.watch(doctorQuestionsProvider);
 
     return SectionCard(
-      title: 'Спросить у врача',
+      title: l.medicalAskDoctor,
       icon: Icons.help_outline,
       accentColor: VizPalette.slot(1, theme.brightness),
       action: TextButton.icon(
         onPressed: onAdd,
         icon: const Icon(Icons.add, size: 18),
-        label: const Text('Записать'),
+        label: Text(l.medicalWriteDown),
       ),
       child: questions.isEmpty
           ? Text(
-              'Запишите сюда всё, что хотите спросить. Список попадёт '
-              'в отчёт для врача — не придётся вспоминать в кабинете.',
+              l.medicalQuestionsHint,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -245,7 +218,7 @@ class _QuestionsCard extends ConsumerWidget {
                     title: Text(q.title),
                     subtitle: Text(shortDate.format(q.date)),
                     trailing: IconButton(
-                      tooltip: 'Спросила',
+                      tooltip: l.medicalAsked,
                       icon: const Icon(Icons.check, size: 20),
                       onPressed: () =>
                           ref.read(logRepositoryProvider).delete(q.id),
@@ -275,8 +248,9 @@ class _QuestionDialogState extends State<_QuestionDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return AlertDialog(
-      title: const Text('Спросить у врача'),
+      title: Text(l.medicalAskDoctor),
       content: SizedBox(
         width: 420,
         child: TextField(
@@ -284,21 +258,19 @@ class _QuestionDialogState extends State<_QuestionDialog> {
           autofocus: true,
           maxLines: 3,
           minLines: 1,
-          decoration: const InputDecoration(
-            hintText: 'Например: нормально ли, что срыгивает после каждого кормления',
-          ),
+          decoration: InputDecoration(hintText: l.medicalQuestionHint),
           onSubmitted: (v) => Navigator.of(context).pop(v.trim()),
         ),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Отмена'),
+          child: Text(l.commonCancel),
         ),
         FilledButton(
           onPressed: () =>
               Navigator.of(context).pop(_controller.text.trim()),
-          child: const Text('Сохранить'),
+          child: Text(l.commonSave),
         ),
       ],
     );
@@ -306,38 +278,30 @@ class _QuestionDialogState extends State<_QuestionDialog> {
 }
 
 class _ReportCard extends StatelessWidget {
-  const _ReportCard({required this.building, required this.onGenerate});
+  const _ReportCard({required this.onExport});
 
-  final bool building;
-  final Future<void> Function() onGenerate;
+  final Future<void> Function() onExport;
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
     return SectionCard(
-      title: 'Отчёт для врача',
+      title: l.medicalReport,
       icon: Icons.picture_as_pdf_outlined,
       accentColor: VizPalette.slot(2, theme.brightness),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Сводка на одном листе: антропометрия с оценкой по нормам ВОЗ, '
-            'статистика болезней, анализы с отклонениями, статус вакцинации '
-            'и вехи развития.',
+            l.medicalReportHint,
             style: theme.textTheme.bodyMedium,
           ),
           const SizedBox(height: 14),
           FilledButton.icon(
-            onPressed: building ? null : onGenerate,
-            icon: building
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.download),
-            label: Text(building ? 'Формирую…' : 'Скачать PDF'),
+            onPressed: onExport,
+            icon: const Icon(Icons.picture_as_pdf_outlined),
+            label: Text(l.reportExport),
           ),
         ],
       ),
@@ -358,6 +322,7 @@ class _RecordCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
     return SectionCard(
       title: record.diagnosis,
@@ -370,12 +335,12 @@ class _RecordCard extends StatelessWidget {
             style: theme.textTheme.bodySmall,
           ),
           IconButton(
-            tooltip: 'Изменить запись',
+            tooltip: l.diaryEditEntry,
             onPressed: onEdit,
             icon: const Icon(Icons.edit_outlined, size: 20),
           ),
           IconButton(
-            tooltip: 'Удалить запись',
+            tooltip: l.medicalDeleteTitle,
             onPressed: onDelete,
             icon: const Icon(Icons.delete_outline, size: 20),
           ),
@@ -391,7 +356,7 @@ class _RecordCard extends StatelessWidget {
             const SizedBox(height: 12),
           ],
           if (record.prescriptions.isNotEmpty) ...[
-            Text('Назначения', style: theme.textTheme.labelLarge),
+            Text(l.medicalPrescriptions, style: theme.textTheme.labelLarge),
             const SizedBox(height: 4),
             Text(record.prescriptions, style: theme.textTheme.bodyMedium),
             const SizedBox(height: 16),
@@ -404,12 +369,11 @@ class _RecordCard extends StatelessWidget {
               runSpacing: 6,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                Text('Результаты анализов',
-                    style: theme.textTheme.labelLarge),
+                Text(l.medicalLabResults, style: theme.textTheme.labelLarge),
                 if (record.outOfRangeCount > 0)
                   Chip(
                     label: Text(
-                      '${record.outOfRangeCount} вне нормы',
+                      l.medicalOutOfRange(record.outOfRangeCount),
                       style: const TextStyle(fontSize: 12),
                     ),
                     visualDensity: VisualDensity.compact,
@@ -424,7 +388,7 @@ class _RecordCard extends StatelessWidget {
           ],
           if (record.files.isNotEmpty) ...[
             const SizedBox(height: 16),
-            Text('Сканы бланков', style: theme.textTheme.labelLarge),
+            Text(l.medicalScans, style: theme.textTheme.labelLarge),
             const SizedBox(height: 8),
             PhotoStrip(photoIds: record.files),
           ],
@@ -441,6 +405,7 @@ class _LabTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -449,11 +414,11 @@ class _LabTable extends StatelessWidget {
         headingRowHeight: 36,
         dataRowMinHeight: 40,
         dataRowMaxHeight: 48,
-        columns: const [
-          DataColumn(label: Text('Показатель')),
-          DataColumn(label: Text('Значение'), numeric: true),
-          DataColumn(label: Text('Норма')),
-          DataColumn(label: Text('')),
+        columns: [
+          DataColumn(label: Text(l.medicalIndicator)),
+          DataColumn(label: Text(l.medicalValue), numeric: true),
+          DataColumn(label: Text(l.medicalReference)),
+          const DataColumn(label: Text('')),
         ],
         rows: [
           for (final r in results)
@@ -506,55 +471,3 @@ class _LabTable extends StatelessWidget {
 
 /// Honest placeholder: these parts of 2.5 need Firebase Storage and the `pdf`
 /// package, neither of which is wired up yet.
-class _PendingFeatures extends StatelessWidget {
-  const _PendingFeatures();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    // Keep this list honest. It listed manual entry and scan attachment for
-    // two releases after both shipped, because it was written before the work
-    // rather than after it. A stale "not yet implemented" is worse than none:
-    // it tells a parent to stop looking for something that is right there.
-    //
-    // Push is built — client, service worker and the scheduler that sends.
-    // It only stays off while the build has no VAPID key, so this line goes
-    // away the moment one is supplied rather than waiting for someone to
-    // remember to delete it. With nothing left to list, so does the card.
-    final pending = <String>[
-      if (!PushConfig.isConfigured)
-        'Push-уведомления о приёме лекарств и визитах: в этой сборке не '
-            'задан ключ отправителя',
-    ];
-    if (pending.isEmpty) return const SizedBox.shrink();
-
-    return SectionCard(
-      title: 'Ещё не реализовано',
-      icon: Icons.construction_outlined,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          for (final line in pending)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(
-                    Icons.radio_button_unchecked,
-                    size: 16,
-                    color: theme.colorScheme.outline,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(line, style: theme.textTheme.bodyMedium),
-                  ),
-                ],
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}

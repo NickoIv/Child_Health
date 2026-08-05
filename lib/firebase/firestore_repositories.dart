@@ -3,12 +3,14 @@ import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../core/photos/compression.dart';
+import '../data/family_repository.dart';
 import '../data/photo_repository.dart';
 import '../data/repositories.dart';
 import '../data/user_repository.dart';
 import '../models/app_user.dart';
 import '../models/child.dart';
 import '../models/development_log.dart';
+import '../models/family_member.dart';
 import '../models/medical_record.dart';
 import '../models/photo.dart';
 import '../models/reminder.dart';
@@ -21,7 +23,22 @@ abstract final class Collections {
   static const records = 'medical_records';
   static const reminders = 'reminders';
   static const photos = 'photos';
+
+  /// Subcollection of `children`. Who else may look at this child.
+  static const familyMembers = 'family_members';
+
+  /// One document per (owner, viewer) pair, id `{ownerUid}_{viewerUid}`.
+  ///
+  /// Redundant with the invitation it is created from, and worth it: without
+  /// it every rule protecting a log, a photo or a reminder would have to walk
+  /// back to the child's subcollection to find out whether the reader is
+  /// family. This is a single existence check on a known path instead.
+  static const familyAccess = 'family_access';
 }
+
+/// Id of the grant that lets [viewerUid] read what [ownerUid] wrote.
+String familyAccessId(String ownerUid, String viewerUid) =>
+    '${ownerUid}_$viewerUid';
 
 /// Every document carries the owning parent's uid, not just the child id.
 ///
@@ -208,6 +225,131 @@ class FirestoreUserRepository implements UserRepository {
   @override
   Future<void> delete(String uid) =>
       db.collection(Collections.users).doc(uid).delete();
+}
+
+/// Who else can see a child, and who has invited whom.
+class FirestoreFamilyRepository implements FamilyRepository {
+  const FirestoreFamilyRepository(this.db);
+
+  final FirebaseFirestore db;
+
+  CollectionReference<Map<String, dynamic>> _members(String childId) => db
+      .collection(Collections.children)
+      .doc(childId)
+      .collection(Collections.familyMembers);
+
+  @override
+  Stream<List<FamilyMember>> watchMembers(String childId) {
+    return _members(childId).snapshots().map((snap) {
+      final members = snap.docs
+          .map((d) => FamilyMember.fromMap(d.id, d.data()))
+          .toList();
+      members.sort((a, b) => a.invitedAt.compareTo(b.invitedAt));
+      return members;
+    });
+  }
+
+  @override
+  Stream<List<FamilyMember>> watchInvitationsFor(String email) {
+    final wanted = normalizeEmail(email);
+    if (wanted.isEmpty) return Stream.value(const []);
+
+    // The one query in the app that reaches across owners. It is safe because
+    // the rule compares the document's address against the caller's verified
+    // token, not against this filter — a client that widened the filter would
+    // simply be refused.
+    return db
+        .collectionGroup(Collections.familyMembers)
+        .where('email', isEqualTo: wanted)
+        .snapshots()
+        .map((snap) {
+          final invitations = snap.docs
+              .map((d) => FamilyMember.fromMap(d.id, d.data()))
+              .toList();
+          invitations.sort((a, b) => a.invitedAt.compareTo(b.invitedAt));
+          return invitations;
+        });
+  }
+
+  @override
+  Future<FamilyMember> invite({
+    required String childId,
+    required String ownerUid,
+    required String email,
+  }) async {
+    final member = FamilyMember(
+      email: normalizeEmail(email),
+      childId: childId,
+      ownerUid: ownerUid,
+      role: FamilyRole.viewer,
+      status: InviteStatus.pending,
+      invitedAt: DateTime.now(),
+    );
+    // Keyed by the address, so re-inviting replaces rather than duplicates.
+    await _members(childId).doc(member.email).set(member.toMap());
+    return member;
+  }
+
+  @override
+  Future<void> accept(FamilyMember invitation, String viewerUid) async {
+    final accepted = invitation.accept(viewerUid, DateTime.now());
+    // Two writes, in this order. The invitation is the proof the grant is
+    // allowed to exist, so it has to be accepted first; a grant written
+    // against a pending invitation is refused by the rules.
+    await _members(invitation.childId).doc(invitation.email).update({
+      'status': accepted.status.code,
+      'accepted_at': accepted.acceptedAt?.toIso8601String(),
+      'viewer_uid': viewerUid,
+    });
+    await db
+        .collection(Collections.familyAccess)
+        .doc(familyAccessId(invitation.ownerUid, viewerUid))
+        .set({
+          'owner_uid': invitation.ownerUid,
+          'viewer_uid': viewerUid,
+          'child_id': invitation.childId,
+          'email': invitation.email,
+          'granted_at': DateTime.now().toIso8601String(),
+        });
+  }
+
+  @override
+  Future<void> revoke({
+    required String childId,
+    required String email,
+  }) async {
+    final wanted = normalizeEmail(email);
+    final doc = await _members(childId).doc(wanted).get();
+    final data = doc.data();
+    if (data == null) return;
+
+    final member = FamilyMember.fromMap(doc.id, data);
+    // The owner is not removable. A record with nobody who can write to it is
+    // a record nobody can correct.
+    if (member.role == FamilyRole.owner) return;
+
+    await doc.reference.delete();
+    if (member.viewerUid.isNotEmpty) {
+      await db
+          .collection(Collections.familyAccess)
+          .doc(familyAccessId(member.ownerUid, member.viewerUid))
+          .delete();
+    }
+  }
+
+  @override
+  Future<void> thank({
+    required String childId,
+    required String email,
+    required DateTime day,
+  }) async {
+    // One field on a document that already exists. No new collection, and
+    // nothing here the existing rule does not already allow the viewer to
+    // write: the address, the role, the owner and the child are untouched.
+    await _members(childId).doc(normalizeEmail(email)).update({
+      'thanked_on': dayStamp(day),
+    });
+  }
 }
 
 class FirestorePhotoRepository extends _Base implements PhotoRepository {

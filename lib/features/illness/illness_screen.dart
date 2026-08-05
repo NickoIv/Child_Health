@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../l10n/app_localizations.dart';
+import '../../core/l10n/labels.dart';
 import '../../core/analytics/illness_stats.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/development_log.dart';
@@ -16,6 +18,7 @@ class IllnessScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     final child = ref.watch(selectedChildProvider);
     if (child == null) return const NoChildPlaceholder();
 
@@ -26,7 +29,7 @@ class IllnessScreen extends ConsumerWidget {
     return PageBody(
       children: [
         SectionCard(
-          title: 'Статистика заболеваемости',
+          title: l.illnessTitle,
           icon: Icons.thermostat_outlined,
           child: _Stats(
             sickDays: sickDays,
@@ -36,7 +39,7 @@ class IllnessScreen extends ConsumerWidget {
         ),
         const SizedBox(height: 16),
         SectionCard(
-          title: 'Тепловая карта за $_monthsShown месяцев',
+          title: l.illnessHeatmap(_monthsShown),
           icon: Icons.calendar_month_outlined,
           child: _HeatMap(
             severityByDay: ref.watch(illnessSeverityByDayProvider),
@@ -45,13 +48,13 @@ class IllnessScreen extends ConsumerWidget {
         ),
         const SizedBox(height: 16),
         SectionCard(
-          title: 'Эпизоды болезни',
+          title: l.illnessEpisodes,
           icon: Icons.list_alt_outlined,
           child: illnessLogs.isEmpty
-              ? const EmptyState(
+              ? EmptyState(
                   icon: Icons.sentiment_satisfied_outlined,
-                  message: 'Записей о болезнях нет',
-                  hint: 'Отметить день болезни можно в дневнике',
+                  message: l.illnessEmpty,
+                  hint: l.illnessEmptyHint,
                 )
               : Column(
                   children: [
@@ -81,6 +84,7 @@ class _Stats extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final now = DateTime.now();
     final lastYear = sickDays
         .where((d) => now.difference(d).inDays <= 365)
@@ -95,12 +99,12 @@ class _Stats extends StatelessWidget {
       children: [
         StatTile(
           value: sickDays.length.toString(),
-          caption: 'дней болезни всего',
+          caption: l.illnessDaysTotal,
           color: sickDays.isEmpty ? StatusColors.normal : null,
         ),
-        StatTile(value: episodes.toString(), caption: 'эпизодов'),
-        StatTile(value: lastYear.toString(), caption: 'дней за 12 месяцев'),
-        StatTile(value: lastQuarter.toString(), caption: 'дней за 3 месяца'),
+        StatTile(value: episodes.toString(), caption: l.illnessEpisodesCount),
+        StatTile(value: lastYear.toString(), caption: l.illnessDays12),
+        StatTile(value: lastQuarter.toString(), caption: l.illnessDays3),
       ],
     );
   }
@@ -118,7 +122,7 @@ class _HeatMap extends StatelessWidget {
   /// point of a heat map is to make that visible without reading anything.
   static Color _colorFor(Severity? severity, ThemeData theme) =>
       switch (severity) {
-        null => theme.colorScheme.surfaceContainerHighest,
+        null => Warm.soft(theme.brightness),
         Severity.mild => StatusColors.warning,
         Severity.moderate => StatusColors.serious,
         Severity.severe => StatusColors.alert,
@@ -126,6 +130,7 @@ class _HeatMap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final today = dateOnly(DateTime.now());
     final start = DateTime(today.year, today.month - months + 1);
@@ -160,9 +165,9 @@ class _HeatMap extends StatelessWidget {
                           message: day == null
                               ? ''
                               : severityByDay[day] == null
-                              ? '${shortDate.format(day)} — здоров'
+                              ? l.illnessDayWell(shortDate.format(day))
                               : '${shortDate.format(day)} — '
-                                    '${severityByDay[day]!.label.toLowerCase()}',
+                                    '${severityByDay[day]!.localizedLabel(l).toLowerCase()}',
                           child: Container(
                             width: 13,
                             height: 13,
@@ -188,9 +193,9 @@ class _HeatMap extends StatelessWidget {
           spacing: 18,
           runSpacing: 8,
           children: [
-            _legend(theme, null, 'здоров'),
+            _legend(theme, null, l.illnessWell),
             for (final s in Severity.values)
-              _legend(theme, s, s.label.toLowerCase()),
+              _legend(theme, s, s.localizedLabel(l).toLowerCase()),
           ],
         ),
       ],
@@ -222,6 +227,7 @@ class _IllnessRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l = AppLocalizations.of(context);
     final severity = log.severity;
     final color = switch (severity) {
       Severity.severe => StatusColors.alert,
@@ -240,7 +246,10 @@ class _IllnessRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(log.title, style: theme.textTheme.titleSmall),
+              Text(
+                localizedLogTitle(l, log),
+                style: theme.textTheme.titleSmall,
+              ),
               if (log.description.isNotEmpty)
                 Text(
                   log.description,
@@ -256,7 +265,7 @@ class _IllnessRow extends StatelessWidget {
         if (severity != null) ...[
           const SizedBox(width: 12),
           Chip(
-            label: Text(severity.label),
+            label: Text(severity.localizedLabel(l)),
             visualDensity: VisualDensity.compact,
             side: BorderSide.none,
             backgroundColor: color.withValues(alpha: 0.14),

@@ -57,6 +57,8 @@ dependencies:
   flutter_local_notifications: ^22.2.0
   timezone: ^0.11.1
   flutter_timezone: ^5.1.0
+  shared_preferences: ^2.5.5
+  speech_to_text: ^7.4.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -74,6 +76,9 @@ dev_dependencies:
 # The following section is specific to Flutter packages.
 flutter:
 
+  # Turns the ARB files in lib/l10n into AppLocalizations.
+  generate: true
+
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
@@ -82,13 +87,13 @@ flutter:
   assets:
     # Bundled rather than fetched at runtime: the PDF report must work
     # offline, and the built-in PDF fonts (Helvetica and friends) have no
-    # Cyrillic glyphs at all — a Russian report would come out blank.
+    # Cyrillic glyphs at all вЂ” a Russian report would come out blank.
     - assets/fonts/Roboto-Regular.ttf
     - assets/fonts/Roboto-Bold.ttf
 
   fonts:
     # Nunito for the interface: rounded and warm rather than the clinical
-    # default, with full Cyrillic. One variable file covers every weight —
+    # default, with full Cyrillic. One variable file covers every weight вЂ”
     # 277 KB instead of three static faces.
     - family: Nunito
       fonts:

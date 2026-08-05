@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/growth/who_standards.dart';
+import '../../core/l10n/labels.dart';
+import '../../l10n/app_localizations.dart';
 import '../../core/router/app_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/units/units.dart';
@@ -13,13 +15,26 @@ import '../../models/reminder.dart';
 import '../../providers.dart';
 import '../shared/widgets.dart';
 import 'dashboard_config.dart';
+import 'focus_home.dart';
 import 'now_card.dart';
+import 'smart_card.dart';
+import '../family/digest_card.dart';
+import '../family/invite_banner.dart';
+import '../family/moments_card.dart';
 
-/// Configurable home screen, per requirement 2.7.
+/// The home screen, in focus mode.
 ///
-/// The customisation lives in settings rather than behind a button here. The
-/// home screen is opened dozens of times a day and rearranged perhaps twice;
-/// a permanent button for the rare action was crowding the common one.
+/// Four things and nothing else: who this is, the four things a parent
+/// records without thinking, the last three that happened, and at most one
+/// card with something to say. Everything the old dashboard also carried —
+/// the eight configurable blocks, patterns, reflection, the digest, the week,
+/// the shared photographs, the exports — moved to the assistant tab, where it
+/// is read rather than passed on the way to logging a feed.
+///
+/// Nothing was removed. The measure of this screen is how quickly a woman
+/// holding a baby in one arm can write down that she fed him, and every card
+/// between her and those four buttons was costing her seconds she was paying
+/// for at three in the morning.
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
@@ -28,36 +43,78 @@ class DashboardScreen extends ConsumerWidget {
     final child = ref.watch(selectedChildProvider);
     if (child == null) return const NoChildPlaceholder();
 
-    final layout = ref.watch(dashboardLayoutProvider);
-
     return PageBody(
+      // A dashboard is a column of cards, and past about 900px the cards stop
+      // being a column and become a wall.
+      maxWidth: 900,
+      children: [
+        // Above everything, and gone the moment it is answered.
+        const InviteBanner(),
+        WarmHeader(child: child),
+        const SizedBox(height: AppTheme.gap),
+        PrimaryActions(child: child),
+        NightSleepLink(childId: child.id),
+        const SizedBox(height: 4),
+        // At most one, picked by priority rather than stacked.
+        const SmartCard(),
+        const RecentPreview(),
+        // For a viewer, the day in five numbers and today's photographs. Both
+        // draw nothing for the mother, who was there.
+        const SizedBox(height: AppTheme.gap),
+        const DigestCard(),
+        const MomentsCard(),
+      ],
+    );
+  }
+}
+
+/// The eight configurable blocks, kept whole and shown in the assistant tab.
+///
+/// They are still the parent's to arrange from settings — see
+/// [DashboardLayoutEditor]. What changed is where they are read.
+class DashboardBlocks extends ConsumerWidget {
+  const DashboardBlocks({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
+    final child = ref.watch(selectedChildProvider);
+    if (child == null) return const SizedBox.shrink();
+
+    final layout = ref.watch(dashboardLayoutProvider);
+    if (layout.isEmpty) {
+      return Column(
+        children: [
+          EmptyState(
+            icon: Icons.dashboard_customize_outlined,
+            message: l.dashAllHidden,
+            hint: l.dashAllHiddenHint,
+          ),
+          const SizedBox(height: AppTheme.gap),
+          FilledButton.tonalIcon(
+            onPressed: () => context.go(settingsPath),
+            icon: const Icon(Icons.tune),
+            label: Text(l.dashConfigure),
+          ),
+        ],
+      );
+    }
+
+    return Column(
       children: [
         for (final kind in layout) ...[
           _widgetFor(kind, child),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppTheme.gap),
         ],
-        if (layout.isEmpty)
-          Column(
-            children: [
-              const EmptyState(
-                icon: Icons.dashboard_customize_outlined,
-                message: 'Все блоки скрыты',
-                hint: 'Вернуть их можно в настройках',
-              ),
-              const SizedBox(height: 16),
-              FilledButton.tonalIcon(
-                onPressed: () => context.go(settingsPath),
-                icon: const Icon(Icons.tune),
-                label: const Text('Настроить главный экран'),
-              ),
-            ],
-          ),
       ],
     );
   }
 
   Widget _widgetFor(DashboardWidgetKind kind, Child child) =>
       switch (kind) {
+        // The block itself only. The four cards that used to trail it are
+        // either the home screen's single smart card now or sit in the
+        // insights section above this one.
         DashboardWidgetKind.now => NowCard(child: child),
         DashboardWidgetKind.summary => _SummaryCard(child: child),
         DashboardWidgetKind.growth => _GrowthCard(child: child),
@@ -75,6 +132,7 @@ class DashboardLayoutEditor extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     final layout = ref.watch(dashboardLayoutProvider);
     final notifier = ref.read(dashboardLayoutProvider.notifier);
     final hidden = DashboardWidgetKind.values
@@ -84,12 +142,12 @@ class DashboardLayoutEditor extends ConsumerWidget {
     return Column(
       children: [
         SectionCard(
-          title: 'Блоки на главном экране',
+          title: l.dashLayoutTitle,
           icon: Icons.dashboard_customize_outlined,
           child: layout.isEmpty
-              ? const EmptyState(
+              ? EmptyState(
                   icon: Icons.visibility_off_outlined,
-                  message: 'Ни один блок не выбран',
+                  message: l.dashNoneSelected,
                 )
               : ReorderableListView(
                   shrinkWrap: true,
@@ -102,12 +160,12 @@ class DashboardLayoutEditor extends ConsumerWidget {
                         key: ValueKey(layout[i]),
                         contentPadding: EdgeInsets.zero,
                         leading: Icon(layout[i].icon),
-                        title: Text(layout[i].label),
+                        title: Text(layout[i].label(l)),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
-                              tooltip: 'Скрыть',
+                              tooltip: l.commonHide,
                               onPressed: () => notifier.toggle(layout[i]),
                               icon: const Icon(Icons.visibility_off_outlined),
                             ),
@@ -127,7 +185,7 @@ class DashboardLayoutEditor extends ConsumerWidget {
         const SizedBox(height: 16),
         if (hidden.isNotEmpty)
           SectionCard(
-            title: 'Скрытые блоки',
+            title: l.dashHiddenBlocks,
             icon: Icons.visibility_off_outlined,
             child: Column(
               children: [
@@ -135,9 +193,9 @@ class DashboardLayoutEditor extends ConsumerWidget {
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: Icon(k.icon),
-                    title: Text(k.label),
+                    title: Text(k.label(l)),
                     trailing: IconButton(
-                      tooltip: 'Показать',
+                      tooltip: l.commonShow,
                       onPressed: () => notifier.toggle(k),
                       icon: const Icon(Icons.add_circle_outline),
                     ),
@@ -150,7 +208,7 @@ class DashboardLayoutEditor extends ConsumerWidget {
           child: TextButton.icon(
             onPressed: notifier.reset,
             icon: const Icon(Icons.restart_alt),
-            label: const Text('Вернуть стандартный набор'),
+            label: Text(l.dashReset),
           ),
         ),
       ],
@@ -165,6 +223,7 @@ class _SummaryCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     final logs = ref.watch(logsProvider).value ?? const <DevelopmentLog>[];
     final milestones =
         logs.where((l) => l.type == LogType.milestone).length;
@@ -173,16 +232,16 @@ class _SummaryCard extends ConsumerWidget {
       title: child.name,
       icon: Icons.child_care_outlined,
       child: Wrap(
-        spacing: 36,
-        runSpacing: 16,
+        spacing: 24,
+        runSpacing: 12,
         children: [
-          StatTile(value: child.ageLabel, caption: 'возраст'),
+          StatTile(value: localizedAge(l, child), caption: l.summaryAge),
           StatTile(
             value: shortDate.format(child.birthDate),
-            caption: 'дата рождения',
+            caption: l.summaryBirthDate,
           ),
-          StatTile(value: '$milestones', caption: 'вех развития'),
-          StatTile(value: '${logs.length}', caption: 'записей всего'),
+          StatTile(value: '$milestones', caption: l.summaryMilestonesCount),
+          StatTile(value: '${logs.length}', caption: l.summaryEntriesCount),
         ],
       ),
     );
@@ -196,14 +255,16 @@ class _GrowthCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     final measurements = ref.watch(measurementsProvider);
     if (measurements.isEmpty) {
-      return const SectionCard(
-        title: 'Рост и вес',
+      return SectionCard(
+        title: l.widgetGrowth,
         icon: Icons.show_chart_outlined,
         child: EmptyState(
           icon: Icons.straighten,
-          message: 'Измерений пока нет',
+          message: l.growthNoMeasurements,
+          compact: true,
         ),
       );
     }
@@ -214,31 +275,31 @@ class _GrowthCard extends ConsumerWidget {
     final units = ref.watch(unitSystemProvider);
 
     return SectionCard(
-      title: 'Рост и вес',
+      title: l.widgetGrowth,
       icon: Icons.show_chart_outlined,
       action: TextButton(
         onPressed: () => context.go('/growth'),
-        child: const Text('Подробнее'),
+        child: Text(l.commonMore),
       ),
       child: Wrap(
-        spacing: 36,
-        runSpacing: 16,
+        spacing: 24,
+        runSpacing: 12,
         children: [
           if (weight != null)
             _MetricWithPercentile(
-              label: 'Вес',
+              label: l.growthWeight,
               value: Units.formatWeight(weight, units),
               z: zScore(GrowthMetric.weight, child.gender, month, weight),
             ),
           if (height != null)
             _MetricWithPercentile(
-              label: 'Рост',
+              label: l.growthHeight,
               value: Units.formatHeight(height, units),
               z: zScore(GrowthMetric.height, child.gender, month, height),
             ),
           StatTile(
             value: shortDate.format(last.date),
-            caption: 'последнее измерение',
+            caption: l.growthLastMeasurement,
           ),
         ],
       ),
@@ -266,7 +327,9 @@ class _MetricWithPercentile extends StatelessWidget {
         : StatusColors.warning;
     return StatTile(
       value: value,
-      caption: '$label · ${percentileFromZ(z!).round()}-й перцентиль',
+      caption: AppLocalizations.of(
+        context,
+      ).growthPercentileWith(label, percentileFromZ(z!).round()),
       color: color,
     );
   }
@@ -277,29 +340,33 @@ class _VaccinationCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     final reminders = ref.watch(remindersProvider).value ?? const <Reminder>[];
     final upcoming = upcomingVaccinations(reminders, limit: 3);
 
     return SectionCard(
-      title: 'Ближайшие прививки',
+      title: l.widgetVaccinations,
       icon: Icons.vaccines_outlined,
       action: TextButton(
         onPressed: () => context.go('/reminders'),
-        child: const Text('Все'),
+        child: Text(l.commonAll),
       ),
       child: upcoming.isEmpty
-          ? const EmptyState(
+          ? EmptyState(
               icon: Icons.done_all,
-              message: 'Предстоящих прививок нет',
+              message: l.vaccinationsNone,
+              compact: true,
             )
           : Column(
               children: [
                 for (final r in upcoming)
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.only(bottom: 8),
                     child: Row(
                       children: [
-                        Expanded(child: Text(r.title)),
+                        Expanded(
+                          child: Text(localizedVaccinationName(l, r.title)),
+                        ),
                         const SizedBox(width: 12),
                         Text(
                           shortDate.format(r.scheduledTime),
@@ -319,28 +386,29 @@ class _IllnessCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     final sickDays = ref.watch(illnessDaysProvider);
     final now = DateTime.now();
     final lastQuarter =
         sickDays.where((d) => now.difference(d).inDays <= 90).length;
 
     return SectionCard(
-      title: 'Заболеваемость',
+      title: l.widgetIllness,
       icon: Icons.thermostat_outlined,
       action: TextButton(
         onPressed: () => context.go('/illness'),
-        child: const Text('Подробнее'),
+        child: Text(l.commonMore),
       ),
       child: Wrap(
-        spacing: 36,
-        runSpacing: 16,
+        spacing: 24,
+        runSpacing: 12,
         children: [
           StatTile(
             value: '${sickDays.length}',
-            caption: 'дней болезни всего',
+            caption: l.illnessDaysTotal,
             color: sickDays.isEmpty ? StatusColors.normal : null,
           ),
-          StatTile(value: '$lastQuarter', caption: 'за последние 3 месяца'),
+          StatTile(value: '$lastQuarter', caption: l.illnessLast3Months),
         ],
       ),
     );
@@ -357,6 +425,7 @@ class _MilestonesCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final logs = ref.watch(logsProvider).value ?? const <DevelopmentLog>[];
     final milestones =
@@ -364,19 +433,19 @@ class _MilestonesCard extends ConsumerWidget {
           ..sort((a, b) => b.date.compareTo(a.date));
 
     return SectionCard(
-      title: 'Вехи развития',
+      title: l.widgetMilestones,
       icon: Icons.star_outline,
       accentColor: VizPalette.slot(4, theme.brightness),
       action: TextButton(
         onPressed: () => context.go('/diary'),
-        child: const Text('Дневник'),
+        child: Text(l.navDiary),
       ),
       child: milestones.isEmpty
-          ? const EmptyState(
+          ? EmptyState(
               icon: Icons.star_outline,
-              message: 'Первое ещё впереди',
-              hint: 'Первая улыбка, первый зуб, первое слово — '
-                  'добавьте их в дневнике как «Веха развития»',
+              message: l.milestonesEmpty,
+              hint: l.milestonesEmptyHint,
+              compact: true,
             )
           : Column(
               children: [
@@ -391,7 +460,7 @@ class _MilestonesCard extends ConsumerWidget {
                           color: VizPalette.slot(4, theme.brightness),
                         ),
                         const SizedBox(width: 10),
-                        Expanded(child: Text(m.title)),
+                        Expanded(child: Text(localizedLogTitle(l, m))),
                         Text(
                           shortDate.format(m.date),
                           style: theme.textTheme.labelSmall,
@@ -410,20 +479,24 @@ class _RecentEntriesCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Named `loc` here: the entry loop below already uses `l` for a log.
+    final loc = AppLocalizations.of(context);
+    final l = loc;
     final logs = ref.watch(logsProvider).value ?? const <DevelopmentLog>[];
     final recent = logs.take(4).toList();
 
     return SectionCard(
-      title: 'Последние записи',
+      title: l.widgetRecent,
       icon: Icons.auto_stories_outlined,
       action: TextButton(
         onPressed: () => context.go('/diary'),
-        child: const Text('Дневник'),
+        child: Text(l.navDiary),
       ),
       child: recent.isEmpty
-          ? const EmptyState(
+          ? EmptyState(
               icon: Icons.edit_note,
-              message: 'Записей пока нет',
+              message: l.recentEmpty,
+              compact: true,
             )
           : Column(
               children: [
@@ -432,7 +505,7 @@ class _RecentEntriesCard extends ConsumerWidget {
                     padding: const EdgeInsets.only(bottom: 10),
                     child: Row(
                       children: [
-                        Expanded(child: Text(l.title)),
+                        Expanded(child: Text(localizedLogTitle(loc, l))),
                         const SizedBox(width: 12),
                         Text(
                           dayMonth.format(l.date),
@@ -452,6 +525,7 @@ class _UpcomingCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     final reminders = ref.watch(remindersProvider).value ?? const <Reminder>[];
     final now = DateTime.now();
     // Vaccinations used to be filtered out here, on the theory that they had
@@ -472,18 +546,18 @@ class _UpcomingCard extends ConsumerWidget {
     final visible = soon.take(4).toList();
 
     return SectionCard(
-      title: 'Ближайшие события',
+      title: l.widgetUpcoming,
       icon: Icons.event_outlined,
       action: TextButton(
         onPressed: () => context.go('/reminders'),
-        child: const Text('Все'),
+        child: Text(l.commonAll),
       ),
       child: visible.isEmpty
-          ? const EmptyState(
+          ? EmptyState(
               icon: Icons.event_available_outlined,
-              message: 'Ничего не запланировано',
-              hint: 'Прививки появятся здесь сами, как только будет '
-                  'создан профиль ребёнка',
+              message: l.remindersNothingPlanned,
+              hint: l.upcomingEmptyHint,
+              compact: true,
             )
           : Column(
               children: [
@@ -503,7 +577,13 @@ class _UpcomingCard extends ConsumerWidget {
                           size: 18,
                         ),
                         const SizedBox(width: 10),
-                        Expanded(child: Text(r.title)),
+                        Expanded(
+                          child: Text(
+                            r.type == ReminderType.vaccination
+                                ? localizedVaccinationName(l, r.title)
+                                : r.title,
+                          ),
+                        ),
                         Text(
                           shortDate.format(r.scheduledTime),
                           style: Theme.of(context).textTheme.labelSmall,

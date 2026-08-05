@@ -15,6 +15,8 @@ class DailyCare {
     required this.sleepMinutes,
     this.lastFeedingAt,
     this.lastNappyAt,
+    this.lastSleepAt,
+    this.lastSleepMinutes,
   });
 
   final int feedings;
@@ -23,6 +25,11 @@ class DailyCare {
   final int sleepMinutes;
   final DateTime? lastFeedingAt;
   final DateTime? lastNappyAt;
+
+  /// The most recent stretch of sleep and how long it ran. The second question
+  /// every parent is asked, after when the baby last ate.
+  final DateTime? lastSleepAt;
+  final int? lastSleepMinutes;
 
   bool get isEmpty =>
       feedings == 0 &&
@@ -71,6 +78,8 @@ DailyCare dailyCareFor(List<DevelopmentLog> logs, DateTime day) {
   var sleep = 0;
   DateTime? lastFeeding;
   DateTime? lastNappy;
+  DateTime? lastSleep;
+  int? lastSleepMinutes;
 
   for (final log in logs) {
     if (dateOnly(log.date) != target) continue;
@@ -91,6 +100,10 @@ DailyCare dailyCareFor(List<DevelopmentLog> logs, DateTime day) {
         }
       case LogType.sleep:
         sleep += log.durationMinutes ?? 0;
+        if (lastSleep == null || log.date.isAfter(lastSleep)) {
+          lastSleep = log.date;
+          lastSleepMinutes = log.durationMinutes;
+        }
       default:
         break;
     }
@@ -103,15 +116,7 @@ DailyCare dailyCareFor(List<DevelopmentLog> logs, DateTime day) {
     sleepMinutes: sleep,
     lastFeedingAt: lastFeeding,
     lastNappyAt: lastNappy,
+    lastSleepAt: lastSleep,
+    lastSleepMinutes: lastSleepMinutes,
   );
-}
-
-/// "2 ч 15 мин" — sleep totals read badly in raw minutes.
-String formatDuration(int minutes) {
-  if (minutes <= 0) return '—';
-  final hours = minutes ~/ 60;
-  final rest = minutes % 60;
-  if (hours == 0) return '$rest мин';
-  if (rest == 0) return '$hours ч';
-  return '$hours ч $rest мин';
 }

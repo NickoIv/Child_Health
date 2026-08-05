@@ -4,13 +4,20 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/analytics/daily_care.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/motion.dart';
 import '../../core/theme/theme_mode.dart';
+import '../../l10n/app_localizations.dart';
+import '../../core/l10n/labels.dart';
 import '../../models/child.dart';
 import '../../models/development_log.dart';
 import '../../models/json.dart';
 import '../../models/reminder.dart';
 import '../../providers.dart';
+import '../family/invite_banner.dart';
+import '../shared/photo_widgets.dart';
 import '../shared/widgets.dart';
+import 'night_sleep_sheet.dart';
+import 'quick_log_sheet.dart';
 
 /// The at-a-glance card: what is going on with this child right now, and the
 /// three things a parent most often needs to do about it.
@@ -26,6 +33,7 @@ class NowCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l = AppLocalizations.of(context);
     final now = DateTime.now();
     final logs = ref.watch(logsProvider).value ?? const <DevelopmentLog>[];
     final reminders = ref.watch(remindersProvider).value ?? const <Reminder>[];
@@ -35,104 +43,159 @@ class NowCard extends ConsumerWidget {
       (l) => l.type == LogType.illness && dateOnly(l.date) == today,
     );
     final lastTemperature = _lastTemperature(logs);
+    final care = ref.watch(dailyCareProvider);
+    final sinceFeeding = care.minutesSinceFeeding(now);
     final dueToday = reminders
-        .where(
-          (r) => !r.isCompleted && dateOnly(r.scheduledTime) == today,
-        )
+        .where((r) => !r.isCompleted && dateOnly(r.scheduledTime) == today)
         .toList();
 
-    final onGradient = theme.colorScheme.onPrimary;
+    final onGradient = AppTheme.onWelcome(theme.brightness);
 
     return Card(
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
-          // The one warm, saturated surface in the app. It greets rather than
-          // reports, which is the whole reason a tired parent opens this at all.
+          // The one warm surface in the app. It greets rather than reports,
+          // which is the whole reason a tired parent opens this at all — and
+          // it carries the four facts she opens it to check.
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(20, 22, 20, 22),
+            padding: const EdgeInsets.fromLTRB(22, 20, 22, 20),
             decoration: BoxDecoration(
-              gradient: AppTheme.welcomeGradient(theme.colorScheme),
+              gradient: AppTheme.welcomeGradient(theme.brightness),
+              boxShadow: AppTheme.softShadow(theme.brightness),
             ),
-            child: Row(
+            child: Column(
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _greeting(now),
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: onGradient.withValues(alpha: 0.85),
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.3,
-                        ),
+                Row(
+                  children: [
+                    // The child's own face, not a generic glyph. For a parent
+                    // of two this is also how she tells whose day she is
+                    // looking at — so it is big enough to recognise at arm's
+                    // length, which 44px was not.
+                    ChildAvatar(child: child, size: 76),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _greeting(l, now),
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: onGradient.withValues(alpha: 0.75),
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          // The largest thing on the screen, and the only
+                          // thing on it that is nobody else's.
+                          Text(
+                            child.name,
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              color: onGradient,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 6),
+                          _AgeChip(
+                            label: localizedAge(l, child),
+                            ink: onGradient,
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 6),
-                      Text(
-                        child.name,
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          color: onGradient,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        child.ageLabel,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: onGradient.withValues(alpha: 0.85),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 10),
+                    _StatusChip(
+                      sickToday: sickToday,
+                      temperature: lastTemperature,
+                    ),
+                  ],
                 ),
-                _StatusChip(
-                  sickToday: sickToday,
-                  temperature: lastTemperature,
+                const SizedBox(height: 14),
+                _PhraseOfDay(now: now, ink: onGradient),
+                const SizedBox(height: 14),
+                // The two questions she is asked all day, by everyone, and
+                // the two she cannot answer from memory at four in the
+                // morning.
+                Row(
+                  children: [
+                    Expanded(
+                      child: _ContextStat(
+                        icon: Icons.water_drop_outlined,
+                        label: l.nowLastFeeding,
+                        value: care.lastFeedingAt == null
+                            ? l.nowNothingYet
+                            : timeOfDay.format(care.lastFeedingAt!),
+                        detail: sinceFeeding == null
+                            ? null
+                            : l.nowAgo(localizedDuration(l, sinceFeeding)),
+                        onGradient: onGradient,
+                      ),
+                    ),
+                    Container(
+                      width: 1,
+                      height: 34,
+                      color: onGradient.withValues(alpha: 0.22),
+                    ),
+                    Expanded(
+                      child: _ContextStat(
+                        icon: Icons.bedtime_outlined,
+                        label: l.nowLastSleep,
+                        value: care.lastSleepAt == null
+                            ? l.nowNothingYet
+                            : timeOfDay.format(care.lastSleepAt!),
+                        detail: care.lastSleepMinutes == null
+                            ? null
+                            : localizedDuration(l, care.lastSleepMinutes!),
+                        onGradient: onGradient,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
 
           Padding(
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (dueToday.isNotEmpty) ...[
-                  for (final r in dueToday.take(3))
+                  for (final r in dueToday.take(2))
                     Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.only(bottom: 8),
                       child: Row(
                         children: [
-                          Container(
-                            padding: const EdgeInsets.all(7),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.primaryContainer,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Icon(
-                              r.type == ReminderType.vaccination
-                                  ? Icons.vaccines_outlined
-                                  : Icons.event_available_outlined,
-                              size: 16,
-                              color: theme.colorScheme.onPrimaryContainer,
-                            ),
+                          Icon(
+                            r.type == ReminderType.vaccination
+                                ? Icons.vaccines_outlined
+                                : Icons.event_available_outlined,
+                            size: 16,
+                            color: theme.colorScheme.primary,
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              'Сегодня: ${r.title}',
-                              style: theme.textTheme.bodyMedium,
+                              l.nowTodayReminder(
+                                r.type == ReminderType.vaccination
+                                    ? localizedVaccinationName(l, r.title)
+                                    : r.title,
+                              ),
+                              style: theme.textTheme.bodySmall,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
                       ),
                     ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                 ],
                 const _TodayCounts(),
-                const SizedBox(height: 14),
+                const SizedBox(height: AppTheme.gap),
                 _QuickActions(child: child),
               ],
             ),
@@ -151,11 +214,160 @@ class NowCard extends ConsumerWidget {
     return null;
   }
 
-  static String _greeting(DateTime now) {
-    if (isNightAt(now)) return 'Доброй ночи';
-    if (now.hour < 12) return 'Доброе утро';
-    if (now.hour < 18) return 'Добрый день';
-    return 'Добрый вечер';
+  static String _greeting(AppLocalizations l, DateTime now) {
+    if (isNightAt(now)) return l.greetingNight;
+    if (now.hour < 12) return l.greetingMorning;
+    if (now.hour < 18) return l.greetingAfternoon;
+    return l.greetingEvening;
+  }
+}
+
+/// The age, as a chip rather than a line of text.
+///
+/// It is the one fact on the greeting that is not about today, and reading it
+/// as a caption under the name made it look like a subtitle to the name. In a
+/// chip it reads as what it is: a small, changing fact about a person.
+class _AgeChip extends StatelessWidget {
+  const _AgeChip({required this.label, required this.ink});
+
+  final String label;
+  final Color ink;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+      decoration: BoxDecoration(
+        // A wash of the surface rather than a colour of its own: the chip has
+        // to sit on a gradient that is already two colours.
+        color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: ink,
+          fontWeight: FontWeight.w600,
+        ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+    );
+  }
+}
+
+/// One sentence, and it changes tomorrow.
+///
+/// Six of them, picked by the date rather than by a random number: a phrase
+/// that changed on every rebuild would flicker as the day's entries came in,
+/// and one that changed on every scroll would read as a slot machine. Picked
+/// by the day, it is the same all day and different in the morning — which is
+/// what "phrase of the day" has to mean to be worth having.
+///
+/// There is no model behind it and there never will be. These say one thing —
+/// that whoever is holding the phone is doing all right — and a sentence
+/// generated fresh each morning would eventually say something else.
+/// The six, in the order they rotate.
+List<String> phrasesOfDay(AppLocalizations l) => [
+  l.phraseOfDay1,
+  l.phraseOfDay2,
+  l.phraseOfDay3,
+  l.phraseOfDay4,
+  l.phraseOfDay5,
+  l.phraseOfDay6,
+];
+
+/// Which one today gets. Days since a fixed date, so it advances once a
+/// night, is the same all day, and never repeats two days running.
+int phraseOfDayIndex(DateTime day, int count) =>
+    DateTime(day.year, day.month, day.day).difference(DateTime(2020)).inDays %
+    count;
+
+class _PhraseOfDay extends StatelessWidget {
+  const _PhraseOfDay({required this.now, required this.ink});
+
+  final DateTime now;
+  final Color ink;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final phrases = phrasesOfDay(l);
+    final index = phraseOfDayIndex(now, phrases.length);
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(Icons.spa_outlined, size: 15, color: ink.withValues(alpha: 0.55)),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            phrases[index],
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: ink.withValues(alpha: 0.85),
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// A fact on the warm surface: what it is, when it was, how long ago.
+class _ContextStat extends StatelessWidget {
+  const _ContextStat({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.onGradient,
+    this.detail,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final String? detail;
+  final Color onGradient;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 13, color: onGradient.withValues(alpha: 0.85)),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  label,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: onGradient.withValues(alpha: 0.85),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 2),
+          Text(
+            detail == null ? value : '$value · $detail',
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: onGradient,
+              fontWeight: FontWeight.w700,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -168,13 +380,14 @@ class _StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l = AppLocalizations.of(context);
     final fever = (temperature ?? 0) >= 38.0;
     final concerning = fever || sickToday;
     final label = temperature != null
         ? '${temperature!.toStringAsFixed(1)} °C'
         : sickToday
-        ? 'Болеет'
-        : 'Здоров';
+        ? l.statusSick
+        : l.statusHealthy;
 
     // Sits on the gradient, so the chip is a white card and the status colour
     // is carried by the icon and the text inside it. A tinted chip on a
@@ -202,7 +415,7 @@ class _StatusChip extends StatelessWidget {
             ),
           ),
           Text(
-            temperature != null ? 'последняя' : 'сегодня',
+            temperature != null ? l.statusLatest : l.commonToday,
             style: theme.textTheme.labelSmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -224,6 +437,7 @@ class _TodayCounts extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l = AppLocalizations.of(context);
     final care = ref.watch(dailyCareProvider);
     final now = DateTime.now();
     // "Complete" only near the end of the day; before that a low count says
@@ -235,13 +449,11 @@ class _TodayCounts extends ConsumerWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerHighest.withValues(
-            alpha: 0.4,
-          ),
+          color: Warm.soft(theme.brightness),
           borderRadius: BorderRadius.circular(14),
         ),
         child: Text(
-          'Сегодня записей ещё нет. Кнопки ниже отмечают время сами.',
+          l.nowNoEntries,
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -258,49 +470,12 @@ class _TodayCounts extends ConsumerWidget {
       dayComplete: dayComplete,
     );
 
-    final sinceFeeding = care.minutesSinceFeeding(now);
-
+    // The time since the last feed moved up into the header, where it sits
+    // beside the last sleep. Repeating it here as a banner was the single
+    // largest block of empty space on the screen.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // The single most-asked question of a newborn day gets its own line,
-        // not a footnote under a number.
-        if (sinceFeeding != null) ...[
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.schedule,
-                  size: 18,
-                  color: theme.colorScheme.onPrimaryContainer,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'С последнего кормления — ${formatDuration(sinceFeeding)}',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: theme.colorScheme.onPrimaryContainer,
-                    ),
-                  ),
-                ),
-                Text(
-                  timeOfDay.format(care.lastFeedingAt!),
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: theme.colorScheme.onPrimaryContainer,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 14),
-        ],
         // A Wrap, not a Row: the fourth tally appears only once sleep has
         // been logged, and "1 ч 30 мин" pushed the row 137px off a phone
         // screen. Wrapping lets the counts reflow instead of clipping.
@@ -310,19 +485,19 @@ class _TodayCounts extends ConsumerWidget {
           children: [
             _Count(
               value: '${care.feedings}',
-              label: 'кормлений',
+              label: l.countFeedings,
               status: feedStatus,
             ),
             _Count(
               value: '${care.wetNappies}',
-              label: 'мокрых',
+              label: l.countWet,
               status: nappyStatus,
             ),
-            _Count(value: '${care.dirtyNappies}', label: 'стул'),
+            _Count(value: '${care.dirtyNappies}', label: l.countDirty),
             if (care.sleepMinutes > 0)
               _Count(
-                value: formatDuration(care.sleepMinutes),
-                label: 'сна',
+                value: localizedDuration(l, care.sleepMinutes),
+                label: l.countSleep,
               ),
           ],
         ),
@@ -394,283 +569,108 @@ class _QuickActions extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final brightness = Theme.of(context).brightness;
+    final l = AppLocalizations.of(context);
+    // A viewer keeps the six cards and gets a padlock on each. Hiding them
+    // would make a father think the app was broken; locking them tells him
+    // exactly what he is looking at and whose it is to change.
+    final readOnly = ref.watch(isReadOnlyProvider);
 
-    // Two rows rather than one: five targets squeezed across a phone would
-    // each be too small to hit reliably with a baby in the other arm.
-    // Feeding and nappies lead because for a newborn they are the whole day.
-    return Column(
-      children: [
-        Row(
+    void quick(QuickLogAction action) =>
+        showQuickLogSheet(context, action: action, childId: child.id);
+
+    // Six actions, and a tone each. Everything a parent does many times a day
+    // comes first; the two that happen once come last. Any more than this and
+    // the screen stops being a place to act and becomes a place to choose,
+    // which at three in the morning is not the same thing.
+    final buttons = <_ActionButton>[
+      _ActionButton(
+        icon: QuickLogAction.feeding.icon,
+        label: l.quickFeed,
+        caption: l.quickFeedHint,
+        readOnly: readOnly,
+        tone: SoftTone.peach,
+        onTap: () => quick(QuickLogAction.feeding),
+      ),
+      _ActionButton(
+        icon: QuickLogAction.nappy.icon,
+        label: l.quickNappy,
+        caption: l.quickNappyHint,
+        readOnly: readOnly,
+        tone: SoftTone.mint,
+        onTap: () => quick(QuickLogAction.nappy),
+      ),
+      _ActionButton(
+        icon: QuickLogAction.sleep.icon,
+        label: l.quickSleep,
+        caption: l.quickSleepHint,
+        readOnly: readOnly,
+        tone: SoftTone.lavender,
+        onTap: () => quick(QuickLogAction.sleep),
+      ),
+      _ActionButton(
+        icon: Icons.nightlight_outlined,
+        label: l.quickNightSleep,
+        caption: l.quickNightSleepHint,
+        readOnly: readOnly,
+        tone: SoftTone.sky,
+        // A night is a shape, not a moment, so it keeps its own sheet.
+        onTap: () => showNightSleepSheet(context, childId: child.id),
+      ),
+      _ActionButton(
+        icon: QuickLogAction.temperature.icon,
+        label: l.quickTemperature,
+        caption: l.quickTemperatureHint,
+        readOnly: readOnly,
+        tone: SoftTone.rose,
+        onTap: () => quick(QuickLogAction.temperature),
+      ),
+      _ActionButton(
+        icon: Icons.forum_outlined,
+        label: l.quickAssistant,
+        caption: l.quickAssistantHint,
+        readOnly: readOnly,
+        tone: SoftTone.sand,
+        onTap: () => context.go('/assistant'),
+      ),
+    ];
+
+    // Three across where each card can carry its caption, two where it
+    // cannot. On a phone that is two, and the pair of columns is what lets
+    // these read as cards at all rather than as a keypad — a 100px column
+    // fits an icon and a cropped word and nothing else.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const gap = AppTheme.gap;
+        final columns =
+            (constraints.maxWidth - 2 * gap) / 3 >= _ActionButton.minCardWidth
+            ? 3
+            : 2;
+        final rows = (buttons.length / columns).ceil();
+
+        return Column(
           children: [
-            Expanded(
-              child: _ActionButton(
-                icon: Icons.water_drop_outlined,
-                label: 'Покормила',
-                color: VizPalette.slot(2, brightness),
-                onTap: () => _logFeeding(context, ref),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _ActionButton(
-                icon: Icons.child_care_outlined,
-                label: 'Подгузник',
-                color: VizPalette.slot(3, brightness),
-                onTap: () => _logNappy(context, ref),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _ActionButton(
-                icon: Icons.bedtime_outlined,
-                label: 'Поспал',
-                color: VizPalette.slot(5, brightness),
-                onTap: () => _logSleep(context, ref),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            Expanded(
-              child: _ActionButton(
-                icon: Icons.thermostat,
-                label: 'Температура',
-                onTap: () => _logTemperature(context, ref),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _ActionButton(
-                icon: Icons.forum_outlined,
-                label: 'Спросить',
-                onTap: () => context.go('/assistant/chat'),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _ActionButton(
-                icon: Icons.emergency_outlined,
-                label: 'Тревога',
-                color: StatusColors.alert,
-                onTap: () => context.go('/assistant/triage'),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Future<void> _logFeeding(BuildContext context, WidgetRef ref) async {
-    final side = await _pickOption<FeedingSide>(
-      context,
-      title: 'Кормление',
-      options: {
-        for (final s in FeedingSide.values)
-          s: switch (s) {
-            FeedingSide.left => Icons.chevron_left,
-            FeedingSide.right => Icons.chevron_right,
-            FeedingSide.bottle => Icons.local_drink_outlined,
-          },
-      },
-      label: (s) => s.label,
-    );
-    if (side == null || !context.mounted) return;
-
-    await _add(
-      ref,
-      DevelopmentLog(
-        id: '',
-        childId: child.id,
-        date: DateTime.now(),
-        type: LogType.feeding,
-        title: 'Кормление',
-        feedingSide: side,
-      ),
-      context,
-      'Записано: кормление, ${side.label.toLowerCase()}',
-    );
-  }
-
-  Future<void> _logNappy(BuildContext context, WidgetRef ref) async {
-    final kind = await _pickOption<NappyKind>(
-      context,
-      title: 'Подгузник',
-      options: {
-        for (final k in NappyKind.values)
-          k: switch (k) {
-            NappyKind.wet => Icons.water_drop_outlined,
-            NappyKind.dirty => Icons.eco_outlined,
-            NappyKind.both => Icons.done_all,
-          },
-      },
-      label: (k) => k.label,
-    );
-    if (kind == null || !context.mounted) return;
-
-    await _add(
-      ref,
-      DevelopmentLog(
-        id: '',
-        childId: child.id,
-        date: DateTime.now(),
-        type: LogType.nappy,
-        title: 'Подгузник',
-        nappyKind: kind,
-      ),
-      context,
-      'Записано: ${kind.label.toLowerCase()}',
-    );
-  }
-
-  Future<void> _logSleep(BuildContext context, WidgetRef ref) async {
-    // Preset lengths rather than a time picker: a newborn's sleep is
-    // measured in "about an hour", and nobody is entering 47 minutes.
-    const options = {
-      30: 'Полчаса',
-      60: 'Час',
-      90: 'Полтора часа',
-      120: 'Два часа',
-      180: 'Три часа',
-    };
-
-    final minutes = await _pickOption<int>(
-      context,
-      title: 'Сколько поспал',
-      options: {for (final m in options.keys) m: Icons.bedtime_outlined},
-      label: (m) => options[m]!,
-    );
-    if (minutes == null || !context.mounted) return;
-
-    await _add(
-      ref,
-      DevelopmentLog(
-        id: '',
-        childId: child.id,
-        date: DateTime.now(),
-        type: LogType.sleep,
-        title: 'Сон',
-        durationMinutes: minutes,
-      ),
-      context,
-      'Записано: сон ${formatDuration(minutes)}',
-    );
-  }
-
-  Future<void> _add(
-    WidgetRef ref,
-    DevelopmentLog log,
-    BuildContext context,
-    String confirmation,
-  ) async {
-    await ref.read(logRepositoryProvider).add(log);
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(confirmation),
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    }
-  }
-
-  /// A sheet of large buttons rather than a dropdown: this is tapped a dozen
-  /// times a day, often one-handed and half-awake.
-  Future<T?> _pickOption<T>(
-    BuildContext context, {
-    required String title,
-    required Map<T, IconData> options,
-    required String Function(T) label,
-  }) {
-    return showModalBottomSheet<T>(
-      context: context,
-      showDragHandle: true,
-      // Sleep offers five lengths, which overflowed the default half-height
-      // sheet by 40px on a phone. Scroll-controlled and scrollable so the
-      // list can grow without clipping the last option.
-      isScrollControlled: true,
-      builder: (sheetContext) {
-        final theme = Theme.of(sheetContext);
-        return SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: theme.textTheme.titleLarge),
-                const SizedBox(height: 6),
-                Text(
-                  'Отметится текущим временем',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                for (final entry in options.entries)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: FilledButton.tonalIcon(
-                        onPressed: () =>
-                            Navigator.of(sheetContext).pop(entry.key),
-                        icon: Icon(entry.value),
-                        label: Text(label(entry.key)),
-                      ),
+            for (var row = 0; row < rows; row++) ...[
+              if (row > 0) const SizedBox(height: gap),
+              Row(
+                children: [
+                  for (var i = 0; i < columns; i++) ...[
+                    if (i > 0) const SizedBox(width: gap),
+                    // The last row of a two-column grid can be short; an
+                    // empty Expanded keeps the survivors their own width
+                    // instead of stretching one across the page.
+                    Expanded(
+                      child: row * columns + i < buttons.length
+                          ? buttons[row * columns + i]
+                          : const SizedBox.shrink(),
                     ),
-                  ),
-              ],
-            ),
-          ),
+                  ],
+                ],
+              ),
+            ],
+          ],
         );
       },
     );
-  }
-
-  Future<void> _logTemperature(BuildContext context, WidgetRef ref) async {
-    final value = await showDialog<double>(
-      context: context,
-      builder: (_) => const _TemperatureDialog(),
-    );
-    if (value == null) return;
-
-    await ref
-        .read(logRepositoryProvider)
-        .add(
-          DevelopmentLog(
-            id: '',
-            childId: child.id,
-            date: DateTime.now(),
-            // A fever is an illness day; anything else is just a measurement.
-            // This is what makes the heat map fill in without extra taps.
-            type: value >= 38.0 ? LogType.illness : LogType.measurement,
-            title: 'Температура ${value.toStringAsFixed(1)} °C',
-            metrics: Metrics(temperatureC: value),
-            severity: value >= 39.0
-                ? Severity.severe
-                : value >= 38.0
-                ? Severity.moderate
-                : null,
-          ),
-        );
-
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Записано: ${value.toStringAsFixed(1)} °C'),
-          action: value >= 38.0
-              ? SnackBarAction(
-                  label: 'Что делать',
-                  onPressed: () => context.go('/assistant/article/fever'),
-                )
-              : null,
-        ),
-      );
-    }
   }
 }
 
@@ -678,126 +678,92 @@ class _ActionButton extends StatelessWidget {
   const _ActionButton({
     required this.icon,
     required this.label,
+    required this.caption,
+    required this.tone,
     required this.onTap,
-    this.color,
+    this.readOnly = false,
   });
 
   final IconData icon;
   final String label;
+  final String caption;
+  final SoftTone tone;
   final VoidCallback onTap;
-  final Color? color;
+
+  /// Dimmed and padlocked rather than removed.
+  final bool readOnly;
+
+  /// One height, one radius for all six. A grid where the cards differ by a
+  /// few pixels reads as unfinished even when nobody can say why.
+  static const height = 88.0;
+  static const radius = 22.0;
+
+  /// Below this a card cannot hold its caption without cropping the Kazakh
+  /// label above it, and the grid drops to two columns instead.
+  static const minCardWidth = 132.0;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final tint = color ?? theme.colorScheme.primary;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        // Tall enough to hit reliably with a thumb while holding a child.
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          color: tint.withValues(alpha: 0.10),
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: tint),
-            const SizedBox(height: 6),
-            Text(
-              label,
-              style: theme.textTheme.labelMedium?.copyWith(color: tint),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+    final ink = tone.ink(theme.brightness);
 
-/// Temperature entry without a keyboard: the realistic range is small, so
-/// stepping through it beats typing while holding a baby.
-class _TemperatureDialog extends StatefulWidget {
-  const _TemperatureDialog();
-
-  @override
-  State<_TemperatureDialog> createState() => _TemperatureDialogState();
-}
-
-class _TemperatureDialogState extends State<_TemperatureDialog> {
-  double _value = 37.0;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final fever = _value >= 38.0;
-    final color = fever ? StatusColors.alert : StatusColors.normal;
-
-    return AlertDialog(
-      title: const Text('Температура'),
-      content: SizedBox(
-        width: 360,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              '${_value.toStringAsFixed(1)} °C',
-              style: theme.textTheme.displaySmall?.copyWith(
-                color: color,
-                fontWeight: FontWeight.w700,
+    return Pressable(
+      onTap: readOnly ? null : onTap,
+      borderRadius: radius,
+      child: Opacity(
+        // Enough to read as unavailable, not so much that it reads as broken.
+        opacity: readOnly ? 0.6 : 1,
+        child: Container(
+          // Fixed rather than padded: a label that wraps to two lines in Kazakh
+          // must not make its neighbour a different size.
+          height: height,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: tone.fill(theme.brightness),
+            borderRadius: BorderRadius.circular(radius),
+          ),
+          // Both lines carry their own tight leading. The theme's reading
+          // heights are for paragraphs; inside 88 pixels they are what makes a
+          // card overflow by exactly one descender.
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(icon, color: ink, size: 28),
+                  if (readOnly) ...[
+                    const Spacer(),
+                    const ReadOnlyLock(size: 15),
+                  ],
+                ],
               ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                IconButton.filledTonal(
-                  onPressed: () => _step(-0.1),
-                  icon: const Icon(Icons.remove),
-                ),
-                const SizedBox(width: 24),
-                IconButton.filledTonal(
-                  onPressed: () => _step(0.1),
-                  icon: const Icon(Icons.add),
-                ),
-              ],
-            ),
-            Slider(
-              value: _value,
-              min: 35.0,
-              max: 42.0,
-              divisions: 70,
-              onChanged: (v) => setState(() => _value = v),
-            ),
-            if (fever)
+              const SizedBox(height: 5),
               Text(
-                'Это лихорадка. День будет отмечен как день болезни.',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodySmall?.copyWith(color: color),
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: ink,
+                  fontWeight: FontWeight.w600,
+                  height: 1.15,
+                ),
               ),
-          ],
+              Text(
+                caption,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  fontSize: 11.5,
+                  height: 1.15,
+                  fontWeight: FontWeight.w500,
+                  color: ink.withValues(alpha: 0.72),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Отмена'),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.of(context).pop(_value),
-          child: const Text('Записать'),
-        ),
-      ],
     );
-  }
-
-  void _step(double delta) {
-    setState(() {
-      // Rounded to one decimal: floating point drift would otherwise show
-      // 37.400000000000006 after a few taps.
-      _value = ((_value + delta) * 10).roundToDouble() / 10;
-      _value = _value.clamp(35.0, 42.0);
-    });
   }
 }

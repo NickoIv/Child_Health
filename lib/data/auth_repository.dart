@@ -31,12 +31,40 @@ const appleProvider = 'apple.com';
 
 /// A failure worth showing to the parent, already phrased in Russian.
 class AuthException implements Exception {
-  const AuthException(this.message);
+  const AuthException(this.message, {this.code});
 
+  /// Russian fallback, for anything the interface has no translation for.
   final String message;
+
+  /// Stable identifier of what went wrong, so the screen showing it can say so
+  /// in the language the parent chose. The repository has no access to the
+  /// widget tree and cannot translate on its own.
+  final String? code;
 
   @override
   String toString() => message;
+}
+
+/// Codes [AuthException] uses. Strings rather than an enum so a new one added
+/// by the Firebase layer cannot fail to compile against an old interface — it
+/// simply falls back to [AuthException.message].
+abstract final class AuthErrorCode {
+  static const invalidCredentials = 'invalidCredentials';
+  static const invalidEmail = 'invalidEmail';
+  static const emailInUse = 'emailInUse';
+  static const weakPassword = 'weakPassword';
+  static const userDisabled = 'userDisabled';
+  static const requiresRecentLogin = 'requiresRecentLogin';
+  static const tooManyRequests = 'tooManyRequests';
+  static const network = 'network';
+  static const operationNotAllowed = 'operationNotAllowed';
+  static const googleNotConfigured = 'googleNotConfigured';
+  static const googleProvider = 'googleProvider';
+  static const googleInterrupted = 'googleInterrupted';
+  static const googleNoToken = 'googleNoToken';
+  static const signInFirst = 'signInFirst';
+  static const noPassword = 'noPassword';
+  static const unknownProvider = 'unknownProvider';
 }
 
 /// The parent closed the provider's window without finishing.

@@ -91,10 +91,12 @@ void main() {
     test('is fixed and mode-invariant', () {
       // Status colours are never themed: the same red must mean the same
       // thing on both surfaces.
-      expect(StatusColors.normal, const Color(0xFF0CA30C));
-      expect(StatusColors.warning, const Color(0xFFFAB219));
-      expect(StatusColors.serious, const Color(0xFFEC835A));
-      expect(StatusColors.alert, const Color(0xFFD03B3B));
+      // Warm rather than traffic-light: a pure green on a cream card reads
+      // as a badge from another application.
+      expect(StatusColors.normal, const Color(0xFF4E8B6B));
+      expect(StatusColors.warning, const Color(0xFFD18B2F));
+      expect(StatusColors.serious, const Color(0xFFC96B5A));
+      expect(StatusColors.alert, const Color(0xFFB3453A));
     });
 
     test('does not collide with any categorical slot', () {

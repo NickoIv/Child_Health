@@ -53,7 +53,7 @@ class _FixedLogRepository implements DevelopmentLogRepository {
 }
 
 void main() {
-  setUpAll(() => initializeDateFormatting('ru_RU'));
+  setUpAll(() => initializeDateFormatting());
 
   Future<void> pumpGrowth(
     WidgetTester tester, {

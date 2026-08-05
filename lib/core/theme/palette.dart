@@ -66,10 +66,14 @@ abstract final class VizPalette {
 /// mitigation is the icon-plus-label pairing used everywhere they appear:
 /// a status colour never carries meaning on its own.
 abstract final class StatusColors {
-  static const normal = Color(0xFF0CA30C);
-  static const warning = Color(0xFFFAB219);
-  static const serious = Color(0xFFEC835A);
-  static const alert = Color(0xFFD03B3B);
+  /// Warm rather than traffic-light. A pure green tick on a cream card reads
+  /// as a badge from another application; these are the same four meanings in
+  /// the app's own palette, and the alert is still the loudest thing on any
+  /// screen it appears on.
+  static const normal = Color(0xFF4E8B6B);
+  static const warning = Color(0xFFD18B2F);
+  static const serious = Color(0xFFC96B5A);
+  static const alert = Color(0xFFB3453A);
   static const neutral = VizPalette.muted;
 
   static Color forSeverityIndex(int index) => switch (index) {

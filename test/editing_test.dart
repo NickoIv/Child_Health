@@ -10,7 +10,7 @@ import 'package:intl/date_symbol_data_local.dart';
 /// an empty list. These are the screens where a bug quietly destroys data
 /// instead of merely failing to create it.
 void main() {
-  setUpAll(() => initializeDateFormatting('ru_RU'));
+  setUpAll(() => initializeDateFormatting());
 
   Future<void> pumpApp(WidgetTester tester) async {
     tester.view.physicalSize = const Size(1400, 2400);
@@ -23,6 +23,15 @@ void main() {
 
   Future<void> openTab(WidgetTester tester, IconData icon) async {
     await tester.tap(find.byIcon(icon).first);
+    await tester.pumpAndSettle();
+  }
+
+  /// The timeline row is the tap target now — the pencil is gone, because an
+  /// entry you can open by touching it does not need a second control saying
+  /// so. IntrinsicHeight is the row's own wrapper, so the first one is the
+  /// first entry.
+  Future<void> openFirstEntry(WidgetTester tester) async {
+    await tester.tap(find.byType(IntrinsicHeight).first);
     await tester.pumpAndSettle();
   }
 
@@ -61,7 +70,7 @@ void main() {
   });
 
   group('editing a diary entry', () {
-    testWidgets('the pencil opens the entry with its text already in place', (
+    testWidgets('tapping a row opens the entry with its text in place', (
       tester,
     ) async {
       await pumpApp(tester);
@@ -69,8 +78,7 @@ void main() {
 
       expect(find.text('Первое слово'), findsWidgets);
 
-      await tester.tap(find.byIcon(Icons.edit_outlined).first);
-      await tester.pumpAndSettle();
+      await openFirstEntry(tester);
 
       expect(find.widgetWithText(AlertDialog, 'Изменить запись'), findsOneWidget);
       // Prefilled, not blank: an edit that starts empty is a delete with
@@ -89,8 +97,7 @@ void main() {
       await pumpApp(tester);
       await openTab(tester, Icons.auto_stories_outlined);
 
-      await tester.tap(find.byIcon(Icons.edit_outlined).first);
-      await tester.pumpAndSettle();
+      await openFirstEntry(tester);
 
       // Whichever entry the feed put first — read its title back out of the
       // form so the assertion does not depend on the seed order.
@@ -103,8 +110,7 @@ void main() {
       // The seed repeats some titles, so count rather than assume one.
       final before = find.text(original).evaluate().length;
 
-      await tester.tap(find.byIcon(Icons.edit_outlined).first);
-      await tester.pumpAndSettle();
+      await openFirstEntry(tester);
       await tester.enterText(
         find.byType(TextFormField).first,
         '$original (уточнено)',
@@ -175,6 +181,12 @@ void main() {
       await pumpApp(tester);
       await openSettings(tester);
 
+      // Last section of a page that keeps growing. ensureVisible, not
+      // scrollUntilVisible: the list builds its lower cards before they are on
+      // screen, so the finder is satisfied while the button is still below the
+      // fold and the tap lands on nothing.
+      await tester.ensureVisible(find.text('Удалить учётную запись'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Удалить учётную запись'));
       await tester.pumpAndSettle();
 
