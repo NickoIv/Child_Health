@@ -17,6 +17,20 @@ import 'package:intl/date_symbol_data_local.dart';
 /// Two things are being checked: that the arithmetic comes from the logs and
 /// nowhere else, and that the card never appears for the mother — for whom it
 /// would be the app narrating her own afternoon back at her.
+/// A moment earlier today, whatever time the suite happens to run at.
+///
+/// The obvious `DateTime.now().subtract(const Duration(hours: 1))` is a day
+/// older than intended when the clock has just passed midnight, and every
+/// card here asks about *today*. This spreads [count] moments across the part
+/// of today that has already happened, so they are always today and always in
+/// the past.
+DateTime earlierToday(int index, int count) {
+  final now = DateTime.now();
+  final midnight = DateTime(now.year, now.month, now.day);
+  final elapsed = now.difference(midnight).inMinutes;
+  return midnight.add(Duration(minutes: elapsed * (index + 1) ~/ (count + 1)));
+}
+
 void main() {
   setUpAll(initializeDateFormatting);
 
@@ -257,8 +271,8 @@ void main() {
       final family = await familyWithViewer();
       addTearDown(family.dispose);
 
-      // Dated to now so the digest, which asks about today, finds them.
-      final now = DateTime.now();
+      // Dated inside today, which is what the digest asks about — and stays
+      // inside it however close to midnight the suite runs.
       await pump(
         tester,
         family: family,
@@ -267,14 +281,14 @@ void main() {
           DevelopmentLog(
             id: 'f1',
             childId: child.id,
-            date: now.subtract(const Duration(hours: 1)),
+            date: earlierToday(2, 3),
             type: LogType.feeding,
             title: 'Кормление',
           ),
           DevelopmentLog(
             id: 'n1',
             childId: child.id,
-            date: now.subtract(const Duration(hours: 2)),
+            date: earlierToday(1, 3),
             type: LogType.nappy,
             title: 'Подгузник',
             nappyKind: NappyKind.wet,
@@ -282,7 +296,7 @@ void main() {
           DevelopmentLog(
             id: 'p1',
             childId: child.id,
-            date: now.subtract(const Duration(hours: 3)),
+            date: earlierToday(0, 3),
             type: LogType.note,
             title: 'Заметка',
             photos: const ['a', 'b'],

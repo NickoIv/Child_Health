@@ -293,6 +293,56 @@ void main() {
 
     /// The week lives on the assistant tab now — see [DashboardScreen], which
     /// keeps the home screen to the four things a parent opens it to do.
+    /// The same week, anchored to the calendar rather than to the clock.
+    ///
+    /// `aWeek(from: DateTime.now())` puts the oldest entries six and a half
+    /// days back, which falls outside the window when the suite runs just
+    /// after midnight. This keeps every entry inside the day it belongs to.
+    List<DevelopmentLog> aWeekOnScreen() {
+      final now = DateTime.now();
+      final midnight = DateTime(now.year, now.month, now.day);
+      final elapsed = now.difference(midnight).inMinutes;
+      DateTime at(int daysBack, int slot) => midnight
+          .subtract(Duration(days: daysBack))
+          .add(Duration(minutes: elapsed * (slot + 1) ~/ 5));
+
+      return [
+        for (var d = 0; d < 7; d++) ...[
+          DevelopmentLog(
+            id: 'f1-$d',
+            childId: child.id,
+            date: at(d, 0),
+            type: LogType.feeding,
+            title: 'x',
+          ),
+          DevelopmentLog(
+            id: 'f2-$d',
+            childId: child.id,
+            date: at(d, 1),
+            type: LogType.feeding,
+            title: 'x',
+          ),
+          DevelopmentLog(
+            id: 'n-$d',
+            childId: child.id,
+            date: at(d, 2),
+            type: LogType.nappy,
+            title: 'x',
+            nappyKind: NappyKind.wet,
+          ),
+          DevelopmentLog(
+            id: 's-$d',
+            childId: child.id,
+            date: at(d, 3),
+            type: LogType.sleep,
+            title: 'x',
+            durationMinutes: 400 + d * 10,
+            nightWakings: 2,
+          ),
+        ],
+      ];
+    }
+
     Future<void> scrollToStory(WidgetTester tester) async {
       final l = await AppLocalizations.delegate.load(defaultLocale);
       await tester.tap(find.text(l.navAssistant).last);
@@ -315,7 +365,7 @@ void main() {
         tester,
         family: family,
         email: 'demo@example.com',
-        logs: aWeek(from: DateTime.now()),
+        logs: aWeekOnScreen(),
       );
       final l = await AppLocalizations.delegate.load(defaultLocale);
       await scrollToStory(tester);
@@ -339,7 +389,7 @@ void main() {
         tester,
         family: family,
         email: fatherEmail,
-        logs: aWeek(from: DateTime.now()),
+        logs: aWeekOnScreen(),
       );
       final l = await AppLocalizations.delegate.load(defaultLocale);
       await scrollToStory(tester);
@@ -384,7 +434,7 @@ void main() {
         family: family,
         email: 'demo@example.com',
         logs: [
-          ...aWeek(from: DateTime.now()),
+          ...aWeekOnScreen(),
           DevelopmentLog(
             id: 'cover',
             childId: child.id,
@@ -419,7 +469,7 @@ void main() {
         tester,
         family: family,
         email: 'demo@example.com',
-        logs: aWeek(from: DateTime.now()),
+        logs: aWeekOnScreen(),
       );
       final l = await AppLocalizations.delegate.load(defaultLocale);
       await scrollToStory(tester);

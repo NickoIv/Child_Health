@@ -19,6 +19,20 @@ import 'package:intl/date_symbol_data_local.dart';
 /// What is tested hardest is the ceiling on all of it: one sentence, once a
 /// day, with no way to reply to it and nothing sent anywhere it was not asked
 /// to go.
+/// A moment earlier today, whatever time the suite happens to run at.
+///
+/// The obvious `DateTime.now().subtract(const Duration(hours: 1))` is a day
+/// older than intended when the clock has just passed midnight, and every
+/// card here asks about *today*. This spreads [count] moments across the part
+/// of today that has already happened, so they are always today and always in
+/// the past.
+DateTime earlierToday(int index, int count) {
+  final now = DateTime.now();
+  final midnight = DateTime(now.year, now.month, now.day);
+  final elapsed = now.difference(midnight).inMinutes;
+  return midnight.add(Duration(minutes: elapsed * (index + 1) ~/ (count + 1)));
+}
+
 void main() {
   setUpAll(initializeDateFormatting);
 
@@ -305,14 +319,18 @@ void main() {
       return family;
     }
 
-    /// A hard day, dated to now so the card asking about today finds it.
-    List<DevelopmentLog> aHardDay() {
-      final now = DateTime.now();
-      return [
-        for (var i = 0; i < HeavyDayThresholds.events; i++)
-          log(LogType.feeding, ago: Duration(minutes: i * 20 + 5), from: now),
-      ];
-    }
+    /// A hard day, dated inside today so the card asking about today finds
+    /// it however close to midnight the suite is running.
+    List<DevelopmentLog> aHardDay() => [
+      for (var i = 0; i < HeavyDayThresholds.events; i++)
+        DevelopmentLog(
+          id: 'hard$i',
+          childId: child.id,
+          date: earlierToday(i, HeavyDayThresholds.events),
+          type: LogType.feeding,
+          title: LogType.feeding.label,
+        ),
+    ];
 
     testWidgets('the mother gets the sentence after a hard day', (
       tester,
@@ -334,8 +352,15 @@ void main() {
         tester,
         family: family,
         email: motherEmail,
-        logs: [log(LogType.feeding, ago: const Duration(hours: 1),
-            from: DateTime.now())],
+        logs: [
+          DevelopmentLog(
+            id: 'quiet',
+            childId: child.id,
+            date: earlierToday(0, 1),
+            type: LogType.feeding,
+            title: LogType.feeding.label,
+          ),
+        ],
       );
       final l = await AppLocalizations.delegate.load(defaultLocale);
 
@@ -387,7 +412,6 @@ void main() {
       final family = await familyWithViewer();
       addTearDown(family.dispose);
 
-      final now = DateTime.now();
       await pump(
         tester,
         family: family,
@@ -396,7 +420,7 @@ void main() {
           DevelopmentLog(
             id: 'p1',
             childId: child.id,
-            date: now.subtract(const Duration(hours: 1)),
+            date: earlierToday(0, 1),
             type: LogType.note,
             title: 'x',
             photos: const ['a'],

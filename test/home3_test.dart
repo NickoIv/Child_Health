@@ -172,6 +172,28 @@ void main() {
   });
 
   group('the microphone', () {
+    testWidgets('sits in the corner a right thumb rests in', (tester) async {
+      const screen = Size(390, 844);
+      await pump(tester, size: screen);
+
+      final button = tester.getRect(find.byIcon(Icons.mic));
+      // Right-hand side, and tight to the edge: a held button is reached
+      // without the hand changing its grip on the phone.
+      expect(button.center.dx, greaterThan(screen.width * 0.72));
+      expect(screen.width - button.right, lessThan(20));
+      // Low enough for a thumb, and still clear of the tab bar.
+      expect(button.bottom, lessThan(screen.height));
+      expect(screen.height - button.bottom, greaterThan(60));
+      // And it does not sit on top of what it is a shortcut to.
+      final cards = find.byType(ActionCard);
+      for (final card in cards.evaluate()) {
+        expect(
+          tester.getRect(find.byWidget(card.widget)).overlaps(button),
+          isFalse,
+        );
+      }
+    });
+
     testWidgets('is 72 across and opens nothing on a tap', (tester) async {
       await pump(tester);
 

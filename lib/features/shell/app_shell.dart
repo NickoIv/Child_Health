@@ -75,9 +75,40 @@ class AppShell extends ConsumerWidget {
       // above it; on the diary or the settings it would be a floating control
       // with nothing to do.
       floatingActionButton: _index == 0 ? const _HomeVoiceButton() : null,
+      floatingActionButtonLocation: const _ThumbReach(),
       bottomNavigationBar: isWide ? null : _BottomBar(index: _index),
     );
   }
+}
+
+/// Where a right thumb already is.
+///
+/// The default floating position sits sixteen pixels above the bar and
+/// sixteen in from the edge, which was tuned for a 56px button used with two
+/// hands. This one is 72px and is *held down* rather than tapped, so it moves
+/// into the corner the thumb rests in when a phone is carried in one hand and
+/// a child in the other: tight to the right edge, and low enough that the
+/// thumb reaches it without the hand shifting its grip.
+///
+/// Left-handed use is not worse off than before — the button was already on
+/// the right, and every action it is a shortcut to stays reachable as a card.
+class _ThumbReach extends StandardFabLocation
+    with FabEndOffsetX, FabFloatOffsetY {
+  const _ThumbReach();
+
+  /// Half the default. The button is big enough to hit from further away; the
+  /// distance that matters is how far the thumb has to travel, not how much
+  /// air is around it.
+  @override
+  double getOffsetX(ScaffoldPrelayoutGeometry geometry, double adjustment) =>
+      super.getOffsetX(geometry, adjustment) + 8;
+
+  @override
+  double getOffsetY(ScaffoldPrelayoutGeometry geometry, double adjustment) =>
+      super.getOffsetY(geometry, adjustment) + 6;
+
+  @override
+  String toString() => 'FloatingActionButtonLocation.thumbReach';
 }
 
 /// The microphone, once there is a child to record anything about.

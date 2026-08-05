@@ -20,6 +20,20 @@ import 'package:intl/date_symbol_data_local.dart';
 /// not a feed, it does not appear for the mother, it does not appear at all on
 /// a day with no photographs, and there is no way to add, react to or comment
 /// on anything in it.
+
+/// A moment earlier today, whatever time the suite happens to run at.
+///
+/// The obvious `DateTime.now().subtract(const Duration(hours: 1))` is a day
+/// older than intended when the clock has just passed midnight, and these
+/// cards ask about *today*. This spreads [count] moments across the part of
+/// today that has already happened.
+DateTime earlierToday(int index, int count) {
+  final now = DateTime.now();
+  final midnight = DateTime(now.year, now.month, now.day);
+  final elapsed = now.difference(midnight).inMinutes;
+  return midnight.add(Duration(minutes: elapsed * (index + 1) ~/ (count + 1)));
+}
+
 void main() {
   setUpAll(initializeDateFormatting);
 
@@ -189,18 +203,19 @@ void main() {
       return family;
     }
 
-    /// Dated to now, because the card asks about today.
-    List<DevelopmentLog> todaysPhotos(int count) {
-      final now = DateTime.now();
-      return [
-        for (var i = 0; i < count; i++)
-          log(
-            at: now,
-            ago: Duration(hours: i + 1),
-            photos: ['p$i'],
-          ),
-      ];
-    }
+    /// Dated inside today, because the card asks about today — and stays
+    /// inside it however close to midnight the suite runs.
+    List<DevelopmentLog> todaysPhotos(int count) => [
+      for (var i = 0; i < count; i++)
+        DevelopmentLog(
+          id: 'photo$i',
+          childId: child.id,
+          date: earlierToday(i, count),
+          type: LogType.note,
+          title: 'x',
+          photos: ['p$i'],
+        ),
+    ];
 
     testWidgets('the father gets the photographs, the time and the line', (
       tester,
@@ -254,7 +269,15 @@ void main() {
         tester,
         family: family,
         email: fatherEmail,
-        logs: [log(at: DateTime.now(), ago: const Duration(hours: 2))],
+        logs: [
+          DevelopmentLog(
+            id: 'no-photo',
+            childId: child.id,
+            date: earlierToday(0, 1),
+            type: LogType.note,
+            title: 'x',
+          ),
+        ],
       );
       final l = await AppLocalizations.delegate.load(defaultLocale);
 
