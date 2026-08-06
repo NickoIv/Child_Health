@@ -6,6 +6,7 @@ import 'package:child_health_tracker/core/theme/motion.dart';
 import 'package:child_health_tracker/core/voice/dictation.dart';
 import 'package:child_health_tracker/core/voice/voice_commands.dart';
 import 'package:child_health_tracker/features/dashboard/focus_home.dart';
+import 'package:child_health_tracker/features/dashboard/quick_dictation.dart';
 import 'package:child_health_tracker/features/dashboard/voice_action_button.dart';
 import 'package:child_health_tracker/features/family/family_screen.dart';
 import 'package:child_health_tracker/features/shared/photo_widgets.dart';
@@ -522,6 +523,36 @@ void main() {
       expect(tester.widget<TextField>(find.byType(TextField)).controller!.text,
           isEmpty);
       expect(find.widgetWithText(SnackBarAction, l.commonUndo), findsOneWidget);
+    });
+
+    testWidgets('two entries in a row leave one confirmation, not two', (
+      tester,
+    ) async {
+      await pumpWeb(tester);
+      final l = await AppLocalizations.delegate.load(defaultLocale);
+
+      Future<void> write(String words) async {
+        await tester.enterText(find.byType(TextField), words);
+        await tester.pump();
+        await tester.pump(QuickDictationField.settle);
+        // Settled, so the snackbar has finished arriving — its dismissal
+        // timer is set when the entrance animation ends, not when it is
+        // asked for.
+        await tester.pumpAndSettle();
+      }
+
+      await write('покормила левой 15 минут');
+      await write('подгузник мокрый');
+
+      // Snackbars queue: three entries written in a row used to queue three
+      // confirmations that played one after another over the diary.
+      expect(find.byType(SnackBar), findsOneWidget);
+      expect(find.widgetWithText(SnackBarAction, l.commonUndo), findsOneWidget);
+
+      // And it goes on its own, without anyone dismissing it.
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+      expect(find.byType(SnackBar), findsNothing);
     });
 
     testWidgets('a sentence it cannot parse is still worth keeping', (

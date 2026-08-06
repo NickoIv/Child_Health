@@ -48,11 +48,13 @@ class _QuickDictationState extends ConsumerState<QuickDictationField> {
   final _controller = TextEditingController();
   final _focus = FocusNode();
   Timer? _autoSave;
+  Timer? _dismiss;
   bool _saving = false;
 
   @override
   void dispose() {
     _autoSave?.cancel();
+    _dismiss?.cancel();
     _controller.dispose();
     _focus.dispose();
     super.dispose();
@@ -208,7 +210,13 @@ class _QuickDictationState extends ConsumerState<QuickDictationField> {
       _focus.unfocus();
       setState(() => _saving = false);
 
-      messenger.showSnackBar(
+      // The one before it goes now rather than when its own timer runs out.
+      // Snackbars queue, and three entries written in a row queued three
+      // confirmations that played one after another over the screen she had
+      // gone back to reading.
+      _dismiss?.cancel();
+      messenger.hideCurrentSnackBar();
+      final shown = messenger.showSnackBar(
         SnackBar(
           content: Row(
             children: [
@@ -217,18 +225,31 @@ class _QuickDictationState extends ConsumerState<QuickDictationField> {
               Expanded(child: Text(l.quickSaved(voiceSummary(l, command)))),
             ],
           ),
-          // Long, because nobody pressed anything: the undo is the only
-          // thing between a misheard sentence and a medical record.
-          duration: const Duration(seconds: 6),
+          // A ceiling only. The real dismissal is the timer below, because
+          // the messenger's own one is set when a snackbar finishes
+          // arriving — and a snackbar that replaced another never gets one
+          // set at all, which is how a confirmation ended up sitting on the
+          // diary until something else happened to push it off.
+          duration: const Duration(minutes: 1),
           action: SnackBarAction(
             label: l.commonUndo,
-            onPressed: () => logs.delete(entry.id),
+            onPressed: () {
+              _dismiss?.cancel();
+              messenger.hideCurrentSnackBar();
+              unawaited(logs.delete(entry.id));
+            },
           ),
         ),
       );
+
+      // Long enough to catch a misheard sentence, short enough not to sit on
+      // the diary. The entry is still there afterwards, one tap away, for as
+      // long as she likes.
+      _dismiss = Timer(const Duration(seconds: 4), shown.close);
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
+      messenger.hideCurrentSnackBar();
       messenger.showSnackBar(SnackBar(content: Text(friendlyError(l, e))));
     }
   }
