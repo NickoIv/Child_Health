@@ -1034,6 +1034,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get voiceTapToStop => 'Tap again when you are done';
 
   @override
+  String get voiceSheetTitle => 'Say it or write it';
+
+  @override
+  String get voiceKeyboardHint =>
+      'Tap the microphone on the keyboard and dictate — that is your phone\'s own dictation';
+
+  @override
+  String get voiceNothingYet => 'Nothing yet';
+
+  @override
+  String get voiceWillSave => 'Will be saved as';
+
+  @override
   String get voiceOpening => 'Opening the microphone…';
 
   @override

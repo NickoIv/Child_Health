@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'ai/ai_config.dart';
@@ -197,6 +198,22 @@ final unitSystemProvider = Provider<UnitSystem>((ref) {
 final dictationProvider = Provider<Dictation>(
   (ref) => const UnavailableDictation(),
 );
+
+/// Whether the microphone hands the job to the keyboard.
+///
+/// True in a browser, which is where the app actually runs. The Web Speech
+/// API opens a microphone two seconds late, refuses to start twice, hides
+/// its results behind a plugin that discards them, and is absent altogether
+/// when the app is opened from an iPhone's home screen. The dictation on the
+/// keyboard has none of those problems, is the recogniser Apple and Google
+/// tuned for these languages, and is one tap away from any focused field.
+///
+/// False on a phone build, where `speech_to_text` talks to the same system
+/// recogniser directly and the hold-to-talk button works as designed.
+///
+/// A provider rather than a `kIsWeb` check in the widget, so a test can look
+/// at both.
+final keyboardDictationProvider = Provider<bool>((ref) => kIsWeb);
 
 /// One photo, fetched on demand.
 ///

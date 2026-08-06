@@ -4,6 +4,7 @@ import 'package:child_health_tracker/core/l10n/labels.dart';
 import 'package:child_health_tracker/core/theme/app_theme.dart';
 import 'package:child_health_tracker/core/theme/motion.dart';
 import 'package:child_health_tracker/core/voice/dictation.dart';
+import 'package:child_health_tracker/core/voice/voice_commands.dart';
 import 'package:child_health_tracker/features/dashboard/focus_home.dart';
 import 'package:child_health_tracker/features/dashboard/voice_action_button.dart';
 import 'package:child_health_tracker/features/family/family_screen.dart';
@@ -430,6 +431,115 @@ void main() {
       expect(find.text('покормила левой 15 минут'), findsOneWidget);
       // Her words and the reading of them, and a button she has to press.
       expect(find.widgetWithText(FilledButton, l.commonSave), findsOneWidget);
+    });
+  });
+
+  group('the keyboard microphone', () {
+    Future<void> pumpWeb(WidgetTester tester) async {
+      tester.view.physicalSize = const Size(390, 1400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            childrenProvider.overrideWith((ref) => Stream.value([child])),
+            dictationProvider.overrideWithValue(dictation),
+            // What a browser gets. The app runs in one.
+            keyboardDictationProvider.overrideWithValue(true),
+          ],
+          child: const ChildHealthApp(),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('the card offers the keyboard, not a recording', (
+      tester,
+    ) async {
+      await pumpWeb(tester);
+      final l = await AppLocalizations.delegate.load(defaultLocale);
+      final card = find.byType(VoiceActionButton);
+
+      // No timer: there is nothing here that runs for a length of time.
+      expect(
+        find.descendant(of: card, matching: find.text(l.voiceSheetTitle)),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: card, matching: find.text(l.voiceKeyboardHint)),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: card, matching: find.text(voiceTimer(Duration.zero))),
+        findsNothing,
+      );
+    });
+
+    testWidgets('one tap opens a focused field and touches no microphone', (
+      tester,
+    ) async {
+      await pumpWeb(tester);
+      final l = await AppLocalizations.delegate.load(defaultLocale);
+
+      await tester.tap(find.byIcon(Icons.mic));
+      await tester.pumpAndSettle();
+
+      final field = find.byType(TextField);
+      expect(field, findsOneWidget);
+      // Focused, so the keyboard — and the microphone on it — is already up.
+      expect(tester.widget<TextField>(field).focusNode?.hasFocus, isTrue);
+      // Nothing was recorded by us. The phone's own recogniser does that.
+      expect(dictation.listening, isFalse);
+      expect(find.text(l.voiceNothingYet), findsOneWidget);
+    });
+
+    testWidgets('what is dictated is read back before it is saved', (
+      tester,
+    ) async {
+      await pumpWeb(tester);
+      final l = await AppLocalizations.delegate.load(defaultLocale);
+
+      await tester.tap(find.byIcon(Icons.mic));
+      await tester.pumpAndSettle();
+
+      // What the keyboard's dictation drops into the field.
+      await tester.enterText(
+        find.byType(TextField),
+        'покормила левой 15 минут',
+      );
+      await tester.pumpAndSettle();
+
+      final command = parseVoiceCommand('покормила левой 15 минут');
+      expect(
+        find.text('${l.voiceWillSave}: ${voiceSummary(l, command)}'),
+        findsOneWidget,
+      );
+      expect(find.text(l.voiceNothingYet), findsNothing);
+      // Read back, then saved — never the other way round.
+      expect(find.widgetWithText(FilledButton, l.commonSave), findsOneWidget);
+    });
+
+    testWidgets('a sentence it cannot parse is still worth keeping', (
+      tester,
+    ) async {
+      await pumpWeb(tester);
+      final l = await AppLocalizations.delegate.load(defaultLocale);
+
+      await tester.tap(find.byIcon(Icons.mic));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'улыбнулся бабушке');
+      await tester.pumpAndSettle();
+
+      // A note in her own words costs nothing; a wrong guess costs a
+      // correction in a medical record.
+      expect(find.textContaining(l.voiceAsNote), findsOneWidget);
+      expect(
+        tester.widget<FilledButton>(
+          find.widgetWithText(FilledButton, l.commonSave),
+        ).onPressed,
+        isNotNull,
+      );
     });
   });
 

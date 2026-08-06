@@ -1942,6 +1942,30 @@ abstract class AppLocalizations {
   /// **'Нажмите ещё раз, когда закончите'**
   String get voiceTapToStop;
 
+  /// No description provided for @voiceSheetTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Скажите или напишите'**
+  String get voiceSheetTitle;
+
+  /// No description provided for @voiceKeyboardHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нажмите микрофон на клавиатуре и продиктуйте — это диктовка вашего телефона'**
+  String get voiceKeyboardHint;
+
+  /// No description provided for @voiceNothingYet.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пока пусто'**
+  String get voiceNothingYet;
+
+  /// No description provided for @voiceWillSave.
+  ///
+  /// In ru, this message translates to:
+  /// **'Запишем'**
+  String get voiceWillSave;
+
   /// No description provided for @voiceOpening.
   ///
   /// In ru, this message translates to:

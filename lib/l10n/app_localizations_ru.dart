@@ -1040,6 +1040,19 @@ class AppLocalizationsRu extends AppLocalizations {
   String get voiceTapToStop => 'Нажмите ещё раз, когда закончите';
 
   @override
+  String get voiceSheetTitle => 'Скажите или напишите';
+
+  @override
+  String get voiceKeyboardHint =>
+      'Нажмите микрофон на клавиатуре и продиктуйте — это диктовка вашего телефона';
+
+  @override
+  String get voiceNothingYet => 'Пока пусто';
+
+  @override
+  String get voiceWillSave => 'Запишем';
+
+  @override
   String get voiceOpening => 'Открываю микрофон…';
 
   @override

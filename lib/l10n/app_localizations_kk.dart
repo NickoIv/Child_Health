@@ -1031,6 +1031,19 @@ class AppLocalizationsKk extends AppLocalizations {
   String get voiceTapToStop => 'Аяқтағанда қайта басыңыз';
 
   @override
+  String get voiceSheetTitle => 'Айтыңыз не жазыңыз';
+
+  @override
+  String get voiceKeyboardHint =>
+      'Пернетақтадағы микрофонды басып айтыңыз — бұл телефоныңыздың диктовкасы';
+
+  @override
+  String get voiceNothingYet => 'Әзірге бос';
+
+  @override
+  String get voiceWillSave => 'Жазылады';
+
+  @override
   String get voiceOpening => 'Микрофон ашылуда…';
 
   @override

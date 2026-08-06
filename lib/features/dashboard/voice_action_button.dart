@@ -13,6 +13,7 @@ import '../../l10n/app_localizations.dart';
 import '../../models/development_log.dart';
 import '../../providers.dart';
 import '../shared/widgets.dart';
+import 'dictation_sheet.dart';
 
 /// Hold it, say it, read it back, save it.
 ///
@@ -102,6 +103,7 @@ class _VoiceActionButtonState extends ConsumerState<VoiceActionButton> {
     // two on a phone, and a card that claims to be listening before it is
     // costs a parent the first half of her sentence.
     final warmingUp = _listening && !(_dictation?.live ?? true);
+    final keyboard = ref.watch(keyboardDictationProvider);
 
     // Listening is a state of the whole card, not a detail on it. A pulsing
     // ring around a 64px circle is invisible to someone holding a phone at
@@ -145,7 +147,9 @@ class _VoiceActionButtonState extends ConsumerState<VoiceActionButton> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  warmingUp
+                  keyboard
+                      ? l.voiceSheetTitle
+                      : warmingUp
                       ? l.voiceOpening
                       : _listening
                       ? l.voiceListening
@@ -188,7 +192,7 @@ class _VoiceActionButtonState extends ConsumerState<VoiceActionButton> {
                   )
                 else
                   Text(
-                    l.voiceExample,
+                    keyboard ? l.voiceKeyboardHint : l.voiceExample,
                     style: TextStyle(
                       fontSize: 12.5,
                       height: 1.35,
@@ -201,17 +205,18 @@ class _VoiceActionButtonState extends ConsumerState<VoiceActionButton> {
             ),
           ),
           const SizedBox(width: 10),
-          Text(
-            voiceTimer(_elapsed),
+          if (!keyboard)
+            Text(
+              voiceTimer(_elapsed),
             style: TextStyle(
               fontSize: _listening ? 15 : 13,
               fontWeight: FontWeight.w700,
               fontFeatures: const [FontFeature.tabularFigures()],
-              color: _listening
-                  ? Warm.accent
-                  : Warm.onCardSoft(theme.brightness),
+                color: _listening
+                    ? Warm.accent
+                    : Warm.onCardSoft(theme.brightness),
+              ),
             ),
-          ),
           const SizedBox(width: 14),
           // Last in the row, so it lands under a right thumb. Everything to
           // the left of it is text, which is read once and never touched.
@@ -269,6 +274,11 @@ class _VoiceActionButtonState extends ConsumerState<VoiceActionButton> {
 
   /// Start it, or finish it.
   void _toggle() {
+    // In a browser the recogniser worth using is the one on the keyboard.
+    if (ref.read(keyboardDictationProvider)) {
+      unawaited(showDictationSheet(context, childId: widget.childId));
+      return;
+    }
     if (_listening) {
       unawaited(_stop());
     } else {
