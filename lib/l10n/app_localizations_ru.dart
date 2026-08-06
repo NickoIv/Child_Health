@@ -1030,6 +1030,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get voiceBusy => 'Секунду — заканчиваю прошлую запись';
 
   @override
+  String get voiceTraceHint =>
+      'Что произошло. Пришлите этот список, если микрофон не работает';
+
+  @override
   String get voiceHeard => 'Услышано';
 
   @override

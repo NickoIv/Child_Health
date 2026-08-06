@@ -304,6 +304,7 @@
   "voiceHoldHint": "Hold the button and speak",
   "voiceExample": "“fed on the left for 15 minutes”",
   "voiceBusy": "One moment — finishing the last recording",
+  "voiceTraceHint": "What happened. Send this list if the microphone is not working",
   "voiceHeard": "Heard",
   "voiceMl": "ml",
   "voiceAsNote": "Will be saved as a note",

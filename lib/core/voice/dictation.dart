@@ -67,6 +67,16 @@ abstract interface class Dictation {
   });
 
   Future<void> stop();
+
+  /// What the recogniser did last time, in order, with timings.
+  ///
+  /// A microphone that produces nothing produces nothing to look at either:
+  /// the browser reports through callbacks that go nowhere a user can see,
+  /// and "could not recognise speech" is the same sentence whether the
+  /// session never opened, opened and heard silence, or heard a sentence the
+  /// plugin then dropped. This is the difference, in a form that can be
+  /// screenshotted and sent.
+  List<String> get trace;
 }
 
 /// What one recognition is asked for.
@@ -153,6 +163,22 @@ class PlatformDictation implements Dictation {
   /// actually let go of the microphone.
   bool _sessionActive = false;
 
+  final _trace = <String>[];
+  DateTime? _sessionStart;
+
+  @override
+  List<String> get trace => List.unmodifiable(_trace);
+
+  void _note(String event) {
+    final started = _sessionStart;
+    final ms = started == null
+        ? 0
+        : DateTime.now().difference(started).inMilliseconds;
+    _trace.add('$ms ms  $event');
+    // Long enough to hold a whole hold, short enough to fit on a screen.
+    if (_trace.length > 30) _trace.removeAt(0);
+  }
+
   @override
   bool get ready => _ready;
 
@@ -169,9 +195,14 @@ class PlatformDictation implements Dictation {
     // call more than once — the plugin remembers.
     try {
       _ready = await _speech.initialize(
-        onError: (error) => _lastError = error.errorMsg,
-        onStatus: (_) {},
+        onError: (error) {
+          _lastError = error.errorMsg;
+          _note('error ${error.errorMsg}'
+              '${error.permanent ? ' (permanent)' : ''}');
+        },
+        onStatus: (status) => _note('status $status'),
       );
+      _note('initialize $_ready');
     } catch (_) {
       // A device with no recogniser at all throws rather than returning
       // false. Same outcome for the parent either way.
@@ -191,6 +222,9 @@ class PlatformDictation implements Dictation {
     if (!_ready || busy) return;
     _lastError = null;
     _segments.clear();
+    _trace.clear();
+    _sessionStart = DateTime.now();
+    _note('hold begins, locale $localeId');
     _delivered = false;
     _sessionActive = true;
     _holding = true;
@@ -233,8 +267,9 @@ class PlatformDictation implements Dictation {
           ? null
           : (level) => onLevel((level / 10).clamp(0.0, 1.0)),
       onResult: (result) {
-        if (!result.finalResult) return;
         final text = result.recognizedWords.trim();
+        _note('result final=${result.finalResult} "$text"');
+        if (!result.finalResult) return;
         if (text.isNotEmpty) _segments.add(text);
         // The recogniser is done with this clause. She may not be done with
         // the sentence, and her finger says which.
@@ -260,6 +295,7 @@ class PlatformDictation implements Dictation {
       await Future<void>.delayed(const Duration(milliseconds: 40));
     }
     if (!_holding || _delivered) return;
+    _note('restart');
     try {
       await _startSession(_localeId, _onLevel);
     } catch (_) {
@@ -270,6 +306,7 @@ class PlatformDictation implements Dictation {
   @override
   Future<void> stop() async {
     _holding = false;
+    _note('released');
     try {
       if (_speech.isListening) await _speech.stop();
     } catch (_) {
@@ -299,6 +336,7 @@ class PlatformDictation implements Dictation {
     _delivered = true;
 
     final text = _heard;
+    _note('delivering "$text"');
     if (text.isNotEmpty) {
       _onResult?.call(text);
       return;
@@ -325,6 +363,9 @@ class UnavailableDictation implements Dictation {
 
   @override
   bool get busy => false;
+
+  @override
+  List<String> get trace => const [];
 
   @override
   String? get unavailableReason => null;

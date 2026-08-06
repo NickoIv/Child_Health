@@ -1924,6 +1924,12 @@ abstract class AppLocalizations {
   /// **'Секунду — заканчиваю прошлую запись'**
   String get voiceBusy;
 
+  /// No description provided for @voiceTraceHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Что произошло. Пришлите этот список, если микрофон не работает'**
+  String get voiceTraceHint;
+
   /// No description provided for @voiceHeard.
   ///
   /// In ru, this message translates to:

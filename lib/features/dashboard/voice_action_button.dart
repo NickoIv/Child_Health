@@ -303,6 +303,56 @@ class _VoiceActionButtonState extends ConsumerState<VoiceActionButton> {
     _open(dictation);
   }
 
+  /// What happened, in the recogniser's own order of events.
+  ///
+  /// Voice input is the one thing in this app that cannot be debugged from
+  /// the outside: it fails on one phone, in one browser, with a message that
+  /// covers four different causes. This is the log — a dozen lines, on the
+  /// screen, where someone can read them out or photograph them.
+  void _showTrace(AppLocalizations l, String headline) {
+    final trace = _dictation?.trace ?? const <String>[];
+    final theme = Theme.of(context);
+
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(headline),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(l.voiceTraceHint, style: theme.textTheme.bodySmall),
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Warm.soft(theme.brightness),
+                  borderRadius: BorderRadius.circular(Warm.chipRadius),
+                ),
+                child: SelectableText(
+                  trace.isEmpty ? '—' : trace.join('\n'),
+                  style: const TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 12,
+                    height: 1.45,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(l.commonClose),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// Said no, and said why.
   ///
   /// "The microphone is unavailable" on its own is a dead end: it is the same
@@ -328,7 +378,6 @@ class _VoiceActionButtonState extends ConsumerState<VoiceActionButton> {
 
   void _open(Dictation dictation) {
     final l = AppLocalizations.of(context);
-    final messenger = ScaffoldMessenger.of(context);
     final locale = dictationLocale(
       Localizations.localeOf(context).languageCode,
     );
@@ -368,7 +417,10 @@ class _VoiceActionButtonState extends ConsumerState<VoiceActionButton> {
         onSilence: () {
           if (!mounted) return;
           _close();
-          messenger.showSnackBar(SnackBar(content: Text(l.voiceFailed)));
+          // Not a snackbar. Nothing was heard, and the only useful thing
+          // left is what the recogniser did instead — which has to stay on
+          // screen long enough to be read, and photographed.
+          _showTrace(l, l.voiceFailed);
         },
         // The browser's own reason, shown rather than swallowed. On an
         // iPhone this is the difference between "it doesn't work" and
@@ -376,9 +428,7 @@ class _VoiceActionButtonState extends ConsumerState<VoiceActionButton> {
         onFailure: (reason) {
           if (!mounted) return;
           _close();
-          messenger.showSnackBar(
-            SnackBar(content: Text('${l.voiceFailed} ($reason)')),
-          );
+          _showTrace(l, '${l.voiceFailed} ($reason)');
         },
       ),
     );

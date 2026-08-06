@@ -1024,6 +1024,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get voiceBusy => 'One moment — finishing the last recording';
 
   @override
+  String get voiceTraceHint =>
+      'What happened. Send this list if the microphone is not working';
+
+  @override
   String get voiceHeard => 'Heard';
 
   @override

@@ -336,6 +336,9 @@ class _FakeDictation implements Dictation {
   bool busy = false;
 
   @override
+  List<String> get trace => const ['fake'];
+
+  @override
   Future<bool> prepare() async {
     prepared++;
     _ready = allowed;

@@ -1021,6 +1021,10 @@ class AppLocalizationsKk extends AppLocalizations {
   String get voiceBusy => 'Бір сәт — алдыңғы жазба аяқталуда';
 
   @override
+  String get voiceTraceHint =>
+      'Не болды. Микрофон жұмыс істемесе, осы тізімді жіберіңіз';
+
+  @override
   String get voiceHeard => 'Естілді';
 
   @override
