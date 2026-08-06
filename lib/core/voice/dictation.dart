@@ -97,12 +97,16 @@ SpeechListenOptions dictationOptions(String localeId) => SpeechListenOptions(
   // The words are wanted, not a command: dictation mode rather than the
   // confirmation mode tuned for "yes" and "cancel".
   listenMode: ListenMode.dictation,
-  // False, and it costs more than it looks like it does. The web plugin sets
-  // `continuous` from this same flag, and Safari on iOS does not do
-  // continuous recognition — with it on the microphone opened, closed and
-  // produced nothing at all. A sentence longer than the recogniser's patience
-  // is handled by restarting instead, not by asking for a longer one.
-  partialResults: false,
+  // True, and not for the reason the name suggests. The web plugin never
+  // marks a result final — `resultType` is hardcoded to partial in
+  // `speech_to_text_web.dart` — and the wrapper drops everything non-final
+  // when this is off. With it off, a browser recognised the sentence, said
+  // so (`status done`), and the words were thrown away one layer above the
+  // callback that was waiting for them.
+  //
+  // Nothing partial reaches the screen: the reading is assembled here and
+  // shown once, when she taps to finish.
+  partialResults: true,
   cancelOnError: true,
 );
 
@@ -141,14 +145,25 @@ class PlatformDictation implements Dictation {
   /// nothing and no way for anyone to find out what.
   String? _lastError;
 
-  /// Everything heard while the button has been held, in order.
+  /// Recognitions that have already ended, in order.
   ///
-  /// A browser recogniser ends the moment it decides a sentence is over, and
-  /// it decides that in the middle of "покормила левой... минут пятнадцать".
-  /// One hold is therefore not one recognition but several, restarted as
-  /// each ends, and this is where the pieces are kept until she lets go.
+  /// A browser recogniser stops the moment it decides a sentence is over,
+  /// and it decides that in the middle of "покормила левой... минут
+  /// пятнадцать". One recording is therefore not one recognition but
+  /// several, restarted as each ends.
   final _segments = <String>[];
-  String get _heard => _segments.join(' ').trim();
+
+  /// The best reading of the recognition currently running.
+  ///
+  /// Every result the web layer sends is labelled partial, so there is no
+  /// final one to wait for — the longest is the one to keep. A later result
+  /// is usually longer, but a recogniser that has changed its mind about the
+  /// opening words can come back shorter, and half a sentence is worse than
+  /// the whole one it already had.
+  String _current = '';
+
+  String get _heard =>
+      [..._segments, _current].where((p) => p.isNotEmpty).join(' ').trim();
   bool _delivered = true;
 
   /// True while her finger is still down.
@@ -226,7 +241,11 @@ class PlatformDictation implements Dictation {
             // The stop that arrived while it was still opening.
             if (_stopWanted) unawaited(_speech.stop());
           } else {
+            final wasLive = _live;
             _live = false;
+            // The web layer never sends a final result, so the end of a
+            // recognition is only ever announced as a change of status.
+            if (wasLive) _endOfClause();
           }
         },
       );
@@ -250,6 +269,7 @@ class PlatformDictation implements Dictation {
     if (!_ready || busy) return;
     _lastError = null;
     _segments.clear();
+    _current = '';
     _trace.clear();
     _sessionStart = DateTime.now();
     _live = false;
@@ -299,18 +319,28 @@ class PlatformDictation implements Dictation {
       onResult: (result) {
         final text = result.recognizedWords.trim();
         _note('result final=${result.finalResult} "$text"');
-        if (!result.finalResult) return;
-        if (text.isNotEmpty) _segments.add(text);
-        // The recogniser is done with this clause. She may not be done with
-        // the sentence, and her finger says which.
-        if (_holding) {
-          unawaited(_resume());
-        } else {
-          _deliver();
-        }
+        if (text.length > _current.length) _current = text;
+        // Native recognisers do mark a result final, and when one does the
+        // clause is over even though the sentence may not be.
+        if (result.finalResult) _endOfClause();
       },
       listenOptions: dictationOptions(localeId),
     );
+  }
+
+  /// One recognition has finished. Whether the recording has is a separate
+  /// question, and only the person speaking answers it.
+  void _endOfClause() {
+    if (_current.isNotEmpty) {
+      _segments.add(_current);
+      _current = '';
+    }
+    if (_delivered) return;
+    if (_holding) {
+      unawaited(_resume());
+    } else {
+      _deliver();
+    }
   }
 
   /// Listen again, because she has not stopped talking.

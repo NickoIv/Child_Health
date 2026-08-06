@@ -249,12 +249,13 @@ void main() {
       }
     });
 
-    test('one recognition at a time, because iOS cannot do otherwise', () {
-      // The web plugin sets SpeechRecognition.continuous from this flag, and
-      // Safari on iOS does not support continuous recognition: with it on
-      // the microphone opened, closed and produced nothing at all. A long
-      // sentence is covered by restarting between clauses instead.
-      expect(dictationOptions('ru-RU').partialResults, isFalse);
+    test('partial results are asked for, or none arrive at all', () {
+      // Not a preference. speech_to_text_web hardcodes every result it sends
+      // to ResultType.partial, and SpeechToText._notifyResults drops
+      // non-final results when this flag is off — so with it off a browser
+      // recognises the sentence, reports `status done`, and the words are
+      // discarded one layer above the listener waiting for them.
+      expect(dictationOptions('ru-RU').partialResults, isTrue);
       expect(dictationOptions('ru-RU').localeId, 'ru-RU');
       expect(dictationOptions('ru-RU').listenFor, DictationSession.maxDuration);
       expect(dictationOptions('ru-RU').pauseFor, DictationSession.pause);
