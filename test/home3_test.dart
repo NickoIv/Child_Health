@@ -250,14 +250,15 @@ void main() {
       final l = await AppLocalizations.delegate.load(defaultLocale);
       final card = find.byType(VoiceActionButton);
 
-      // Floating, it covered whichever entry was being read. In the column it
-      // covers nothing, and there is room to print what to say to it.
+      // Floating, it covered whichever entry was being read. Pinned above
+      // the tabs it covers nothing, and there is room to print what to say
+      // to it.
       expect(find.byType(FloatingActionButton), findsNothing);
       expect(
         tester.getRect(card).top,
         greaterThan(tester.getRect(find.byType(RecentPreview)).bottom - 1),
       );
-      // It spans the column, like every other card on this screen.
+      // Full width, like every other card on this screen.
       expect(
         tester.getSize(card).width,
         tester.getSize(find.byType(RecentPreview)).width,
@@ -275,6 +276,50 @@ void main() {
         find.descendant(of: card, matching: find.text(voiceTimer(Duration.zero))),
         findsOneWidget,
       );
+    });
+
+    testWidgets('stays put while the page scrolls under it', (tester) async {
+      // A short phone with a long day on it: the kind of screen where the
+      // card used to be below the fold on the one page it exists to be used
+      // from.
+      await pump(
+        tester,
+        size: const Size(390, 780),
+        logs: [
+          for (var i = 0; i < 12; i++)
+            DevelopmentLog(
+              id: 'f$i',
+              childId: child.id,
+              date: DateTime.now().subtract(Duration(minutes: 20 * i + 5)),
+              type: LogType.feeding,
+              title: LogType.feeding.label,
+            ),
+        ],
+      );
+
+      final card = find.byType(VoiceActionButton);
+      expect(card, findsOneWidget);
+      final before = tester.getRect(card);
+
+      // Above the tabs, and on the screen without anyone going to look.
+      expect(before.bottom, lessThanOrEqualTo(780));
+      expect(
+        before.bottom,
+        lessThanOrEqualTo(tester.getRect(find.byType(NavigationBar)).top + 1),
+      );
+
+      // Read from the scroll position rather than from the header's box: a
+      // sliver list drops the children it has scrolled past, so the widget
+      // this moved is gone by the time it could be measured.
+      final scroll = tester.state<ScrollableState>(find.byType(Scrollable));
+      expect(scroll.position.pixels, 0);
+
+      await tester.drag(find.byType(WarmHeader), const Offset(0, -400));
+      await tester.pumpAndSettle();
+
+      // The page moved; the microphone did not.
+      expect(scroll.position.pixels, greaterThan(0));
+      expect(tester.getRect(card), before);
     });
 
     testWidgets('the button itself is on the right, under a thumb', (
@@ -474,6 +519,10 @@ class _FakeDictation implements Dictation {
   @override
   bool get ready => _ready;
   bool _ready = false;
+
+  /// What a refusal would say. Set by a test that wants the message checked.
+  @override
+  String? unavailableReason;
 
   @override
   Future<bool> prepare() async {

@@ -21,6 +21,14 @@ abstract interface class Dictation {
   /// the same thing: the keyboard still works.
   Future<bool> prepare();
 
+  /// Why [prepare] said no, in the recogniser's own words.
+  ///
+  /// Null when it has not been asked yet or when it worked. On the web this
+  /// is the browser's reason — `not supported` from an iOS home-screen app,
+  /// where Safari withholds the speech API entirely, is a different problem
+  /// from a denied permission and needs a different sentence.
+  String? get unavailableReason;
+
   /// Whether [prepare] has already succeeded.
   ///
   /// Exists so the caller can reach [start] without an `await` in front of
@@ -77,6 +85,9 @@ class PlatformDictation implements Dictation {
 
   @override
   bool get ready => _ready;
+
+  @override
+  String? get unavailableReason => _ready ? null : _lastError;
 
   @override
   Future<bool> prepare() async {
@@ -155,6 +166,9 @@ class UnavailableDictation implements Dictation {
 
   @override
   bool get ready => false;
+
+  @override
+  String? get unavailableReason => null;
 
   @override
   Future<bool> prepare() async => false;

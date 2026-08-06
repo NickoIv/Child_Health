@@ -18,7 +18,6 @@ import 'dashboard_config.dart';
 import 'focus_home.dart';
 import 'now_card.dart';
 import 'smart_card.dart';
-import 'voice_action_button.dart';
 import '../family/digest_card.dart';
 import '../family/invite_banner.dart';
 import '../family/moments_card.dart';
@@ -59,11 +58,6 @@ class DashboardScreen extends ConsumerWidget {
         // At most one, picked by priority rather than stacked.
         const SmartCard(),
         const RecentPreview(),
-        // Under the list rather than over it. Holding it is the fastest way
-        // to write down the thing she just did, and the sentence it wants is
-        // printed on it — which a floating circle had nowhere to put.
-        const SizedBox(height: AppTheme.gap),
-        VoiceActionButton(childId: child.id),
         // For a viewer, the day in five numbers and today's photographs. Both
         // draw nothing for the mother, who was there.
         const SizedBox(height: AppTheme.gap),

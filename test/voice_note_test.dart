@@ -295,6 +295,10 @@ class _FakeDictation implements Dictation {
   bool get ready => _ready;
   bool _ready = false;
 
+  /// What a refusal would say. Set by a test that wants the message checked.
+  @override
+  String? unavailableReason;
+
   @override
   Future<bool> prepare() async {
     prepared++;

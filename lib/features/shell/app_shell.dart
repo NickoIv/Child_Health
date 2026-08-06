@@ -8,6 +8,7 @@ import '../../l10n/app_localizations.dart';
 import '../../core/theme/theme_mode.dart';
 import '../../models/child.dart';
 import '../../providers.dart';
+import '../dashboard/voice_action_button.dart';
 import '../family/invite_banner.dart';
 import '../shared/photo_widgets.dart';
 
@@ -70,11 +71,43 @@ class AppShell extends ConsumerWidget {
               ],
             )
           : child,
-      // The microphone used to float here. It is a card on the home screen
-      // now — see [VoiceActionButton] — because floating over the list it
-      // covered whichever entry a parent was reading, and a control that
-      // says what to say to it needs room for the sentence.
-      bottomNavigationBar: isWide ? null : _BottomBar(index: _index),
+      // The microphone rides above the tab bar on the home screen: pinned, so
+      // it is there the moment the app opens rather than after a scroll, and
+      // outside the list, so it covers nothing.
+      bottomNavigationBar: isWide
+          ? null
+          : Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (_index == 0) const _PinnedVoice(),
+                _BottomBar(index: _index),
+              ],
+            ),
+    );
+  }
+}
+
+/// The microphone, held in place above the tab bar.
+///
+/// It sat in the scrolling column and a parent had to go looking for it — on
+/// a phone it was below the fold on the screen it exists to be used from.
+/// Here it is on top of the page rather than in it, which is what "always in
+/// view" has to mean, and it keeps the page's own background so the list
+/// scrolling underneath does not show through.
+class _PinnedVoice extends ConsumerWidget {
+  const _PinnedVoice();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final child = ref.watch(selectedChildProvider);
+    if (child == null) return const SizedBox.shrink();
+
+    return ColoredBox(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
+        child: VoiceActionButton(childId: child.id),
+      ),
     );
   }
 }

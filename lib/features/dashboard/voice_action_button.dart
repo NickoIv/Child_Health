@@ -247,10 +247,33 @@ class _VoiceActionButtonState extends ConsumerState<VoiceActionButton> {
     _opening = false;
     if (!mounted) return;
     if (!ready) {
-      messenger.showSnackBar(SnackBar(content: Text(l.voiceUnavailable)));
+      _refused(l, messenger, dictation.unavailableReason);
       return;
     }
     _open(dictation);
+  }
+
+  /// Said no, and said why.
+  ///
+  /// "The microphone is unavailable" on its own is a dead end: it is the same
+  /// sentence whether the permission was denied, the language is missing, or
+  /// the browser has no recogniser at all. The reason comes from the browser
+  /// and is worth more than the phrasing — an iPhone reports `not supported`
+  /// when the app was opened from the home screen rather than in a Safari
+  /// tab, which is a thing a parent can actually fix.
+  void _refused(
+    AppLocalizations l,
+    ScaffoldMessengerState messenger,
+    String? reason,
+  ) {
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          reason == null ? l.voiceUnavailable : '${l.voiceUnavailable} ($reason)',
+        ),
+        duration: const Duration(seconds: 6),
+      ),
+    );
   }
 
   void _open(Dictation dictation) {
