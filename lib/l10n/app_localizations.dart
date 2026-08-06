@@ -1966,6 +1966,12 @@ abstract class AppLocalizations {
   /// **'Запишем'**
   String get voiceWillSave;
 
+  /// No description provided for @voiceFieldHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Скажите или напишите…'**
+  String get voiceFieldHint;
+
   /// No description provided for @commonUndo.
   ///
   /// In ru, this message translates to:

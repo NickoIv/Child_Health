@@ -1047,6 +1047,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get voiceWillSave => 'Will be saved as';
 
   @override
+  String get voiceFieldHint => 'Say it or write it…';
+
+  @override
   String get commonUndo => 'Undo';
 
   @override

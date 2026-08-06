@@ -1053,6 +1053,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get voiceWillSave => 'Запишем';
 
   @override
+  String get voiceFieldHint => 'Скажите или напишите…';
+
+  @override
   String get commonUndo => 'Отменить';
 
   @override

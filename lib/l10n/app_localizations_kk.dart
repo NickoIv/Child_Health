@@ -1044,6 +1044,9 @@ class AppLocalizationsKk extends AppLocalizations {
   String get voiceWillSave => 'Жазылады';
 
   @override
+  String get voiceFieldHint => 'Айтыңыз не жазыңыз…';
+
+  @override
   String get commonUndo => 'Қайтару';
 
   @override

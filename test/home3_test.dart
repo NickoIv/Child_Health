@@ -454,103 +454,73 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    testWidgets('the card offers the keyboard, not a recording', (
-      tester,
-    ) async {
-      await pumpWeb(tester);
-      final l = await AppLocalizations.delegate.load(defaultLocale);
-      final card = find.byType(VoiceActionButton);
-
-      // No timer: there is nothing here that runs for a length of time.
-      expect(
-        find.descendant(of: card, matching: find.text(l.voiceSheetTitle)),
-        findsOneWidget,
-      );
-      expect(
-        find.descendant(of: card, matching: find.text(l.voiceKeyboardHint)),
-        findsOneWidget,
-      );
-      expect(
-        find.descendant(of: card, matching: find.text(voiceTimer(Duration.zero))),
-        findsNothing,
-      );
-    });
-
-    testWidgets('one tap opens a focused field and touches no microphone', (
+    testWidgets('the field is the card, with nothing in front of it', (
       tester,
     ) async {
       await pumpWeb(tester);
       final l = await AppLocalizations.delegate.load(defaultLocale);
 
-      await tester.tap(find.byIcon(Icons.mic));
-      await tester.pumpAndSettle();
-
+      // One tap lands on the input itself, which is the only kind of tap
+      // Safari raises a keyboard for. A button of ours in front of it made
+      // three taps out of two.
       final field = find.byType(TextField);
       expect(field, findsOneWidget);
-      // Focused, so the keyboard — and the microphone on it — is already up.
-      expect(tester.widget<TextField>(field).focusNode?.hasFocus, isTrue);
-      // Nothing was recorded by us. The phone's own recogniser does that.
+      expect(find.text(l.voiceFieldHint), findsOneWidget);
+      expect(find.byType(VoiceActionButton), findsNothing);
+
+      // Pinned above the tabs, like the card it replaces.
+      expect(
+        tester.getRect(field).bottom,
+        lessThanOrEqualTo(tester.getRect(find.byType(NavigationBar)).top + 1),
+      );
+      // Nothing of ours touches a microphone.
       expect(dictation.listening, isFalse);
-      expect(find.text(l.voiceNothingYet), findsOneWidget);
+      expect(dictation.prepared, 0);
     });
 
-    testWidgets('what is dictated is read back before it is saved', (
+    testWidgets('what is dictated is read back before it is written', (
       tester,
     ) async {
       await pumpWeb(tester);
       final l = await AppLocalizations.delegate.load(defaultLocale);
-
-      await tester.tap(find.byIcon(Icons.mic));
-      await tester.pumpAndSettle();
 
       // What the keyboard's dictation drops into the field.
       await tester.enterText(
         find.byType(TextField),
         'покормила левой 15 минут',
       );
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       final command = parseVoiceCommand('покормила левой 15 минут');
       expect(
         find.text('${l.voiceWillSave}: ${voiceSummary(l, command)}'),
         findsOneWidget,
       );
-      expect(find.text(l.voiceNothingYet), findsNothing);
-      // Read back before it is written. The button is there for anyone who
-      // does not want to wait the two seconds.
-      expect(
-        find.widgetWithText(FilledButton, l.voiceSavingSoon),
-        findsOneWidget,
-      );
     });
 
-    testWidgets('it saves itself once the words stop arriving', (
+    testWidgets('it writes itself once the words stop arriving', (
       tester,
     ) async {
       await pumpWeb(tester);
       final l = await AppLocalizations.delegate.load(defaultLocale);
 
-      await tester.tap(find.byIcon(Icons.mic));
-      await tester.pumpAndSettle();
       await tester.enterText(
         find.byType(TextField),
         'покормила левой 15 минут',
       );
       await tester.pump();
 
-      // Still there a moment later: a pause mid-sentence is not the end of
-      // one.
+      // A pause mid-sentence is not the end of one.
       await tester.pump(const Duration(milliseconds: 900));
-      expect(find.byType(TextField), findsOneWidget);
+      expect(find.textContaining(l.voiceWillSave), findsOneWidget);
 
-      // And gone once she has actually finished — no third tap.
       await tester.pump(const Duration(seconds: 2));
       await tester.pumpAndSettle();
-      expect(find.byType(TextField), findsNothing);
 
-      // Written, and offered back. The undo is what the confirmation button
-      // used to be, minus the tap on every recording that was right.
-      expect(find.textContaining(l.quickSheetFeeding), findsWidgets);
+      // Written without a third tap, cleared for the next one, and offered
+      // back: an undo protects a misheard sentence as well as a button did.
+      expect(tester.widget<TextField>(find.byType(TextField)).controller!.text,
+          isEmpty);
       expect(find.widgetWithText(SnackBarAction, l.commonUndo), findsOneWidget);
     });
 
@@ -560,20 +530,12 @@ void main() {
       await pumpWeb(tester);
       final l = await AppLocalizations.delegate.load(defaultLocale);
 
-      await tester.tap(find.byIcon(Icons.mic));
-      await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField), 'улыбнулся бабушке');
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       // A note in her own words costs nothing; a wrong guess costs a
       // correction in a medical record.
       expect(find.textContaining(l.voiceAsNote), findsOneWidget);
-      expect(
-        tester.widget<FilledButton>(
-          find.widgetWithText(FilledButton, l.voiceSavingSoon),
-        ).onPressed,
-        isNotNull,
-      );
     });
   });
 

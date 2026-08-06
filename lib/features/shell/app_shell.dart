@@ -8,6 +8,7 @@ import '../../l10n/app_localizations.dart';
 import '../../core/theme/theme_mode.dart';
 import '../../models/child.dart';
 import '../../providers.dart';
+import '../dashboard/quick_dictation.dart';
 import '../dashboard/voice_action_button.dart';
 import '../family/invite_banner.dart';
 import '../shared/photo_widgets.dart';
@@ -102,11 +103,17 @@ class _PinnedVoice extends ConsumerWidget {
     final child = ref.watch(selectedChildProvider);
     if (child == null) return const SizedBox.shrink();
 
+    // In a browser the recogniser worth using is the one on the keyboard,
+    // and the shortest way to it is a field a thumb can land on directly.
+    final keyboard = ref.watch(keyboardDictationProvider);
+
     return ColoredBox(
       color: Theme.of(context).scaffoldBackgroundColor,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
-        child: VoiceActionButton(childId: child.id),
+        child: keyboard
+            ? QuickDictationField(childId: child.id)
+            : VoiceActionButton(childId: child.id),
       ),
     );
   }

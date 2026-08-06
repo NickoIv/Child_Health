@@ -13,7 +13,6 @@ import '../../l10n/app_localizations.dart';
 import '../../models/development_log.dart';
 import '../../providers.dart';
 import '../shared/widgets.dart';
-import 'dictation_sheet.dart';
 
 /// Hold it, say it, read it back, save it.
 ///
@@ -274,11 +273,6 @@ class _VoiceActionButtonState extends ConsumerState<VoiceActionButton> {
 
   /// Start it, or finish it.
   void _toggle() {
-    // In a browser the recogniser worth using is the one on the keyboard.
-    if (ref.read(keyboardDictationProvider)) {
-      unawaited(showDictationSheet(context, childId: widget.childId));
-      return;
-    }
     if (_listening) {
       unawaited(_stop());
     } else {
