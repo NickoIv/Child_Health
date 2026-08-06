@@ -92,7 +92,14 @@ abstract interface class Dictation {
 /// breaks voice input on every iPhone.
 SpeechListenOptions dictationOptions(String localeId) => SpeechListenOptions(
   listenFor: DictationSession.maxDuration,
-  pauseFor: DictationSession.pause,
+  // No pauseFor, and this one is not a preference either. The wrapper's
+  // pause timer measures silence from the last *speech event*, and the web
+  // plugin never reports sound levels — so the timer never sees anything at
+  // all and fires on schedule every time, cancelling the recognition with
+  // `aborted` and discarding whatever it had. On a phone it fired at five
+  // seconds, twice, before a sentence was finished.
+  //
+  // The recording ends when she says it does, or at [maxDuration].
   localeId: localeId,
   // The words are wanted, not a command: dictation mode rather than the
   // confirmation mode tuned for "yes" and "cancel".
@@ -117,11 +124,11 @@ abstract final class DictationSession {
   /// own.
   static const maxDuration = Duration(seconds: 30);
 
-  /// A gap this long means she has finished, not that she is thinking.
+  /// How long a silence the *native* recognisers treat as the end.
   ///
-  /// Five, not three. "Покормила левой... минут пятнадцать" has a gap in the
-  /// middle of it, and three seconds was cutting the sentence in half and
-  /// keeping the first half.
+  /// Not passed on the web: see the note in [dictationOptions]. Five rather
+  /// than three, because "покормила левой... минут пятнадцать" has a gap in
+  /// the middle of it and three seconds kept only the first half.
   static const pause = Duration(seconds: 5);
 
   /// How long to wait after the button is released for a final transcript.

@@ -258,7 +258,12 @@ void main() {
       expect(dictationOptions('ru-RU').partialResults, isTrue);
       expect(dictationOptions('ru-RU').localeId, 'ru-RU');
       expect(dictationOptions('ru-RU').listenFor, DictationSession.maxDuration);
-      expect(dictationOptions('ru-RU').pauseFor, DictationSession.pause);
+      // No pause timer. The wrapper measures silence from the last speech
+      // event and the web plugin reports no sound levels at all, so the
+      // timer fired on schedule regardless of whether anyone was talking
+      // and cancelled the recognition — `error aborted`, five seconds in,
+      // every time, taking the words with it.
+      expect(dictationOptions('ru-RU').pauseFor, isNull);
     });
 
     test('the pause is long enough for a sentence with a gap in it', () {
