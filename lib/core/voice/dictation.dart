@@ -240,12 +240,22 @@ class UnavailableDictation implements Dictation {
 
 /// The recogniser locale for an interface language.
 ///
+/// Two spellings of the same thing, and the difference is not cosmetic. The
+/// native plugins want `ru_RU`, the way Android and iOS list their locales.
+/// A browser wants the BCP-47 tag `ru-RU` and assigns it straight to
+/// `SpeechRecognition.lang` — hand it an underscore and it is not a language
+/// tag at all, so the recogniser quietly keeps whatever the page defaults to
+/// and listens to a Russian sentence in English.
+///
 /// Kazakh recognition is not on every device; where it is missing the plugin
 /// falls back to the system default rather than failing, which is the right
 /// outcome — a Kazakh-speaking parent dictating into a phone set to Russian
 /// gets Russian text she can correct, not an error.
-String dictationLocale(String languageCode) => switch (languageCode) {
-  'ru' => 'ru_RU',
-  'kk' => 'kk_KZ',
-  _ => 'en_US',
-};
+String dictationLocale(String languageCode, {bool web = kIsWeb}) {
+  final id = switch (languageCode) {
+    'ru' => 'ru_RU',
+    'kk' => 'kk_KZ',
+    _ => 'en_US',
+  };
+  return web ? id.replaceAll('_', '-') : id;
+}

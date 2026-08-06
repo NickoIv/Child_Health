@@ -59,6 +59,11 @@ dependencies:
   flutter_timezone: ^5.1.0
   shared_preferences: ^2.5.5
   speech_to_text: ^7.4.0
+  # Browser APIs the framework does not wrap. Used only by cues_web.dart, for
+  # the sound and the buzz that mark the two ends of a recording — neither of
+  # which the platform channels behind HapticFeedback and SystemSound answer
+  # on the web.
+  web: ^1.1.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

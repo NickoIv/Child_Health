@@ -229,11 +229,31 @@ void main() {
     });
 
     test('each interface language asks for its own recogniser', () {
-      expect(dictationLocale('ru'), 'ru_RU');
-      expect(dictationLocale('kk'), 'kk_KZ');
-      expect(dictationLocale('en'), 'en_US');
+      expect(dictationLocale('ru', web: false), 'ru_RU');
+      expect(dictationLocale('kk', web: false), 'kk_KZ');
+      expect(dictationLocale('en', web: false), 'en_US');
       // Anything unexpected falls back rather than passing a bad tag down.
-      expect(dictationLocale('zz'), 'en_US');
+      expect(dictationLocale('zz', web: false), 'en_US');
+    });
+
+    test('a browser is handed a language tag it can read', () {
+      // `SpeechRecognition.lang` takes BCP-47 and is assigned whatever it is
+      // given. An underscore is not a language tag, so the recogniser keeps
+      // the page default and listens to a Russian sentence in English —
+      // which is exactly what "it hears me badly" looked like.
+      expect(dictationLocale('ru', web: true), 'ru-RU');
+      expect(dictationLocale('kk', web: true), 'kk-KZ');
+      expect(dictationLocale('en', web: true), 'en-US');
+      for (final code in ['ru', 'kk', 'en', 'zz']) {
+        expect(dictationLocale(code, web: true), isNot(contains('_')));
+      }
+    });
+
+    test('the pause is long enough for a sentence with a gap in it', () {
+      // "покормила левой... минут пятнадцать" pauses in the middle. Three
+      // seconds finalised the first half and threw the rest away.
+      expect(DictationSession.pause.inSeconds, greaterThanOrEqualTo(5));
+      expect(DictationSession.settle.inMilliseconds, greaterThan(0));
     });
 
     test('every voice string exists in all three languages', () async {

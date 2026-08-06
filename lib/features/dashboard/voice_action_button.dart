@@ -1,12 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/l10n/labels.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/motion.dart';
+import '../../core/voice/cues.dart';
 import '../../core/voice/dictation.dart';
 import '../../core/voice/voice_commands.dart';
 import '../../l10n/app_localizations.dart';
@@ -97,13 +97,36 @@ class _VoiceActionButtonState extends ConsumerState<VoiceActionButton> {
 
     final theme = Theme.of(context);
 
-    return Container(
+    // Listening is a state of the whole card, not a detail on it. A pulsing
+    // ring around a 64px circle is invisible to someone holding a phone at
+    // arm's length with a baby on the other arm; the card going warm under
+    // her thumb is not.
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      curve: Motion.curve,
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 14, 14, 14),
       decoration: BoxDecoration(
-        color: Warm.card(theme.brightness),
+        color: _listening
+            ? Color.alphaBlend(
+                Warm.accent.withValues(alpha: 0.16),
+                Warm.card(theme.brightness),
+              )
+            : Warm.card(theme.brightness),
         borderRadius: BorderRadius.circular(28),
-        boxShadow: Warm.shadow(theme.brightness),
+        border: Border.all(
+          color: _listening ? Warm.accent : Colors.transparent,
+          width: 2,
+        ),
+        boxShadow: _listening
+            ? [
+                BoxShadow(
+                  color: Warm.accent.withValues(alpha: 0.30),
+                  blurRadius: 26,
+                  offset: const Offset(0, 6),
+                ),
+              ]
+            : Warm.shadow(theme.brightness),
       ),
       child: Row(
         children: [
@@ -118,16 +141,19 @@ class _VoiceActionButtonState extends ConsumerState<VoiceActionButton> {
                 Text(
                   _listening ? l.voiceListening : l.voiceHoldHint,
                   style: TextStyle(
-                    fontSize: 15.5,
-                    fontWeight: FontWeight.w700,
+                    fontSize: _listening ? 17 : 15.5,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.2,
                     height: 1.25,
-                    color: Warm.onCard(theme.brightness),
+                    color: _listening
+                        ? Warm.accent
+                        : Warm.onCard(theme.brightness),
                   ),
                 ),
                 const SizedBox(height: 4),
                 if (_listening)
                   SizedBox(
-                    height: 26,
+                    height: 34,
                     child: CustomPaint(
                       painter: _WaveformPainter(
                         levels: _levels,
@@ -153,7 +179,7 @@ class _VoiceActionButtonState extends ConsumerState<VoiceActionButton> {
           Text(
             voiceTimer(_elapsed),
             style: TextStyle(
-              fontSize: 13,
+              fontSize: _listening ? 15 : 13,
               fontWeight: FontWeight.w700,
               fontFeatures: const [FontFeature.tabularFigures()],
               color: _listening
@@ -178,9 +204,15 @@ class _VoiceActionButtonState extends ConsumerState<VoiceActionButton> {
               child: MicPulse(
                 listening: _listening,
                 color: Warm.accent,
-                child: Container(
-                  width: VoiceActionButton.size,
-                  height: VoiceActionButton.size,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  curve: Motion.curve,
+                  width: _listening
+                      ? VoiceActionButton.size + 8
+                      : VoiceActionButton.size,
+                  height: _listening
+                      ? VoiceActionButton.size + 8
+                      : VoiceActionButton.size,
                   decoration: BoxDecoration(
                     gradient: Warm.accentGradient,
                     shape: BoxShape.circle,
@@ -292,8 +324,7 @@ class _VoiceActionButtonState extends ConsumerState<VoiceActionButton> {
     // are on the child and not on the phone: one she feels, one she hears.
     // Light to start and firmer to stop, so the two ends of a recording are
     // told apart by touch alone.
-    unawaited(HapticFeedback.lightImpact());
-    unawaited(SystemSound.play(SystemSoundType.click));
+    VoiceCues.start();
 
     setState(() {
       _listening = true;
@@ -342,8 +373,7 @@ class _VoiceActionButtonState extends ConsumerState<VoiceActionButton> {
 
   Future<void> _stop() async {
     if (!_listening) return;
-    unawaited(HapticFeedback.mediumImpact());
-    unawaited(SystemSound.play(SystemSoundType.click));
+    VoiceCues.stop();
     _close();
     await _dictation?.stop();
   }
