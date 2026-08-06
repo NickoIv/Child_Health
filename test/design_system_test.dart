@@ -15,9 +15,9 @@ void main() {
   group('the palette', () {
     test('is the eleven colours of the system', () {
       expect(Warm.background, const Color(0xFFFFF8F2));
-      expect(Warm.primaryCard, const Color(0xFFFFF1E6));
-      expect(Warm.secondaryCard, const Color(0xFFFFE8DA));
-      expect(Warm.lavender, const Color(0xFFF7EFFF));
+      expect(Warm.primaryCard, const Color(0xFFFDEADC));
+      expect(Warm.secondaryCard, const Color(0xFFF9DDCB));
+      expect(Warm.lavender, const Color(0xFFF3EAFE));
       expect(Warm.accent, const Color(0xFFE67E22));
       expect(Warm.accentSoft, const Color(0xFFE8B899));
       expect(Warm.ink, const Color(0xFF3B2B23));
@@ -131,7 +131,7 @@ void main() {
       // their own measurements; both are drawn from the same list.
       expect(ActionCard.height, 104);
       expect(ActionCard.radius, Warm.cardRadius);
-      expect(ActionCard.iconSize, 28);
+      expect(ActionCard.iconSize, 30);
       expect(ActionCard.titleSize, 16);
       expect(ActionCard.captionSize, 11.5);
 

@@ -153,7 +153,7 @@ void main() {
         expect(tester.getSize(find.byWidget(card.widget)).height, 104);
       }
       expect(ActionCard.radius, 24);
-      expect(ActionCard.iconSize, 28);
+      expect(ActionCard.iconSize, 30);
     });
   });
 
@@ -194,8 +194,8 @@ void main() {
   group('the warm palette', () {
     test('is the five colours asked for', () {
       expect(Warm.background, const Color(0xFFFFF8F2));
-      expect(Warm.primaryCard, const Color(0xFFFFF1E6));
-      expect(Warm.lavender, const Color(0xFFF7EFFF));
+      expect(Warm.primaryCard, const Color(0xFFFDEADC));
+      expect(Warm.lavender, const Color(0xFFF3EAFE));
       expect(Warm.accent, const Color(0xFFE67E22));
       expect(Warm.ink, const Color(0xFF3B2B23));
       expect(Warm.inkSoft, const Color(0xFF8A6B5C));

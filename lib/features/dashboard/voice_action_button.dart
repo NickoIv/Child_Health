@@ -65,7 +65,15 @@ class _VoiceActionButtonState extends ConsumerState<VoiceActionButton> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _dictation = ref.read(dictationProvider);
+    final dictation = ref.read(dictationProvider);
+    if (identical(dictation, _dictation)) return;
+    _dictation = dictation;
+    // Woken here rather than on the first press. On the web this only
+    // constructs the recogniser — it opens no microphone and asks for
+    // nothing — but it means the press itself has nothing to wait for, and
+    // Safari refuses a microphone that is asked for after the gesture that
+    // asked for it has finished.
+    if (!dictation.ready) unawaited(dictation.prepare());
   }
 
   @override
@@ -208,18 +216,33 @@ class _VoiceActionButtonState extends ConsumerState<VoiceActionButton> {
     ).showSnackBar(SnackBar(content: Text(l.voiceHoldHint)));
   }
 
-  Future<void> _start() async {
+  /// Deliberately not `async`.
+  ///
+  /// Everything between the finger landing and `dictation.start()` runs in
+  /// the same turn of the event loop as the gesture that began it. Safari
+  /// will not open a microphone otherwise: an `await` here — even one that
+  /// completes immediately — resumes in a later microtask, and by then the
+  /// browser no longer considers the request to be something the user asked
+  /// for. This is why holding the button did nothing on an iPhone.
+  void _start() {
     final dictation = _dictation;
     if (dictation == null || _listening || _opening) return;
-    _opening = true;
 
+    if (dictation.ready) {
+      _open(dictation);
+    } else {
+      // First hold on a device that has not woken its recogniser yet. This
+      // path does await, and on iOS it may well be refused; the next hold
+      // takes the synchronous path above and works.
+      unawaited(_prepareThenOpen(dictation));
+    }
+  }
+
+  Future<void> _prepareThenOpen(Dictation dictation) async {
+    _opening = true;
     final l = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
-    final locale = dictationLocale(
-      Localizations.localeOf(context).languageCode,
-    );
 
-    // The call that raises the permission dialog.
     final ready = await dictation.prepare();
     _opening = false;
     if (!mounted) return;
@@ -227,6 +250,15 @@ class _VoiceActionButtonState extends ConsumerState<VoiceActionButton> {
       messenger.showSnackBar(SnackBar(content: Text(l.voiceUnavailable)));
       return;
     }
+    _open(dictation);
+  }
+
+  void _open(Dictation dictation) {
+    final l = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final locale = dictationLocale(
+      Localizations.localeOf(context).languageCode,
+    );
 
     // Two confirmations at the moment the microphone opens, because her eyes
     // are on the child and not on the phone: one she feels, one she hears.
@@ -250,19 +282,33 @@ class _VoiceActionButtonState extends ConsumerState<VoiceActionButton> {
       if (mounted && _listening) setState(() {});
     });
 
-    await dictation.start(
-      localeId: locale,
-      onResult: _heard,
-      onLevel: (level) {
-        if (!mounted || !_listening) return;
-        _levels.add(level);
-        if (_levels.length > _WaveformPainter.bars) _levels.removeAt(0);
-      },
-      onSilence: () {
-        if (!mounted) return;
-        _close();
-        messenger.showSnackBar(SnackBar(content: Text(l.voiceFailed)));
-      },
+    // Called, not awaited: the microphone has to be asked for inside the
+    // gesture, and there is nothing after this line that needs its answer.
+    unawaited(
+      dictation.start(
+        localeId: locale,
+        onResult: _heard,
+        onLevel: (level) {
+          if (!mounted || !_listening) return;
+          _levels.add(level);
+          if (_levels.length > _WaveformPainter.bars) _levels.removeAt(0);
+        },
+        onSilence: () {
+          if (!mounted) return;
+          _close();
+          messenger.showSnackBar(SnackBar(content: Text(l.voiceFailed)));
+        },
+        // The browser's own reason, shown rather than swallowed. On an
+        // iPhone this is the difference between "it doesn't work" and
+        // "Safari refused the microphone".
+        onFailure: (reason) {
+          if (!mounted) return;
+          _close();
+          messenger.showSnackBar(
+            SnackBar(content: Text('${l.voiceFailed} ($reason)')),
+          );
+        },
+      ),
     );
   }
 

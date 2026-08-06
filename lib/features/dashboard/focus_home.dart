@@ -268,7 +268,7 @@ class ActionCard extends StatelessWidget {
 
   static const height = 104.0;
   static const radius = 24.0;
-  static const iconSize = 28.0;
+  static const iconSize = 30.0;
   static const titleSize = 16.0;
   static const captionSize = 11.5;
 

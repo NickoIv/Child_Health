@@ -15,12 +15,12 @@ export 'palette.dart';
 /// white at 10% goes muddy on a dark surface, and the ink is the one thing
 /// here that has to stay readable. A test holds every pair at 4.5:1.
 enum SoftTone {
-  peach(Color(0xFFFDEBE0), Color(0xFF8B5136), Color(0xFF3A2A22), Color(0xFFEBB999)),
-  lavender(Color(0xFFEFE9FB), Color(0xFF5B4C97), Color(0xFF292338), Color(0xFFC4B8F0)),
-  mint(Color(0xFFE2F4EC), Color(0xFF35705C), Color(0xFF1D302A), Color(0xFF9FD6C0)),
-  rose(Color(0xFFFCE7EC), Color(0xFF94485F), Color(0xFF37232B), Color(0xFFEFAABE)),
-  sky(Color(0xFFE4EFFA), Color(0xFF3D6588), Color(0xFF1F2A37), Color(0xFFA8C8E6)),
-  sand(Color(0xFFF7EFE0), Color(0xFF7D6339), Color(0xFF332C20), Color(0xFFDFC79E));
+  peach(Color(0xFFFADFD3), Color(0xFF8B5136), Color(0xFF3A2A22), Color(0xFFEBB999)),
+  lavender(Color(0xFFEDE3FA), Color(0xFF5B4C97), Color(0xFF292338), Color(0xFFC4B8F0)),
+  mint(Color(0xFFD7EFE3), Color(0xFF35705C), Color(0xFF1D302A), Color(0xFF9FD6C0)),
+  rose(Color(0xFFFBDDE9), Color(0xFF94485F), Color(0xFF37232B), Color(0xFFEFAABE)),
+  sky(Color(0xFFDCEAF9), Color(0xFF3D6588), Color(0xFF1F2A37), Color(0xFFA8C8E6)),
+  sand(Color(0xFFF8F0D4), Color(0xFF7D6339), Color(0xFF332C20), Color(0xFFDFC79E));
 
   const SoftTone(this._lightFill, this._lightInk, this._darkFill, this._darkInk);
 
@@ -53,14 +53,14 @@ abstract final class Warm {
   /// The surface of a card. One tint for all of them: two shades of cream a
   /// few points apart read as a mistake rather than as a hierarchy, and the
   /// hierarchy on this screen is carried by size and air instead.
-  static const primaryCard = Color(0xFFFFF1E6);
+  static const primaryCard = Color(0xFFFDEADC);
 
   /// Kept for the surfaces that sit *on* a card and need to separate from it.
-  static const secondaryCard = Color(0xFFFFE8DA);
+  static const secondaryCard = Color(0xFFF9DDCB);
 
   /// The one cool note left, and the only place violet is still allowed on a
   /// warm screen — under ten percent of what is visible, by design.
-  static const lavender = Color(0xFFF7EFFF);
+  static const lavender = Color(0xFFF3EAFE);
 
   /// The one saturated colour: the microphone, an active icon, a live count.
   ///

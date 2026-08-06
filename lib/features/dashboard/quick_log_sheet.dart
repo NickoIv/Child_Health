@@ -29,10 +29,15 @@ enum QuickLogAction {
   sleep,
   temperature;
 
+  /// Filled rather than outlined.
+  ///
+  /// A hairline icon on a pastel card reads as a placeholder — it has the
+  /// weight of the caption under it, when it is meant to be the thing a thumb
+  /// aims at without reading anything.
   IconData get icon => switch (this) {
-    QuickLogAction.feeding => Icons.water_drop_outlined,
-    QuickLogAction.nappy => Icons.child_care_outlined,
-    QuickLogAction.sleep => Icons.bedtime_outlined,
+    QuickLogAction.feeding => Icons.water_drop,
+    QuickLogAction.nappy => Icons.child_care,
+    QuickLogAction.sleep => Icons.bedtime,
     QuickLogAction.temperature => Icons.thermostat,
   };
 

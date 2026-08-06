@@ -142,7 +142,7 @@ void main() {
       }
       expect(ActionCard.height, 104);
       expect(ActionCard.radius, 24);
-      expect(ActionCard.iconSize, 28);
+      expect(ActionCard.iconSize, 30);
       expect(ActionCard.titleSize, 16);
       expect(ActionCard.captionSize, 11.5);
 
@@ -300,7 +300,10 @@ void main() {
 
       await tester.tap(find.byIcon(Icons.mic));
       await tester.pump(const Duration(milliseconds: 300));
-      expect(dictation.prepared, 0, reason: 'a tap must not open the mic');
+      // The recogniser is woken when the card appears, so that a hold can
+      // reach it without an await — Safari refuses a microphone asked for
+      // after the gesture has ended. Waking it opens nothing.
+      expect(dictation.listening, isFalse, reason: 'a tap must not open the mic');
     });
 
     testWidgets('opens while held and closes when released', (tester) async {
@@ -435,9 +438,9 @@ void main() {
 
     test('the palette is the one asked for', () {
       expect(Warm.background, const Color(0xFFFFF8F2));
-      expect(Warm.primaryCard, const Color(0xFFFFF1E6));
+      expect(Warm.primaryCard, const Color(0xFFFDEADC));
       expect(Warm.accent, const Color(0xFFE67E22));
-      expect(Warm.lavender, const Color(0xFFF7EFFF));
+      expect(Warm.lavender, const Color(0xFFF3EAFE));
       expect(Warm.ink, const Color(0xFF3B2B23));
       expect(Warm.inkSoft, const Color(0xFF8A6B5C));
       // Soft rather than absent: a cream page with a hard shadow reads as
@@ -466,9 +469,16 @@ class _FakeDictation implements Dictation {
   void say(String text) => _onResult?.call(text);
   void speakAt(double level) => _onLevel?.call(level);
 
+  /// True once [prepare] has succeeded, exactly like the real one — the
+  /// widget uses this to reach the microphone without an await in the way.
+  @override
+  bool get ready => _ready;
+  bool _ready = false;
+
   @override
   Future<bool> prepare() async {
     prepared++;
+    _ready = allowed;
     return allowed;
   }
 
@@ -478,6 +488,7 @@ class _FakeDictation implements Dictation {
     required ValueChanged<String> onResult,
     required VoidCallback onSilence,
     ValueChanged<double>? onLevel,
+    ValueChanged<String>? onFailure,
   }) async {
     listening = true;
     _onResult = onResult;

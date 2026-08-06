@@ -21,6 +21,15 @@ abstract interface class Dictation {
   /// the same thing: the keyboard still works.
   Future<bool> prepare();
 
+  /// Whether [prepare] has already succeeded.
+  ///
+  /// Exists so the caller can reach [start] without an `await` in front of
+  /// it. Safari only opens a microphone from inside the event handler of a
+  /// real gesture, and an awaited future — even one that completes at once —
+  /// resumes in a later microtask, by which time the gesture is over and the
+  /// request is refused. Every hold after the first takes that path.
+  bool get ready;
+
   /// Listens until [DictationSession.maxDuration], a pause, or [stop].
   ///
   /// [onResult] fires once, with the finished text. Partial results are
@@ -36,6 +45,7 @@ abstract interface class Dictation {
     required ValueChanged<String> onResult,
     required VoidCallback onSilence,
     ValueChanged<double>? onLevel,
+    ValueChanged<String>? onFailure,
   });
 
   Future<void> stop();
@@ -59,13 +69,23 @@ class PlatformDictation implements Dictation {
   final SpeechToText _speech;
   bool _ready = false;
 
+  /// Set by the recogniser's own error callback, which is where the browser
+  /// says *why* — `not-allowed`, `service-not-allowed`, `language-not-
+  /// supported`. Swallowing it left a parent holding a button that did
+  /// nothing and no way for anyone to find out what.
+  String? _lastError;
+
+  @override
+  bool get ready => _ready;
+
   @override
   Future<bool> prepare() async {
+    if (_ready) return true;
     // initialize() is what raises the permission dialog, and it is safe to
     // call more than once — the plugin remembers.
     try {
       _ready = await _speech.initialize(
-        onError: (_) {},
+        onError: (error) => _lastError = error.errorMsg,
         onStatus: (_) {},
       );
     } catch (_) {
@@ -82,8 +102,10 @@ class PlatformDictation implements Dictation {
     required ValueChanged<String> onResult,
     required VoidCallback onSilence,
     ValueChanged<double>? onLevel,
+    ValueChanged<String>? onFailure,
   }) async {
     if (!_ready) return;
+    _lastError = null;
     await _speech.listen(
       // The plugin reports roughly -2..10 on iOS and 0..10 on Android;
       // normalised here so the waveform does not have to know either.
@@ -94,7 +116,14 @@ class PlatformDictation implements Dictation {
         if (!result.finalResult) return;
         final text = result.recognizedWords.trim();
         if (text.isEmpty) {
-          onSilence();
+          // A refusal and a silent room both end up here. They are not the
+          // same thing to whoever is holding the button.
+          final error = _lastError;
+          if (error != null && onFailure != null) {
+            onFailure(error);
+          } else {
+            onSilence();
+          }
         } else {
           onResult(text);
         }
@@ -125,6 +154,9 @@ class UnavailableDictation implements Dictation {
   const UnavailableDictation();
 
   @override
+  bool get ready => false;
+
+  @override
   Future<bool> prepare() async => false;
 
   @override
@@ -133,6 +165,7 @@ class UnavailableDictation implements Dictation {
     required ValueChanged<String> onResult,
     required VoidCallback onSilence,
     ValueChanged<double>? onLevel,
+    ValueChanged<String>? onFailure,
   }) async {}
 
   @override

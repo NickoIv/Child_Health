@@ -70,7 +70,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(fake.prepared, 1, reason: 'permission is asked at the tap');
+    expect(fake.prepared, greaterThan(0), reason: 'permission is asked');
     expect(fake.listening, isTrue);
     expect(find.text(l.voiceListening), findsOneWidget);
     expect(find.text(l.voiceSpeakNow), findsOneWidget);
@@ -289,9 +289,16 @@ class _FakeDictation implements Dictation {
   /// Lets a test drive the waveform without a room to make noise in.
   void speakAt(double level) => _onLevel?.call(level);
 
+  /// True once [prepare] has succeeded, exactly like the real one — the
+  /// widget uses this to reach the microphone without an await in the way.
+  @override
+  bool get ready => _ready;
+  bool _ready = false;
+
   @override
   Future<bool> prepare() async {
     prepared++;
+    _ready = allowed;
     return allowed;
   }
 
@@ -301,6 +308,7 @@ class _FakeDictation implements Dictation {
     required ValueChanged<String> onResult,
     required VoidCallback onSilence,
     ValueChanged<double>? onLevel,
+    ValueChanged<String>? onFailure,
   }) async {
     listening = true;
     _onLevel = onLevel;
