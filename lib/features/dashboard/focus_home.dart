@@ -366,8 +366,14 @@ class RecentPreview extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final l = AppLocalizations.of(context);
-    final logs = ref.watch(logsProvider).value ?? const <DevelopmentLog>[];
+    final async = ref.watch(logsProvider);
+    final logs = async.value ?? const <DevelopmentLog>[];
     final recent = logs.take(limit).toList();
+    // Loading and empty are not the same thing, and until now they looked
+    // identical: "nothing written down yet" is a hard sentence to read on a
+    // day that had eleven feeds in it, and it was showing for as long as the
+    // first query took.
+    final loading = async.isLoading && !async.hasValue;
 
     return Container(
       width: double.infinity,
@@ -397,7 +403,13 @@ class RecentPreview extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 6),
-          if (recent.isEmpty)
+          if (loading)
+            for (var i = 0; i < limit; i++)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: _RowSkeleton(),
+              )
+          else if (recent.isEmpty)
             Padding(
               padding: const EdgeInsets.only(bottom: 4),
               child: Text(
@@ -420,6 +432,37 @@ class RecentPreview extends ConsumerWidget {
               ),
         ],
       ),
+    );
+  }
+}
+
+/// The shape of an entry, while the first query is still running.
+///
+/// The same badge and the same two lines, at the same sizes, so the list
+/// does not jump when the real rows land on top of them.
+class _RowSkeleton extends StatelessWidget {
+  const _RowSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const Skeleton(
+          width: _TimelineRow.badgeSize,
+          height: _TimelineRow.badgeSize,
+          radius: _TimelineRow.badgeSize / 2,
+        ),
+        const SizedBox(width: 12),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Skeleton(width: 130, height: 13),
+            SizedBox(height: 6),
+            Skeleton(width: 80, height: 11),
+          ],
+        ),
+      ],
     );
   }
 }

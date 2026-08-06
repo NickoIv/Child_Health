@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/l10n/labels.dart';
 import '../../core/router/app_router.dart';
 import '../../l10n/app_localizations.dart';
+import '../../core/theme/motion.dart';
 import '../../core/theme/theme_mode.dart';
 import '../../models/child.dart';
 import '../../providers.dart';
@@ -63,15 +64,18 @@ class AppShell extends ConsumerWidget {
           SizedBox(width: 8),
         ],
       ),
+      // Tabs are siblings, not a stack: they cross-fade with a few pixels of
+      // travel rather than sliding in from the side, which would imitate a
+      // navigation that did not happen.
       body: isWide
           ? Row(
               children: [
                 _Rail(index: _index),
                 const VerticalDivider(width: 1),
-                Expanded(child: child),
+                Expanded(child: TabSwitch(index: _index, child: child)),
               ],
             )
-          : child,
+          : TabSwitch(index: _index, child: child),
       // The microphone rides above the tab bar on the home screen: pinned, so
       // it is there the moment the app opens rather than after a scroll, and
       // outside the list, so it covers nothing.

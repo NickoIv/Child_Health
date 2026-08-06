@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/analytics/daily_digest.dart';
 import '../../core/l10n/labels.dart';
+import '../../core/theme/motion.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/units/units.dart';
 import '../../l10n/app_localizations.dart';
@@ -79,13 +80,21 @@ class DigestCard extends ConsumerWidget {
                 spacing: 22,
                 runSpacing: 14,
                 children: [
-                  _Fact(value: '${digest.feedings}', label: l.digestFeedings),
+                  _Fact(
+                    value: '${digest.feedings}',
+                    countTo: digest.feedings,
+                    label: l.digestFeedings,
+                  ),
                   if (digest.sleepMinutes > 0)
                     _Fact(
                       value: localizedDuration(l, digest.sleepMinutes),
                       label: l.digestSleep,
                     ),
-                  _Fact(value: '${digest.nappies}', label: l.digestNappies),
+                  _Fact(
+                    value: '${digest.nappies}',
+                    countTo: digest.nappies,
+                    label: l.digestNappies,
+                  ),
                   // Shown only when somebody took a reading. An empty slot
                   // reading "—" invites the question the card cannot answer.
                   if (digest.lastTemperature != null)
@@ -99,6 +108,7 @@ class DigestCard extends ConsumerWidget {
                   if (digest.photos > 0)
                     _Fact(
                       value: '${digest.photos}',
+                      countTo: digest.photos,
                       label: l.digestPhotos,
                       icon: Icons.photo_camera_outlined,
                     ),
@@ -132,12 +142,21 @@ class _Fact extends StatelessWidget {
   const _Fact({
     required this.value,
     required this.label,
+    this.countTo,
     this.color,
     this.icon,
   });
 
   final String value;
   final String label;
+
+  /// A plain count — feeds, nappies, photographs — which runs up to itself
+  /// when the card arrives.
+  ///
+  /// Null for readings. A temperature or a duration that counts up is a
+  /// number moving while someone reads it, and a reading you watch settle is
+  /// a reading you check twice.
+  final int? countTo;
   final Color? color;
   final IconData? icon;
 
@@ -159,10 +178,20 @@ class _Fact extends StatelessWidget {
               ),
               const SizedBox(width: 5),
             ],
-            Text(
-              value,
-              style: theme.textTheme.titleLarge?.copyWith(color: color),
-            ),
+            if (countTo case final target?)
+              CountUp(
+                key: ValueKey('$label:$target'),
+                value: target,
+                builder: (context, shown) => Text(
+                  '$shown',
+                  style: theme.textTheme.titleLarge?.copyWith(color: color),
+                ),
+              )
+            else
+              Text(
+                value,
+                style: theme.textTheme.titleLarge?.copyWith(color: color),
+              ),
           ],
         ),
         Text(

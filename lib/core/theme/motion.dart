@@ -21,6 +21,16 @@ import 'package:flutter/material.dart';
 /// eases in as well would put a delay between the touch and the answer.
 abstract final class Motion {
   static const curve = Curves.easeOutCubic;
+
+  /// Three lengths, and nothing between them.
+  ///
+  /// [quick] is an acknowledgement — a surface dipping, a colour changing.
+  /// [normal] is something arriving or leaving. [slow] is a number counting
+  /// up, which is the only motion here anyone is meant to watch rather than
+  /// merely notice.
+  static const quick = Duration(milliseconds: 140);
+  static const normal = Duration(milliseconds: 280);
+  static const slow = Duration(milliseconds: 650);
 }
 
 /// A surface that gives a little under the finger.
@@ -235,6 +245,142 @@ class SuccessCheck extends StatelessWidget {
         size: size,
         color: color ?? Theme.of(context).colorScheme.inversePrimary,
       ),
+    );
+  }
+}
+
+
+/// A number that arrives at its value instead of being there already.
+///
+/// Only for figures a parent reads deliberately — the five in the digest, the
+/// hours of sleep in the week. A count-up on a clock or a temperature would
+/// be a lie told for effect: those are readings, and a reading that moves is
+/// a reading you cannot trust.
+///
+/// Keyed on the value where it is used, so it counts when the day changes and
+/// sits still through the rebuilds in between.
+class CountUp extends StatelessWidget {
+  const CountUp({
+    required this.value,
+    required this.builder,
+    this.duration = Motion.slow,
+    super.key,
+  });
+
+  final int value;
+  final Duration duration;
+  final Widget Function(BuildContext context, int value) builder;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<int>(
+      tween: IntTween(begin: 0, end: value),
+      duration: duration,
+      curve: Motion.curve,
+      builder: (context, shown, _) => builder(context, shown),
+    );
+  }
+}
+
+/// The shape of what is coming, while it is still on its way.
+///
+/// A spinner says "wait"; this says "here is a card, its contents are a
+/// second behind". The difference matters on a screen opened forty times a
+/// day, where the layout is already familiar and only the numbers are new.
+///
+/// The sweep is slow and low-contrast on purpose: it is a sign of life, not
+/// a thing to look at, and it stops existing the moment the data lands.
+class Skeleton extends StatefulWidget {
+  const Skeleton({
+    required this.width,
+    required this.height,
+    this.radius = 12,
+    super.key,
+  });
+
+  final double width;
+  final double height;
+  final double radius;
+
+  @override
+  State<Skeleton> createState() => _SkeletonState();
+}
+
+class _SkeletonState extends State<Skeleton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1400),
+  )..repeat();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final base = Theme.of(context).colorScheme.onSurface;
+
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, _) {
+        // A slow breath rather than a travelling highlight: a gradient
+        // sweeping across six placeholders at once reads as a loading screen
+        // from a different application.
+        final t = (1 - (_controller.value * 2 - 1).abs());
+        return Container(
+          width: widget.width,
+          height: widget.height,
+          decoration: BoxDecoration(
+            color: base.withValues(alpha: 0.05 + t * 0.05),
+            borderRadius: BorderRadius.circular(widget.radius),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// One screen replacing another.
+///
+/// A cross-fade with eight pixels of travel, in the direction of the tab that
+/// was tapped — the same movement [Arrival] uses for a row, because a screen
+/// and a row arriving differently is two ideas where one will do.
+///
+/// Nothing slides the full width. A phone that pushes whole screens sideways
+/// on a tab bar is imitating navigation that did not happen: the tabs are
+/// siblings, not a stack.
+class TabSwitch extends StatelessWidget {
+  const TabSwitch({required this.index, required this.child, super.key});
+
+  final int index;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: Motion.normal,
+      switchInCurve: Motion.curve,
+      switchOutCurve: Motion.curve,
+      // The outgoing screen leaves the tree the moment the new one is asked
+      // for, rather than fading out under it. Two screens alive at once is
+      // two scrollables showing through each other — and, because the routes
+      // underneath carry GlobalKeys, two widgets claiming the same key.
+      layoutBuilder: (current, previous) =>
+          current ?? const SizedBox.shrink(),
+      transitionBuilder: (child, animation) => FadeTransition(
+        opacity: animation,
+        child: SlideTransition(
+          position: Tween(
+            begin: const Offset(0, 0.012),
+            end: Offset.zero,
+          ).animate(animation),
+          child: child,
+        ),
+      ),
+      child: KeyedSubtree(key: ValueKey(index), child: child),
     );
   }
 }
