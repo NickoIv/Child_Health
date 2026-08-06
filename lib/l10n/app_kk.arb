@@ -311,6 +311,8 @@
   "voiceKeyboardHint": "Пернетақтадағы микрофонды басып айтыңыз — бұл телефоныңыздың диктовкасы",
   "voiceNothingYet": "Әзірге бос",
   "voiceWillSave": "Жазылады",
+  "commonUndo": "Қайтару",
+  "voiceSavingSoon": "Қазір сақтау",
   "voiceOpening": "Микрофон ашылуда…",
   "voiceHeard": "Естілді",
   "voiceMl": "мл",

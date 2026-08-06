@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -46,9 +48,18 @@ class _DictationSheet extends ConsumerStatefulWidget {
 }
 
 class _DictationSheetState extends ConsumerState<_DictationSheet> {
+  /// How long a silence in the text counts as "she has finished".
+  ///
+  /// Long enough to think mid-sentence, short enough not to be a wait. It is
+  /// measured on the text rather than on the microphone, because the
+  /// dictation belongs to the keyboard and this side only sees the words
+  /// arriving.
+  static const settle = Duration(seconds: 2);
+
   final _controller = TextEditingController();
   final _focus = FocusNode();
   bool _saving = false;
+  Timer? _autoSave;
 
   @override
   void initState() {
@@ -60,9 +71,24 @@ class _DictationSheetState extends ConsumerState<_DictationSheet> {
 
   @override
   void dispose() {
+    _autoSave?.cancel();
     _controller.dispose();
     _focus.dispose();
     super.dispose();
+  }
+
+  /// Saving is the third tap, and the third tap is the one worth removing.
+  ///
+  /// Two seconds after the words stop arriving it writes the entry itself
+  /// and offers to undo it. A confirmation button protects against a wrong
+  /// reading; so does an undo, and an undo does not cost a tap on the
+  /// hundreds of readings that were right.
+  void _armAutoSave() {
+    _autoSave?.cancel();
+    if (_controller.text.trim().isEmpty) return;
+    _autoSave = Timer(settle, () {
+      if (mounted && !_saving) unawaited(_save(automatic: true));
+    });
   }
 
   @override
@@ -115,7 +141,10 @@ class _DictationSheetState extends ConsumerState<_DictationSheet> {
                 textCapitalization: TextCapitalization.sentences,
                 style: const TextStyle(fontSize: 17, height: 1.35),
                 decoration: InputDecoration(hintText: l.voiceExample),
-                onChanged: (_) => setState(() {}),
+                onChanged: (_) {
+                  setState(() {});
+                  _armAutoSave();
+                },
               ),
               const SizedBox(height: 12),
 
@@ -149,9 +178,9 @@ class _DictationSheetState extends ConsumerState<_DictationSheet> {
               const SizedBox(height: 16),
 
               FilledButton.icon(
-                onPressed: command == null || _saving ? null : _save,
+                onPressed: command == null || _saving ? null : () => _save(),
                 icon: const Icon(Icons.check),
-                label: Text(l.commonSave),
+                label: Text(command == null ? l.commonSave : l.voiceSavingSoon),
               ),
               const SizedBox(height: 4),
               TextButton(
@@ -165,16 +194,24 @@ class _DictationSheetState extends ConsumerState<_DictationSheet> {
     );
   }
 
-  Future<void> _save() async {
+  Future<void> _save({bool automatic = false}) async {
     final l = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
-    final command = parseVoiceCommand(_controller.text.trim());
+    final text = _controller.text.trim();
+    if (text.isEmpty) return;
+
+    _autoSave?.cancel();
+    final command = parseVoiceCommand(text);
+    final entry = voiceLog(
+      command,
+      childId: widget.childId,
+      at: DateTime.now(),
+    );
+    final logs = ref.read(logRepositoryProvider);
     setState(() => _saving = true);
 
     try {
-      await ref
-          .read(logRepositoryProvider)
-          .add(voiceLog(command, childId: widget.childId, at: DateTime.now()));
+      await logs.add(entry);
       if (!mounted) return;
       Navigator.of(context).pop();
       messenger.showSnackBar(
@@ -186,7 +223,13 @@ class _DictationSheetState extends ConsumerState<_DictationSheet> {
               Expanded(child: Text(l.quickSaved(voiceSummary(l, command)))),
             ],
           ),
-          duration: const Duration(seconds: 2),
+          // Longer when nobody pressed anything: the undo is the only thing
+          // standing between a misheard sentence and a medical record.
+          duration: Duration(seconds: automatic ? 6 : 2),
+          action: SnackBarAction(
+            label: l.commonUndo,
+            onPressed: () => logs.delete(entry.id),
+          ),
         ),
       );
     } catch (e) {

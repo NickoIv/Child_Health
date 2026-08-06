@@ -516,8 +516,42 @@ void main() {
         findsOneWidget,
       );
       expect(find.text(l.voiceNothingYet), findsNothing);
-      // Read back, then saved — never the other way round.
-      expect(find.widgetWithText(FilledButton, l.commonSave), findsOneWidget);
+      // Read back before it is written. The button is there for anyone who
+      // does not want to wait the two seconds.
+      expect(
+        find.widgetWithText(FilledButton, l.voiceSavingSoon),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('it saves itself once the words stop arriving', (
+      tester,
+    ) async {
+      await pumpWeb(tester);
+      final l = await AppLocalizations.delegate.load(defaultLocale);
+
+      await tester.tap(find.byIcon(Icons.mic));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byType(TextField),
+        'покормила левой 15 минут',
+      );
+      await tester.pump();
+
+      // Still there a moment later: a pause mid-sentence is not the end of
+      // one.
+      await tester.pump(const Duration(milliseconds: 900));
+      expect(find.byType(TextField), findsOneWidget);
+
+      // And gone once she has actually finished — no third tap.
+      await tester.pump(const Duration(seconds: 2));
+      await tester.pumpAndSettle();
+      expect(find.byType(TextField), findsNothing);
+
+      // Written, and offered back. The undo is what the confirmation button
+      // used to be, minus the tap on every recording that was right.
+      expect(find.textContaining(l.quickSheetFeeding), findsWidgets);
+      expect(find.widgetWithText(SnackBarAction, l.commonUndo), findsOneWidget);
     });
 
     testWidgets('a sentence it cannot parse is still worth keeping', (
@@ -536,7 +570,7 @@ void main() {
       expect(find.textContaining(l.voiceAsNote), findsOneWidget);
       expect(
         tester.widget<FilledButton>(
-          find.widgetWithText(FilledButton, l.commonSave),
+          find.widgetWithText(FilledButton, l.voiceSavingSoon),
         ).onPressed,
         isNotNull,
       );

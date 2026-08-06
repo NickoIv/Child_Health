@@ -1047,6 +1047,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get voiceWillSave => 'Will be saved as';
 
   @override
+  String get commonUndo => 'Undo';
+
+  @override
+  String get voiceSavingSoon => 'Save now';
+
+  @override
   String get voiceOpening => 'Opening the microphone…';
 
   @override

@@ -1966,6 +1966,18 @@ abstract class AppLocalizations {
   /// **'Запишем'**
   String get voiceWillSave;
 
+  /// No description provided for @commonUndo.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отменить'**
+  String get commonUndo;
+
+  /// No description provided for @voiceSavingSoon.
+  ///
+  /// In ru, this message translates to:
+  /// **'Записать сейчас'**
+  String get voiceSavingSoon;
+
   /// No description provided for @voiceOpening.
   ///
   /// In ru, this message translates to:

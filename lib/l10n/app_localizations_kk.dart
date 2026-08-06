@@ -1044,6 +1044,12 @@ class AppLocalizationsKk extends AppLocalizations {
   String get voiceWillSave => 'Жазылады';
 
   @override
+  String get commonUndo => 'Қайтару';
+
+  @override
+  String get voiceSavingSoon => 'Қазір сақтау';
+
+  @override
   String get voiceOpening => 'Микрофон ашылуда…';
 
   @override

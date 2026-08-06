@@ -1053,6 +1053,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get voiceWillSave => 'Запишем';
 
   @override
+  String get commonUndo => 'Отменить';
+
+  @override
+  String get voiceSavingSoon => 'Записать сейчас';
+
+  @override
   String get voiceOpening => 'Открываю микрофон…';
 
   @override

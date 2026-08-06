@@ -311,6 +311,8 @@
   "voiceKeyboardHint": "Tap the microphone on the keyboard and dictate — that is your phone's own dictation",
   "voiceNothingYet": "Nothing yet",
   "voiceWillSave": "Will be saved as",
+  "commonUndo": "Undo",
+  "voiceSavingSoon": "Save now",
   "voiceOpening": "Opening the microphone…",
   "voiceHeard": "Heard",
   "voiceMl": "ml",

@@ -527,6 +527,8 @@
   "voiceKeyboardHint": "Нажмите микрофон на клавиатуре и продиктуйте — это диктовка вашего телефона",
   "voiceNothingYet": "Пока пусто",
   "voiceWillSave": "Запишем",
+  "commonUndo": "Отменить",
+  "voiceSavingSoon": "Записать сейчас",
   "voiceOpening": "Открываю микрофон…",
   "voiceHeard": "Услышано",
   "voiceMl": "мл",
