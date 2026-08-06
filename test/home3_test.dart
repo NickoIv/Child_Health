@@ -265,7 +265,7 @@ void main() {
       );
       // The instruction and an example of a sentence it understands.
       expect(
-        find.descendant(of: card, matching: find.text(l.voiceHoldHint)),
+        find.descendant(of: card, matching: find.text(l.voiceTapHint)),
         findsOneWidget,
       );
       expect(
@@ -337,39 +337,34 @@ void main() {
       expect(button.width, VoiceActionButton.size);
     });
 
-    testWidgets('is 64 across and opens nothing on a tap', (tester) async {
+    testWidgets('is 64 across and one tap opens it', (tester) async {
       await pump(tester);
 
       expect(find.byType(VoiceActionButton), findsOneWidget);
       expect(VoiceActionButton.size, 64);
 
+      // Held was the better idea and a browser cannot do it: Safari takes a
+      // second or two to open the microphone, so a hold ends before the
+      // recording starts. A tap has no end to run out of.
       await tester.tap(find.byIcon(Icons.mic));
       await tester.pump(const Duration(milliseconds: 300));
-      // The recogniser is woken when the card appears, so that a hold can
-      // reach it without an await — Safari refuses a microphone asked for
-      // after the gesture has ended. Waking it opens nothing.
-      expect(dictation.listening, isFalse, reason: 'a tap must not open the mic');
+      expect(dictation.listening, isTrue);
     });
 
-    testWidgets('opens while held and closes when released', (tester) async {
+    testWidgets('a second tap closes it', (tester) async {
       await pump(tester);
 
-      final gesture = await tester.startGesture(
-        tester.getCenter(find.byIcon(Icons.mic)),
-      );
-      // Past the long-press threshold, which is what "hold" means here.
-      await tester.pump(const Duration(milliseconds: 600));
-      await tester.pump();
-
+      await tester.tap(find.byIcon(Icons.mic));
+      await tester.pump(const Duration(milliseconds: 300));
       expect(dictation.prepared, 1);
       expect(dictation.listening, isTrue);
-      // The panel with the waveform and the timer is only up while listening.
+      // The waveform and the timer are only up while it is open.
       expect(find.byType(CustomPaint), findsWidgets);
       expect(find.text(voiceTimer(Duration.zero)), findsOneWidget);
       expect(voiceTimer(const Duration(seconds: 65)), '01:05');
 
-      await gesture.up();
-      await tester.pump();
+      await tester.tap(find.byIcon(Icons.graphic_eq));
+      await tester.pump(const Duration(milliseconds: 300));
       expect(dictation.listening, isFalse);
       expect(dictation.stopped, 1);
     });
@@ -380,30 +375,27 @@ void main() {
       await pump(tester);
       final l = await AppLocalizations.delegate.load(defaultLocale);
 
-      final gesture = await tester.startGesture(
-        tester.getCenter(find.byIcon(Icons.mic)),
-      );
-      await tester.pump(const Duration(milliseconds: 600));
-      await tester.pump();
+      await tester.tap(find.byIcon(Icons.mic));
+      await tester.pump(const Duration(milliseconds: 300));
 
       dictation.speakAt(0.8);
       await tester.pump(const Duration(milliseconds: 120));
-      // While it is open the example gives way to the waveform, in the same
-      // place — nothing moves under her thumb.
+      // Open: the example gives way to the waveform and to the way out.
       expect(find.text(l.voiceListening), findsOneWidget);
+      expect(find.text(l.voiceTapToStop), findsOneWidget);
       expect(find.text(l.voiceExample), findsNothing);
       expect(find.text(voiceTimer(Duration.zero)), findsOneWidget);
 
-      await gesture.up();
-      await tester.pump(const Duration(milliseconds: 200));
-      // Released: nothing left animating, which is what "no idle animation"
+      await tester.tap(find.byIcon(Icons.graphic_eq));
+      await tester.pump(const Duration(milliseconds: 300));
+      // Closed: nothing left animating, which is what "no idle animation"
       // has to mean in practice.
       await tester.pumpAndSettle();
       expect(find.text(l.voiceListening), findsNothing);
       expect(find.text(l.voiceExample), findsOneWidget);
     });
 
-    testWidgets('a second hold waits rather than blaming the room', (
+    testWidgets('a second tap waits rather than blaming the room', (
       tester,
     ) async {
       await pump(tester);
@@ -414,17 +406,12 @@ void main() {
       // not recognise speech", which reads as "you were not heard".
       dictation.busy = true;
 
-      final gesture = await tester.startGesture(
-        tester.getCenter(find.byIcon(Icons.mic)),
-      );
-      await tester.pump(const Duration(milliseconds: 600));
-      await tester.pump();
+      await tester.tap(find.byIcon(Icons.mic));
+      await tester.pump(const Duration(milliseconds: 300));
 
       expect(dictation.listening, isFalse);
       expect(find.text(l.voiceBusy), findsOneWidget);
       expect(find.text(l.voiceFailed), findsNothing);
-
-      await gesture.up();
       await tester.pumpAndSettle();
     });
 
@@ -434,14 +421,9 @@ void main() {
       await pump(tester);
       final l = await AppLocalizations.delegate.load(defaultLocale);
 
-      final gesture = await tester.startGesture(
-        tester.getCenter(find.byIcon(Icons.mic)),
-      );
-      await tester.pump(const Duration(milliseconds: 600));
-      await tester.pump();
+      await tester.tap(find.byIcon(Icons.mic));
+      await tester.pump(const Duration(milliseconds: 300));
       dictation.say('покормила левой 15 минут');
-      await tester.pumpAndSettle();
-      await gesture.up();
       await tester.pumpAndSettle();
 
       expect(find.text(l.voiceHeard), findsOneWidget);
@@ -556,6 +538,11 @@ class _FakeDictation implements Dictation {
 
   @override
   List<String> get trace => const ['fake'];
+
+  /// The fake opens instantly. A browser does not, which is the whole point
+  /// of the flag — see the test that holds the opening state on screen.
+  @override
+  bool get live => listening;
 
   @override
   Future<bool> prepare() async {

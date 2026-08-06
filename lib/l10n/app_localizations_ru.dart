@@ -1034,6 +1034,15 @@ class AppLocalizationsRu extends AppLocalizations {
       'Что произошло. Пришлите этот список, если микрофон не работает';
 
   @override
+  String get voiceTapHint => 'Нажмите и говорите';
+
+  @override
+  String get voiceTapToStop => 'Нажмите ещё раз, когда закончите';
+
+  @override
+  String get voiceOpening => 'Открываю микрофон…';
+
+  @override
   String get voiceHeard => 'Услышано';
 
   @override

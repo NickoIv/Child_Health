@@ -1028,6 +1028,15 @@ class AppLocalizationsEn extends AppLocalizations {
       'What happened. Send this list if the microphone is not working';
 
   @override
+  String get voiceTapHint => 'Tap and speak';
+
+  @override
+  String get voiceTapToStop => 'Tap again when you are done';
+
+  @override
+  String get voiceOpening => 'Opening the microphone…';
+
+  @override
   String get voiceHeard => 'Heard';
 
   @override

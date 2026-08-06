@@ -1930,6 +1930,24 @@ abstract class AppLocalizations {
   /// **'Что произошло. Пришлите этот список, если микрофон не работает'**
   String get voiceTraceHint;
 
+  /// No description provided for @voiceTapHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нажмите и говорите'**
+  String get voiceTapHint;
+
+  /// No description provided for @voiceTapToStop.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нажмите ещё раз, когда закончите'**
+  String get voiceTapToStop;
+
+  /// No description provided for @voiceOpening.
+  ///
+  /// In ru, this message translates to:
+  /// **'Открываю микрофон…'**
+  String get voiceOpening;
+
   /// No description provided for @voiceHeard.
   ///
   /// In ru, this message translates to:

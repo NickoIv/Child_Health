@@ -39,6 +39,12 @@ abstract interface class Dictation {
   /// day produced no result and was reported as "could not recognise speech".
   bool get busy;
 
+  /// Whether the microphone is actually open, as opposed to asked for.
+  ///
+  /// The second or so between the two is long enough to be seen, so it is
+  /// shown rather than pretended away.
+  bool get live;
+
   /// Whether [prepare] has already succeeded.
   ///
   /// Exists so the caller can reach [start] without an `await` in front of
@@ -163,6 +169,16 @@ class PlatformDictation implements Dictation {
   /// actually let go of the microphone.
   bool _sessionActive = false;
 
+  /// Whether the browser has confirmed it is actually listening.
+  ///
+  /// Asking is not starting. Safari takes one to two seconds between
+  /// `start()` and the microphone being live, and a stop that lands inside
+  /// that gap used to do nothing at all — `isListening` was still false, so
+  /// there was nothing to stop, and the session then opened behind us and
+  /// ran on with no one waiting for it.
+  bool _live = false;
+  bool _stopWanted = false;
+
   final _trace = <String>[];
   DateTime? _sessionStart;
 
@@ -186,6 +202,9 @@ class PlatformDictation implements Dictation {
   bool get busy => _sessionActive || _speech.isListening;
 
   @override
+  bool get live => _live;
+
+  @override
   String? get unavailableReason => _ready ? null : _lastError;
 
   @override
@@ -200,7 +219,16 @@ class PlatformDictation implements Dictation {
           _note('error ${error.errorMsg}'
               '${error.permanent ? ' (permanent)' : ''}');
         },
-        onStatus: (status) => _note('status $status'),
+        onStatus: (status) {
+          _note('status $status');
+          if (status == 'listening') {
+            _live = true;
+            // The stop that arrived while it was still opening.
+            if (_stopWanted) unawaited(_speech.stop());
+          } else {
+            _live = false;
+          }
+        },
       );
       _note('initialize $_ready');
     } catch (_) {
@@ -224,7 +252,9 @@ class PlatformDictation implements Dictation {
     _segments.clear();
     _trace.clear();
     _sessionStart = DateTime.now();
-    _note('hold begins, locale $localeId');
+    _live = false;
+    _stopWanted = false;
+    _note('start requested, locale $localeId');
     _delivered = false;
     _sessionActive = true;
     _holding = true;
@@ -306,12 +336,22 @@ class PlatformDictation implements Dictation {
   @override
   Future<void> stop() async {
     _holding = false;
-    _note('released');
+    _stopWanted = true;
+    _note('stop requested, live=$_live');
     try {
-      if (_speech.isListening) await _speech.stop();
+      if (_speech.isListening) {
+        await _speech.stop();
+      } else if (!_live) {
+        // Still opening. Wait for it rather than walking away — a session
+        // nobody stopped keeps the microphone and refuses the next one.
+        for (var i = 0; i < 40 && !_live; i++) {
+          await Future<void>.delayed(const Duration(milliseconds: 50));
+        }
+        if (_speech.isListening) await _speech.stop();
+      }
     } catch (_) {
       // Stopping something that has already stopped is not a problem worth
-      // propagating to a finger that has simply lifted.
+      // propagating.
     }
 
     // Give the recogniser its moment to finish the sentence before deciding
@@ -363,6 +403,9 @@ class UnavailableDictation implements Dictation {
 
   @override
   bool get busy => false;
+
+  @override
+  bool get live => false;
 
   @override
   List<String> get trace => const [];

@@ -31,12 +31,14 @@ class VoiceActionButton extends ConsumerStatefulWidget {
 
   final String childId;
 
-  /// Held, not tapped.
+  /// Tapped, not held.
   ///
-  /// A tap that opens a microphone leaves a parent guessing when it closed; a
-  /// held button is a walkie-talkie, and everyone already knows how one of
-  /// those works. It also makes the accident impossible — a phone in a pocket
-  /// cannot hold its own button down.
+  /// Held was the better idea and it cannot work in a browser. Safari takes
+  /// one to two seconds between being asked for the microphone and actually
+  /// listening; a hold ends inside that gap, so the recording began after
+  /// the finger had already lifted and every attempt came back empty. A tap
+  /// to start and a tap to stop puts the whole delay behind a state the
+  /// screen can show, and gives her as long as she needs to say it.
   static const size = 64.0;
 
   /// A ceiling rather than a target: releasing ends it sooner, which is the
@@ -96,6 +98,10 @@ class _VoiceActionButtonState extends ConsumerState<VoiceActionButton> {
     if (ref.watch(isReadOnlyProvider)) return const SizedBox.shrink();
 
     final theme = Theme.of(context);
+    // Asked for, but not open yet. Worth saying out loud: it is a second or
+    // two on a phone, and a card that claims to be listening before it is
+    // costs a parent the first half of her sentence.
+    final warmingUp = _listening && !(_dictation?.live ?? true);
 
     // Listening is a state of the whole card, not a detail on it. A pulsing
     // ring around a 64px circle is invisible to someone holding a phone at
@@ -139,7 +145,11 @@ class _VoiceActionButtonState extends ConsumerState<VoiceActionButton> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  _listening ? l.voiceListening : l.voiceHoldHint,
+                  warmingUp
+                      ? l.voiceOpening
+                      : _listening
+                      ? l.voiceListening
+                      : l.voiceTapHint,
                   style: TextStyle(
                     fontSize: _listening ? 17 : 15.5,
                     fontWeight: FontWeight.w800,
@@ -152,14 +162,29 @@ class _VoiceActionButtonState extends ConsumerState<VoiceActionButton> {
                 ),
                 const SizedBox(height: 4),
                 if (_listening)
-                  SizedBox(
-                    height: 34,
-                    child: CustomPaint(
-                      painter: _WaveformPainter(
-                        levels: _levels,
-                        color: Warm.accent,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        height: 26,
+                        child: CustomPaint(
+                          painter: _WaveformPainter(
+                            levels: _levels,
+                            color: Warm.accent,
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 2),
+                      Text(
+                        l.voiceTapToStop,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Warm.accent,
+                        ),
+                      ),
+                    ],
                   )
                 else
                   Text(
@@ -194,13 +219,11 @@ class _VoiceActionButtonState extends ConsumerState<VoiceActionButton> {
             button: true,
             label: l.voiceQuickHint,
             child: GestureDetector(
-              // A long press is what she means to do; a drag off the button is
-              // what her thumb does when the baby moves. Either ending closes
-              // the microphone.
-              onLongPressStart: (_) => _start(),
-              onLongPressEnd: (_) => _stop(),
-              onLongPressCancel: _stop,
-              onTap: () => _hint(l),
+              // One tap each way. A second tap during the second it takes to
+              // open is ignored rather than cancelling — a parent who taps
+              // twice because nothing happened yet should still get her
+              // recording.
+              onTap: _toggle,
               child: MicPulse(
                 listening: _listening,
                 color: Warm.accent,
@@ -244,13 +267,13 @@ class _VoiceActionButtonState extends ConsumerState<VoiceActionButton> {
       ? Duration.zero
       : DateTime.now().difference(_startedAt!);
 
-  /// A tap is not how this works, and saying so once is kinder than doing
-  /// nothing and letting her tap again.
-  void _hint(AppLocalizations l) {
-    if (_listening) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(l.voiceHoldHint)));
+  /// Start it, or finish it.
+  void _toggle() {
+    if (_listening) {
+      unawaited(_stop());
+    } else {
+      _start();
+    }
   }
 
   /// Deliberately not `async`.

@@ -338,6 +338,11 @@ class _FakeDictation implements Dictation {
   @override
   List<String> get trace => const ['fake'];
 
+  /// The fake opens instantly. A browser does not, which is the whole point
+  /// of the flag — see the test that holds the opening state on screen.
+  @override
+  bool get live => listening;
+
   @override
   Future<bool> prepare() async {
     prepared++;

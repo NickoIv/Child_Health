@@ -1025,6 +1025,15 @@ class AppLocalizationsKk extends AppLocalizations {
       'Не болды. Микрофон жұмыс істемесе, осы тізімді жіберіңіз';
 
   @override
+  String get voiceTapHint => 'Басыңыз да сөйлеңіз';
+
+  @override
+  String get voiceTapToStop => 'Аяқтағанда қайта басыңыз';
+
+  @override
+  String get voiceOpening => 'Микрофон ашылуда…';
+
+  @override
   String get voiceHeard => 'Естілді';
 
   @override
