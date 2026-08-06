@@ -34,13 +34,67 @@
 </head>
 <body>
   <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
+    Evict whatever the last visit left behind, then start the app.
 
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
+    This page is served no-cache, so it is the only file guaranteed to be
+    current — which makes it the only place that can clear the rest. Three
+    deploys in a row reached the bucket and never reached a phone: hosting
+    had once been told to treat every .js file as immutable for a year, and
+    Flutter does not put a hash in main.dart.js, so browsers held a bundle
+    from months earlier and had no reason to ask for another. Safari also
+    kept a whole app shell in the service worker's cache storage.
+
+    Everything below runs once, costs one round trip, and then never does
+    anything again on a browser that has nothing stale to throw away. The
+    app starts either way: every failure path falls through to start().
   -->
-  <script src="flutter_bootstrap.js" async></script>
+  <script>
+    (function () {
+      var started = false;
+      function start() {
+        if (started) return;
+        started = true;
+        var s = document.createElement('script');
+        // Queried so this file itself can never be the stale one.
+        s.src = 'flutter_bootstrap.js?v=' + Date.now();
+        s.async = true;
+        document.body.appendChild(s);
+      }
+
+      // Older browsers, or anything that does not do promises the way this
+      // expects: start immediately rather than not at all.
+      if (!window.Promise || !window.fetch) return start();
+
+      var work = [];
+
+      // The service worker is not registered any more (built with
+      // --pwa-strategy=none), but one installed by an earlier version is
+      // still in charge until it is told otherwise.
+      if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+        work.push(
+          navigator.serviceWorker.getRegistrations().then(function (regs) {
+            return Promise.all(regs.map(function (r) { return r.unregister(); }));
+          })
+        );
+      }
+      if (window.caches && caches.keys) {
+        work.push(
+          caches.keys().then(function (keys) {
+            return Promise.all(keys.map(function (k) { return caches.delete(k); }));
+          })
+        );
+      }
+
+      Promise.all(work)
+        // One forced revalidation, which replaces the immutable entry with
+        // the no-cache one hosting sends today. After this the browser asks
+        // about the bundle on every visit, the way it always should have.
+        .then(function () {
+          return fetch('main.dart.js', { cache: 'reload' });
+        })
+        .catch(function () {})
+        .then(start, start);
+    })();
+  </script>
 </body>
 </html>
