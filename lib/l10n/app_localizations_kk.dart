@@ -1018,6 +1018,9 @@ class AppLocalizationsKk extends AppLocalizations {
   String get voiceExample => '«сол көкірекпен 15 минут еміздім»';
 
   @override
+  String get voiceBusy => 'Бір сәт — алдыңғы жазба аяқталуда';
+
+  @override
   String get voiceHeard => 'Естілді';
 
   @override

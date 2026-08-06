@@ -1918,6 +1918,12 @@ abstract class AppLocalizations {
   /// **'«покормила левой 15 минут»'**
   String get voiceExample;
 
+  /// No description provided for @voiceBusy.
+  ///
+  /// In ru, this message translates to:
+  /// **'Секунду — заканчиваю прошлую запись'**
+  String get voiceBusy;
+
   /// No description provided for @voiceHeard.
   ///
   /// In ru, this message translates to:

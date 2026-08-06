@@ -1021,6 +1021,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get voiceExample => '“fed on the left for 15 minutes”';
 
   @override
+  String get voiceBusy => 'One moment — finishing the last recording';
+
+  @override
   String get voiceHeard => 'Heard';
 
   @override

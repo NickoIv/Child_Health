@@ -303,6 +303,7 @@
   "voiceQuickHint": "Record by voice",
   "voiceHoldHint": "Hold the button and speak",
   "voiceExample": "“fed on the left for 15 minutes”",
+  "voiceBusy": "One moment — finishing the last recording",
   "voiceHeard": "Heard",
   "voiceMl": "ml",
   "voiceAsNote": "Will be saved as a note",

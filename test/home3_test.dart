@@ -403,6 +403,31 @@ void main() {
       expect(find.text(l.voiceExample), findsOneWidget);
     });
 
+    testWidgets('a second hold waits rather than blaming the room', (
+      tester,
+    ) async {
+      await pump(tester);
+      final l = await AppLocalizations.delegate.load(defaultLocale);
+
+      // The browser keeps one recogniser and refuses to start it again while
+      // the last run is still closing. That refusal used to arrive as "could
+      // not recognise speech", which reads as "you were not heard".
+      dictation.busy = true;
+
+      final gesture = await tester.startGesture(
+        tester.getCenter(find.byIcon(Icons.mic)),
+      );
+      await tester.pump(const Duration(milliseconds: 600));
+      await tester.pump();
+
+      expect(dictation.listening, isFalse);
+      expect(find.text(l.voiceBusy), findsOneWidget);
+      expect(find.text(l.voiceFailed), findsNothing);
+
+      await gesture.up();
+      await tester.pumpAndSettle();
+    });
+
     testWidgets('a heard sentence is shown back before anything is written', (
       tester,
     ) async {
@@ -523,6 +548,11 @@ class _FakeDictation implements Dictation {
   /// What a refusal would say. Set by a test that wants the message checked.
   @override
   String? unavailableReason;
+
+  /// Still winding down. Set by a test that wants a second hold refused the
+  /// way the real recogniser refuses one.
+  @override
+  bool busy = false;
 
   @override
   Future<bool> prepare() async {

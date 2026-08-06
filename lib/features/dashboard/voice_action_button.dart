@@ -265,6 +265,19 @@ class _VoiceActionButtonState extends ConsumerState<VoiceActionButton> {
     final dictation = _dictation;
     if (dictation == null || _listening || _opening) return;
 
+    // The previous recording is still closing. Opening a second one on top
+    // of it produces nothing and used to be reported as a failure to hear
+    // her — so wait, and say so, rather than blaming the room.
+    if (dictation.busy) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context).voiceBusy),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
     if (dictation.ready) {
       _open(dictation);
     } else {

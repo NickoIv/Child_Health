@@ -29,6 +29,14 @@ abstract interface class Dictation {
   /// from a denied permission and needs a different sentence.
   String? get unavailableReason;
 
+  /// Whether the last session is still winding down.
+  ///
+  /// The browser keeps one recogniser for the life of the page and refuses to
+  /// start it again while the previous run is still closing — the refusal is
+  /// a synchronous exception nobody was catching, so the second hold of the
+  /// day produced no result and was reported as "could not recognise speech".
+  bool get busy;
+
   /// Whether [prepare] has already succeeded.
   ///
   /// Exists so the caller can reach [start] without an `await` in front of
@@ -107,8 +115,15 @@ class PlatformDictation implements Dictation {
   VoidCallback? _onSilence;
   ValueChanged<String>? _onFailure;
 
+  /// True from the moment a session is asked for until the recogniser has
+  /// actually let go of the microphone.
+  bool _sessionActive = false;
+
   @override
   bool get ready => _ready;
+
+  @override
+  bool get busy => _sessionActive || _speech.isListening;
 
   @override
   String? get unavailableReason => _ready ? null : _lastError;
@@ -139,14 +154,41 @@ class PlatformDictation implements Dictation {
     ValueChanged<double>? onLevel,
     ValueChanged<String>? onFailure,
   }) async {
-    if (!_ready) return;
+    if (!_ready || busy) return;
     _lastError = null;
     _heard = '';
     _delivered = false;
+    _sessionActive = true;
     _onResult = onResult;
     _onSilence = onSilence;
     _onFailure = onFailure;
 
+    try {
+      await _startSession(localeId, onLevel);
+    } catch (error) {
+      // The recogniser said no, out loud, on the way in. Reported as itself
+      // rather than as a silent room — they are not the same failure and
+      // only one of them is the parent's fault.
+      _sessionActive = false;
+      _delivered = true;
+      onFailure?.call(_reasonFrom(error));
+    }
+  }
+
+  /// One line for the reason, out of whatever the platform threw.
+  ///
+  /// Browsers raise a DOM exception here and phones a PlatformException; both
+  /// stringify to something long and neither is meant for a parent, so this
+  /// is a label for a bug report rather than an explanation.
+  String _reasonFrom(Object error) {
+    final text = error.toString();
+    return text.length > 60 ? '${text.substring(0, 60)}…' : text;
+  }
+
+  Future<void> _startSession(
+    String localeId,
+    ValueChanged<double>? onLevel,
+  ) async {
     await _speech.listen(
       // The plugin reports roughly -2..10 on iOS and 0..10 on Android;
       // normalised here so the waveform does not have to know either.
@@ -180,13 +222,27 @@ class PlatformDictation implements Dictation {
 
   @override
   Future<void> stop() async {
-    if (_speech.isListening) await _speech.stop();
+    try {
+      if (_speech.isListening) await _speech.stop();
+    } catch (_) {
+      // Stopping something that has already stopped is not a problem worth
+      // propagating to a finger that has simply lifted.
+    }
+
     // Give the recogniser its moment to finish the sentence before deciding
     // that what we have is all there is.
     if (!_delivered) {
       await Future<void>.delayed(DictationSession.settle);
       _deliver();
     }
+
+    // And then wait for it to actually let go. Until it has, the next hold
+    // would be refused — which is the whole reason a second recording used
+    // to fail where the first one worked.
+    for (var i = 0; i < 20 && _speech.isListening; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+    }
+    _sessionActive = false;
   }
 
   /// Hands over whatever was heard, exactly once per session.
@@ -218,6 +274,9 @@ class UnavailableDictation implements Dictation {
 
   @override
   bool get ready => false;
+
+  @override
+  bool get busy => false;
 
   @override
   String? get unavailableReason => null;

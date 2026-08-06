@@ -319,6 +319,11 @@ class _FakeDictation implements Dictation {
   @override
   String? unavailableReason;
 
+  /// Still winding down. Set by a test that wants a second hold refused the
+  /// way the real recogniser refuses one.
+  @override
+  bool busy = false;
+
   @override
   Future<bool> prepare() async {
     prepared++;
