@@ -490,6 +490,30 @@ class PlatformDictation implements Dictation {
       await Future<void>.delayed(const Duration(milliseconds: 50));
     }
     _sessionActive = false;
+
+    if (_direct) unawaited(_recycle());
+  }
+
+  /// A new recogniser for the next recording.
+  ///
+  /// A browser's SpeechRecognition object is good for one run. Started a
+  /// second time it throws, or accepts the call and never produces anything
+  /// — which is why the first recording worked and every one after it came
+  /// back empty.
+  ///
+  /// `initialize()` builds a fresh one, and on the platform interface it is
+  /// not the once-only call the wrapper above it makes of it. Done here,
+  /// between recordings, rather than on the next tap: opening a microphone
+  /// in Safari has to happen in the same turn as the tap that asked for it,
+  /// with nothing awaited in between.
+  Future<void> _recycle() async {
+    try {
+      final ready = await _plugin.initialize();
+      _ready = ready;
+      _note('recycled $ready');
+    } catch (error) {
+      _note('recycle failed ${_reasonFrom(error)}');
+    }
   }
 
   /// Hands over whatever was heard, exactly once per session.
