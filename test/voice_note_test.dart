@@ -249,13 +249,14 @@ void main() {
       }
     });
 
-    test('partial results are asked for, or none arrive at all', () {
-      // Not a preference. speech_to_text_web hardcodes every result it sends
-      // to ResultType.partial, and SpeechToText._notifyResults drops
-      // non-final results when this flag is off — so with it off a browser
-      // recognises the sentence, reports `status done`, and the words are
-      // discarded one layer above the listener waiting for them.
-      expect(dictationOptions('ru-RU').partialResults, isTrue);
+    test('partial results are off, because Safari cannot do continuous', () {
+      // speech_to_text_web sets both `interimResults` and `continuous` from
+      // this one flag. With it on, an iPhone held an open microphone for
+      // nine seconds and returned nothing at all. With it off Safari
+      // behaves — and the wrapper layer that would otherwise discard every
+      // result (it hardcodes resultType to partial, then drops non-final
+      // results) is bypassed on the web entirely.
+      expect(dictationOptions('ru-RU').partialResults, isFalse);
       expect(dictationOptions('ru-RU').localeId, 'ru-RU');
       expect(dictationOptions('ru-RU').listenFor, DictationSession.maxDuration);
       // No pause timer. The wrapper measures silence from the last speech

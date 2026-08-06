@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:speech_to_text/speech_to_text.dart';
+import 'package:speech_to_text_platform_interface/speech_to_text_platform_interface.dart';
 
 /// Dictating a note, and nothing more than that.
 ///
@@ -104,16 +106,13 @@ SpeechListenOptions dictationOptions(String localeId) => SpeechListenOptions(
   // The words are wanted, not a command: dictation mode rather than the
   // confirmation mode tuned for "yes" and "cancel".
   listenMode: ListenMode.dictation,
-  // True, and not for the reason the name suggests. The web plugin never
-  // marks a result final — `resultType` is hardcoded to partial in
-  // `speech_to_text_web.dart` — and the wrapper drops everything non-final
-  // when this is off. With it off, a browser recognised the sentence, said
-  // so (`status done`), and the words were thrown away one layer above the
-  // callback that was waiting for them.
-  //
-  // Nothing partial reaches the screen: the reading is assembled here and
-  // shown once, when she taps to finish.
-  partialResults: true,
+  // False, and the browser path does not go through the layer that made
+  // this a dilemma. `speech_to_text_web` sets both `interimResults` and
+  // `continuous` from this one flag: with it on, Safari on iOS holds an
+  // open microphone for nine seconds and returns nothing at all. With it
+  // off Safari behaves, and the wrapper that would have discarded the
+  // result is bypassed — see [PlatformDictation._direct].
+  partialResults: false,
   cancelOnError: true,
 );
 
@@ -145,6 +144,23 @@ class PlatformDictation implements Dictation {
 
   final SpeechToText _speech;
   bool _ready = false;
+
+  /// Whether to talk to the platform plugin underneath `SpeechToText`.
+  ///
+  /// On the web, yes, and not by preference. `speech_to_text_web` builds
+  /// every result with `resultType` hardcoded to partial, and
+  /// `SpeechToText._notifyResults` drops non-final results unless partial
+  /// results are asked for — but asking for them sets
+  /// `SpeechRecognition.continuous`, which Safari on iOS answers with an
+  /// open microphone and silence. The two settings that have to disagree are
+  /// the same field, so the browser path uses the interface the wrapper
+  /// itself sits on and does its own assembling.
+  ///
+  /// Phones keep the wrapper: it handles permissions, locales and the
+  /// platform's own idea of when a sentence has ended, none of which is
+  /// worth reimplementing where it already works.
+  bool get _direct => kIsWeb;
+  SpeechToTextPlatform get _plugin => SpeechToTextPlatform.instance;
 
   /// Set by the recogniser's own error callback, which is where the browser
   /// says *why* — `not-allowed`, `service-not-allowed`, `language-not-
@@ -221,7 +237,9 @@ class PlatformDictation implements Dictation {
   bool get ready => _ready;
 
   @override
-  bool get busy => _sessionActive || _speech.isListening;
+  bool get busy => _sessionActive || _listening;
+
+  bool get _listening => _direct ? _live : _speech.isListening;
 
   @override
   bool get live => _live;
@@ -232,6 +250,7 @@ class PlatformDictation implements Dictation {
   @override
   Future<bool> prepare() async {
     if (_ready) return true;
+    if (_direct) return _prepareDirect();
     // initialize() is what raises the permission dialog, and it is safe to
     // call more than once — the plugin remembers.
     try {
@@ -241,20 +260,7 @@ class PlatformDictation implements Dictation {
           _note('error ${error.errorMsg}'
               '${error.permanent ? ' (permanent)' : ''}');
         },
-        onStatus: (status) {
-          _note('status $status');
-          if (status == 'listening') {
-            _live = true;
-            // The stop that arrived while it was still opening.
-            if (_stopWanted) unawaited(_speech.stop());
-          } else {
-            final wasLive = _live;
-            _live = false;
-            // The web layer never sends a final result, so the end of a
-            // recognition is only ever announced as a change of status.
-            if (wasLive) _endOfClause();
-          }
-        },
+        onStatus: _onStatus,
       );
       _note('initialize $_ready');
     } catch (_) {
@@ -263,6 +269,75 @@ class PlatformDictation implements Dictation {
       _ready = false;
     }
     return _ready && await _speech.hasPermission;
+  }
+
+  Future<bool> _prepareDirect() async {
+    _plugin.onStatus = _onStatus;
+    _plugin.onError = (raw) {
+      final message = _fieldOf(raw, 'errorMsg') ?? raw;
+      _lastError = message;
+      _note('error $message');
+    };
+    _plugin.onTextRecognition = (raw) {
+      final text = _firstAlternate(raw);
+      _note('result "$text"');
+      if (text.length > _current.length) _current = text;
+    };
+
+    try {
+      _ready = await _plugin.initialize();
+    } catch (_) {
+      _ready = false;
+    }
+    _note('initialize $_ready');
+    return _ready && await _plugin.hasPermission();
+  }
+
+  /// One field out of the JSON the plugin sends across, without building a
+  /// model for two strings.
+  String? _fieldOf(String raw, String key) {
+    try {
+      final map = jsonDecode(raw) as Map<String, dynamic>;
+      return map[key] as String?;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// The recogniser's best guess out of `{"alternates":[{"recognizedWords"…`.
+  String _firstAlternate(String raw) {
+    try {
+      final map = jsonDecode(raw) as Map<String, dynamic>;
+      final alternates = map['alternates'] as List<dynamic>;
+      if (alternates.isEmpty) return '';
+      final first = alternates.first as Map<String, dynamic>;
+      return (first['recognizedWords'] as String? ?? '').trim();
+    } catch (_) {
+      return '';
+    }
+  }
+
+  void _onStatus(String status) {
+    _note('status $status');
+    if (status == 'listening') {
+      _live = true;
+      // The stop that arrived while it was still opening.
+      if (_stopWanted) unawaited(_stopPlugin());
+      return;
+    }
+    final wasLive = _live;
+    _live = false;
+    // The web layer never sends a final result, so the end of a recognition
+    // is only ever announced as a change of status.
+    if (wasLive) _endOfClause();
+  }
+
+  Future<void> _stopPlugin() async {
+    if (_direct) {
+      await _plugin.stop();
+    } else if (_speech.isListening) {
+      await _speech.stop();
+    }
   }
 
   @override
@@ -317,6 +392,16 @@ class PlatformDictation implements Dictation {
     String localeId,
     ValueChanged<double>? onLevel,
   ) async {
+    if (_direct) {
+      // Results arrive through the callback set in [_prepareDirect]; there
+      // is no per-session listener to hand over here.
+      await _plugin.listen(
+        localeId: localeId,
+        options: dictationOptions(localeId),
+      );
+      return;
+    }
+
     await _speech.listen(
       // The plugin reports roughly -2..10 on iOS and 0..10 on Android;
       // normalised here so the waveform does not have to know either.
@@ -358,7 +443,7 @@ class PlatformDictation implements Dictation {
   /// error worth showing: it means this hold is over, and what was heard up
   /// to here is what gets written down.
   Future<void> _resume() async {
-    for (var i = 0; i < 10 && _speech.isListening; i++) {
+    for (var i = 0; i < 10 && _listening; i++) {
       await Future<void>.delayed(const Duration(milliseconds: 40));
     }
     if (!_holding || _delivered) return;
@@ -376,15 +461,15 @@ class PlatformDictation implements Dictation {
     _stopWanted = true;
     _note('stop requested, live=$_live');
     try {
-      if (_speech.isListening) {
-        await _speech.stop();
+      if (_listening) {
+        await _stopPlugin();
       } else if (!_live) {
         // Still opening. Wait for it rather than walking away — a session
         // nobody stopped keeps the microphone and refuses the next one.
         for (var i = 0; i < 40 && !_live; i++) {
           await Future<void>.delayed(const Duration(milliseconds: 50));
         }
-        if (_speech.isListening) await _speech.stop();
+        if (_listening) await _stopPlugin();
       }
     } catch (_) {
       // Stopping something that has already stopped is not a problem worth
@@ -401,7 +486,7 @@ class PlatformDictation implements Dictation {
     // And then wait for it to actually let go. Until it has, the next hold
     // would be refused — which is the whole reason a second recording used
     // to fail where the first one worked.
-    for (var i = 0; i < 20 && _speech.isListening; i++) {
+    for (var i = 0; i < 20 && _listening; i++) {
       await Future<void>.delayed(const Duration(milliseconds: 50));
     }
     _sessionActive = false;
