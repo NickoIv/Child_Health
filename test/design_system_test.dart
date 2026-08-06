@@ -21,7 +21,7 @@ void main() {
       expect(Warm.accent, const Color(0xFFE67E22));
       expect(Warm.accentSoft, const Color(0xFFE8B899));
       expect(Warm.ink, const Color(0xFF3B2B23));
-      expect(Warm.inkSoft, const Color(0xFF8A6B5C));
+      expect(Warm.inkSoft, const Color(0xFF75574A));
       expect(Warm.success, const Color(0xFF4E8B6B));
       expect(Warm.warning, const Color(0xFFD18B2F));
       expect(Warm.danger, const Color(0xFFC96B5A));
@@ -54,10 +54,15 @@ void main() {
       expect(Warm.cardGap, 14);
       expect(Warm.innerGap, 12);
 
-      final shadow = Warm.shadow(Brightness.light).single;
-      expect(shadow.blurRadius, 24);
-      expect(shadow.offset, const Offset(0, 8));
-      expect(shadow.color.a, closeTo(0.08, 0.005));
+      // Two layers: a tight one that draws the card's edge and a wide one
+      // that lifts it. One wide blur on its own read as fog — everything had
+      // a grey halo and nothing had an edge.
+      final shadow = Warm.shadow(Brightness.light);
+      expect(shadow, hasLength(2));
+      expect(shadow.first.blurRadius, lessThan(4));
+      expect(shadow.last.blurRadius, 20);
+      expect(shadow.last.offset, const Offset(0, 6));
+      expect(shadow.last.color.a, closeTo(0.10, 0.005));
       // Dark mode gets none: a shadow on a near-black page is a smudge.
       expect(Warm.shadow(Brightness.dark), isEmpty);
     });
@@ -131,7 +136,7 @@ void main() {
       // their own measurements; both are drawn from the same list.
       expect(ActionCard.height, 104);
       expect(ActionCard.radius, Warm.cardRadius);
-      expect(ActionCard.iconSize, 30);
+      expect(ActionCard.iconSize, 20);
       expect(ActionCard.titleSize, 16);
       expect(ActionCard.captionSize, 11.5);
 

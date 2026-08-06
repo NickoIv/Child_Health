@@ -142,7 +142,7 @@ void main() {
       }
       expect(ActionCard.height, 104);
       expect(ActionCard.radius, 24);
-      expect(ActionCard.iconSize, 30);
+      expect(ActionCard.iconSize, 20);
       expect(ActionCard.titleSize, 16);
       expect(ActionCard.captionSize, 11.5);
 
@@ -487,15 +487,15 @@ void main() {
       expect(Warm.accent, const Color(0xFFE67E22));
       expect(Warm.lavender, const Color(0xFFF3EAFE));
       expect(Warm.ink, const Color(0xFF3B2B23));
-      expect(Warm.inkSoft, const Color(0xFF8A6B5C));
+      expect(Warm.inkSoft, const Color(0xFF75574A));
       // Soft rather than absent: a cream page with a hard shadow reads as
-      // dirty, and one with none reads as a wireframe.
-      // Blur 24 at eight percent, offset down by eight — the one shadow
-      // every raised surface in the app gets.
-      final shadow = Warm.shadow(Brightness.light).single;
-      expect(shadow.blurRadius, 24);
-      expect(shadow.offset, const Offset(0, 8));
-      expect(shadow.color.a, closeTo(0.08, 0.005));
+      // dirty, one with none reads as a wireframe, and one with a single
+      // wide blur — which is what this was — reads as fog.
+      final shadow = Warm.shadow(Brightness.light);
+      expect(shadow, hasLength(2));
+      expect(shadow.first.blurRadius, lessThan(4), reason: 'the edge');
+      expect(shadow.last.blurRadius, 20, reason: 'the lift');
+      expect(shadow.last.color.a, closeTo(0.10, 0.005));
       expect(Warm.shadow(Brightness.dark), isEmpty);
     });
   });

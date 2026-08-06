@@ -63,6 +63,9 @@ class WarmHeader extends ConsumerWidget {
                   child.name,
                   style: theme.textTheme.headlineSmall?.copyWith(
                     color: Warm.onCard(theme.brightness),
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.6,
+                    height: 1.05,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -118,7 +121,8 @@ class _AgeChip extends StatelessWidget {
         localizedAge(l, child),
         style: TextStyle(
           fontSize: 13,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.1,
           color: SoftTone.peach.ink(theme.brightness),
         ),
         maxLines: 1,
@@ -268,7 +272,11 @@ class ActionCard extends StatelessWidget {
 
   static const height = 104.0;
   static const radius = 24.0;
-  static const iconSize = 30.0;
+  static const iconSize = 20.0;
+
+  /// The disc the icon sits on. Sized against the 104 the card is fixed at:
+  /// disc, gap, title and caption have to add up to less than that.
+  static const badgeSize = 34.0;
   static const titleSize = 16.0;
   static const captionSize = 11.5;
 
@@ -282,7 +290,7 @@ class ActionCard extends StatelessWidget {
       onTap: readOnly ? null : onTap,
       child: Container(
         height: height,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           color: tone.fill(theme.brightness),
           borderRadius: BorderRadius.circular(radius),
@@ -296,7 +304,19 @@ class ActionCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Icon(icon, size: iconSize, color: ink),
+                  // On a disc of its own. Loose on the card the icon had
+                  // nothing holding it and read as a watermark; the disc
+                  // gives it an edge and makes the four cards scan as four
+                  // buttons rather than four coloured rectangles.
+                  Container(
+                    width: badgeSize,
+                    height: badgeSize,
+                    decoration: BoxDecoration(
+                      color: ink.withValues(alpha: 0.13),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(icon, size: iconSize, color: ink),
+                  ),
                   const Spacer(),
                   if (readOnly) const ReadOnlyLock(size: 15),
                 ],
@@ -306,18 +326,20 @@ class ActionCard extends StatelessWidget {
                 label,
                 style: TextStyle(
                   fontSize: titleSize,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.2,
                   color: ink,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 1),
+              const SizedBox(height: 2),
               Text(
                 caption,
                 style: TextStyle(
                   fontSize: captionSize,
-                  color: ink.withValues(alpha: 0.75),
+                  fontWeight: FontWeight.w500,
+                  color: ink.withValues(alpha: 0.88),
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -435,14 +457,14 @@ class _TimelineRow extends StatelessWidget {
             width: badgeSize,
             height: badgeSize,
             decoration: BoxDecoration(
-              color: Warm.soft(theme.brightness),
+              color: Warm.accent.withValues(alpha: 0.14),
               shape: BoxShape.circle,
               border: Border.all(
                 color: Warm.accent.withValues(alpha: 0.35),
                 width: 1.5,
               ),
             ),
-            child: Icon(logIcon(entry), size: 16, color: Warm.accent),
+            child: Icon(logIcon(entry), size: 17, color: Warm.accent),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -455,7 +477,8 @@ class _TimelineRow extends StatelessWidget {
                       timeOfDay.format(entry.date),
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: Warm.accent,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w800,
+                        fontFeatures: const [FontFeature.tabularFigures()],
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -466,7 +489,8 @@ class _TimelineRow extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: ink,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.2,
                         ),
                       ),
                     ),

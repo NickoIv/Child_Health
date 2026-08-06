@@ -40,8 +40,13 @@ class VoiceActionButton extends ConsumerStatefulWidget {
   static const size = 64.0;
 
   /// A ceiling rather than a target: releasing ends it sooner, which is the
-  /// normal case. Long enough for "покормила левой пятнадцать минут".
-  static const listenFor = Duration(seconds: 10);
+  /// normal case.
+  ///
+  /// The same half minute the recogniser itself allows. Ten seconds was a
+  /// second ceiling under the first one, and the one that fired — a sentence
+  /// with a pause in the middle of it was being cut off by the button rather
+  /// than by the person speaking.
+  static const listenFor = DictationSession.maxDuration;
 
   @override
   ConsumerState<VoiceActionButton> createState() => _VoiceActionButtonState();

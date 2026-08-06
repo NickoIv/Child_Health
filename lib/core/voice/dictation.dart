@@ -67,7 +67,18 @@ abstract final class DictationSession {
   static const maxDuration = Duration(seconds: 30);
 
   /// A gap this long means she has finished, not that she is thinking.
-  static const pause = Duration(seconds: 3);
+  ///
+  /// Five, not three. "Покормила левой... минут пятнадцать" has a gap in the
+  /// middle of it, and three seconds was cutting the sentence in half and
+  /// keeping the first half.
+  static const pause = Duration(seconds: 5);
+
+  /// How long to wait after the button is released for a final transcript.
+  ///
+  /// Recognisers finalise asynchronously. Releasing and immediately reading
+  /// what was heard gets whatever had been decided so far, which on a slow
+  /// connection is most of the sentence rather than all of it.
+  static const settle = Duration(milliseconds: 700);
 }
 
 /// The real one: whatever speech recognition the device already ships with.
@@ -82,6 +93,19 @@ class PlatformDictation implements Dictation {
   /// supported`. Swallowing it left a parent holding a button that did
   /// nothing and no way for anyone to find out what.
   String? _lastError;
+
+  /// The longest thing heard this session.
+  ///
+  /// Partial results are collected rather than discarded because a browser
+  /// recogniser can decide a sentence is over mid-breath and finalise the
+  /// first clause on its own. When that happens the partial that came before
+  /// it is the fuller sentence, and it is the one worth keeping.
+  String _heard = '';
+  bool _delivered = true;
+
+  ValueChanged<String>? _onResult;
+  VoidCallback? _onSilence;
+  ValueChanged<String>? _onFailure;
 
   @override
   bool get ready => _ready;
@@ -117,6 +141,12 @@ class PlatformDictation implements Dictation {
   }) async {
     if (!_ready) return;
     _lastError = null;
+    _heard = '';
+    _delivered = false;
+    _onResult = onResult;
+    _onSilence = onSilence;
+    _onFailure = onFailure;
+
     await _speech.listen(
       // The plugin reports roughly -2..10 on iOS and 0..10 on Android;
       // normalised here so the waveform does not have to know either.
@@ -124,20 +154,13 @@ class PlatformDictation implements Dictation {
           ? null
           : (level) => onLevel((level / 10).clamp(0.0, 1.0)),
       onResult: (result) {
-        if (!result.finalResult) return;
         final text = result.recognizedWords.trim();
-        if (text.isEmpty) {
-          // A refusal and a silent room both end up here. They are not the
-          // same thing to whoever is holding the button.
-          final error = _lastError;
-          if (error != null && onFailure != null) {
-            onFailure(error);
-          } else {
-            onSilence();
-          }
-        } else {
-          onResult(text);
-        }
+        // Longest wins. A later partial is usually longer than an earlier
+        // one, but a recogniser that has changed its mind about the opening
+        // words can come back shorter, and half a sentence is worse than the
+        // whole one it already had.
+        if (text.length > _heard.length) _heard = text;
+        if (result.finalResult) _deliver();
       },
       listenOptions: SpeechListenOptions(
         listenFor: DictationSession.maxDuration,
@@ -146,7 +169,10 @@ class PlatformDictation implements Dictation {
         // The words are wanted, not a command: dictation mode rather than the
         // confirmation mode tuned for "yes" and "cancel".
         listenMode: ListenMode.dictation,
-        partialResults: false,
+        // Kept, not shown. Nothing rewrites itself under her eyes — the card
+        // still appears only once, when she lets go — but the partials are
+        // what make a truncated final result recoverable.
+        partialResults: true,
         cancelOnError: true,
       ),
     );
@@ -155,6 +181,32 @@ class PlatformDictation implements Dictation {
   @override
   Future<void> stop() async {
     if (_speech.isListening) await _speech.stop();
+    // Give the recogniser its moment to finish the sentence before deciding
+    // that what we have is all there is.
+    if (!_delivered) {
+      await Future<void>.delayed(DictationSession.settle);
+      _deliver();
+    }
+  }
+
+  /// Hands over whatever was heard, exactly once per session.
+  void _deliver() {
+    if (_delivered) return;
+    _delivered = true;
+
+    final text = _heard;
+    if (text.isNotEmpty) {
+      _onResult?.call(text);
+      return;
+    }
+    // A refusal and a silent room both end up here. They are not the same
+    // thing to whoever is holding the button.
+    final error = _lastError;
+    if (error != null && _onFailure != null) {
+      _onFailure!(error);
+    } else {
+      _onSilence?.call();
+    }
   }
 }
 

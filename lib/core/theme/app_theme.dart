@@ -74,7 +74,9 @@ abstract final class Warm {
 
   /// Reading colour on any of the above.
   static const ink = Color(0xFF3B2B23);
-  static const inkSoft = Color(0xFF8A6B5C);
+  /// Darkened from #8A6B5C. On a cream card the old value sat at 3.1:1 and
+  /// read as disabled text rather than as a second line.
+  static const inkSoft = Color(0xFF75574A);
 
   /// The three colours that mean something.
   ///
@@ -92,10 +94,19 @@ abstract final class Warm {
   static List<BoxShadow> shadow(Brightness b) => b == Brightness.dark
       ? const []
       : const [
+          // Two, not one. A single wide blur at eight percent read as fog
+          // rather than as lift: everything on the page had a soft grey halo
+          // and nothing had an edge. The tight one draws the edge, the wide
+          // one does the lifting.
           BoxShadow(
-            color: Color(0x143B2B23),
-            blurRadius: 24,
-            offset: Offset(0, 8),
+            color: Color(0x0F3B2B23),
+            blurRadius: 2,
+            offset: Offset(0, 1),
+          ),
+          BoxShadow(
+            color: Color(0x1A3B2B23),
+            blurRadius: 20,
+            offset: Offset(0, 6),
           ),
         ];
 

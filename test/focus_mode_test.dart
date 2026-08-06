@@ -153,7 +153,7 @@ void main() {
         expect(tester.getSize(find.byWidget(card.widget)).height, 104);
       }
       expect(ActionCard.radius, 24);
-      expect(ActionCard.iconSize, 30);
+      expect(ActionCard.iconSize, 20);
     });
   });
 
@@ -198,7 +198,7 @@ void main() {
       expect(Warm.lavender, const Color(0xFFF3EAFE));
       expect(Warm.accent, const Color(0xFFE67E22));
       expect(Warm.ink, const Color(0xFF3B2B23));
-      expect(Warm.inkSoft, const Color(0xFF8A6B5C));
+      expect(Warm.inkSoft, const Color(0xFF75574A));
     });
 
     test('paints the page and the greeting warm', () {
