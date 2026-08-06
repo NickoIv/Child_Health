@@ -249,6 +249,17 @@ void main() {
       }
     });
 
+    test('one recognition at a time, because iOS cannot do otherwise', () {
+      // The web plugin sets SpeechRecognition.continuous from this flag, and
+      // Safari on iOS does not support continuous recognition: with it on
+      // the microphone opened, closed and produced nothing at all. A long
+      // sentence is covered by restarting between clauses instead.
+      expect(dictationOptions('ru-RU').partialResults, isFalse);
+      expect(dictationOptions('ru-RU').localeId, 'ru-RU');
+      expect(dictationOptions('ru-RU').listenFor, DictationSession.maxDuration);
+      expect(dictationOptions('ru-RU').pauseFor, DictationSession.pause);
+    });
+
     test('the pause is long enough for a sentence with a gap in it', () {
       // "покормила левой... минут пятнадцать" pauses in the middle. Three
       // seconds finalised the first half and threw the rest away.

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
@@ -67,6 +69,27 @@ abstract interface class Dictation {
   Future<void> stop();
 }
 
+/// What one recognition is asked for.
+///
+/// Lifted out of the call so a test can read it: one of these fields is load
+/// bearing in a way its name does not admit, and turning it back on silently
+/// breaks voice input on every iPhone.
+SpeechListenOptions dictationOptions(String localeId) => SpeechListenOptions(
+  listenFor: DictationSession.maxDuration,
+  pauseFor: DictationSession.pause,
+  localeId: localeId,
+  // The words are wanted, not a command: dictation mode rather than the
+  // confirmation mode tuned for "yes" and "cancel".
+  listenMode: ListenMode.dictation,
+  // False, and it costs more than it looks like it does. The web plugin sets
+  // `continuous` from this same flag, and Safari on iOS does not do
+  // continuous recognition — with it on the microphone opened, closed and
+  // produced nothing at all. A sentence longer than the recogniser's patience
+  // is handled by restarting instead, not by asking for a longer one.
+  partialResults: false,
+  cancelOnError: true,
+);
+
 /// Session limits, kept where both the controller and its tests can see them.
 abstract final class DictationSession {
   /// Half a minute is longer than any note in this app has ever been, and
@@ -102,14 +125,25 @@ class PlatformDictation implements Dictation {
   /// nothing and no way for anyone to find out what.
   String? _lastError;
 
-  /// The longest thing heard this session.
+  /// Everything heard while the button has been held, in order.
   ///
-  /// Partial results are collected rather than discarded because a browser
-  /// recogniser can decide a sentence is over mid-breath and finalise the
-  /// first clause on its own. When that happens the partial that came before
-  /// it is the fuller sentence, and it is the one worth keeping.
-  String _heard = '';
+  /// A browser recogniser ends the moment it decides a sentence is over, and
+  /// it decides that in the middle of "покормила левой... минут пятнадцать".
+  /// One hold is therefore not one recognition but several, restarted as
+  /// each ends, and this is where the pieces are kept until she lets go.
+  final _segments = <String>[];
+  String get _heard => _segments.join(' ').trim();
   bool _delivered = true;
+
+  /// True while her finger is still down.
+  ///
+  /// The difference between a recogniser that finished and a person who
+  /// finished. Only the second one ends the recording.
+  bool _holding = false;
+
+  /// Kept so a restart can ask for the same thing the first one did.
+  String _localeId = '';
+  ValueChanged<double>? _onLevel;
 
   ValueChanged<String>? _onResult;
   VoidCallback? _onSilence;
@@ -156,9 +190,12 @@ class PlatformDictation implements Dictation {
   }) async {
     if (!_ready || busy) return;
     _lastError = null;
-    _heard = '';
+    _segments.clear();
     _delivered = false;
     _sessionActive = true;
+    _holding = true;
+    _localeId = localeId;
+    _onLevel = onLevel;
     _onResult = onResult;
     _onSilence = onSilence;
     _onFailure = onFailure;
@@ -196,32 +233,43 @@ class PlatformDictation implements Dictation {
           ? null
           : (level) => onLevel((level / 10).clamp(0.0, 1.0)),
       onResult: (result) {
+        if (!result.finalResult) return;
         final text = result.recognizedWords.trim();
-        // Longest wins. A later partial is usually longer than an earlier
-        // one, but a recogniser that has changed its mind about the opening
-        // words can come back shorter, and half a sentence is worse than the
-        // whole one it already had.
-        if (text.length > _heard.length) _heard = text;
-        if (result.finalResult) _deliver();
+        if (text.isNotEmpty) _segments.add(text);
+        // The recogniser is done with this clause. She may not be done with
+        // the sentence, and her finger says which.
+        if (_holding) {
+          unawaited(_resume());
+        } else {
+          _deliver();
+        }
       },
-      listenOptions: SpeechListenOptions(
-        listenFor: DictationSession.maxDuration,
-        pauseFor: DictationSession.pause,
-        localeId: localeId,
-        // The words are wanted, not a command: dictation mode rather than the
-        // confirmation mode tuned for "yes" and "cancel".
-        listenMode: ListenMode.dictation,
-        // Kept, not shown. Nothing rewrites itself under her eyes — the card
-        // still appears only once, when she lets go — but the partials are
-        // what make a truncated final result recoverable.
-        partialResults: true,
-        cancelOnError: true,
-      ),
+      listenOptions: dictationOptions(localeId),
     );
+  }
+
+  /// Listen again, because she has not stopped talking.
+  ///
+  /// The recogniser has to be given a moment to let go before it will start
+  /// again — asking too early throws, which is the same refusal that used to
+  /// break the second recording of the day. A restart that fails is not an
+  /// error worth showing: it means this hold is over, and what was heard up
+  /// to here is what gets written down.
+  Future<void> _resume() async {
+    for (var i = 0; i < 10 && _speech.isListening; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 40));
+    }
+    if (!_holding || _delivered) return;
+    try {
+      await _startSession(_localeId, _onLevel);
+    } catch (_) {
+      _deliver();
+    }
   }
 
   @override
   Future<void> stop() async {
+    _holding = false;
     try {
       if (_speech.isListening) await _speech.stop();
     } catch (_) {
