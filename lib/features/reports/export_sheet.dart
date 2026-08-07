@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/theme/app_sheet.dart';
 import '../../core/theme/app_snack.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/development_log.dart';
@@ -18,10 +19,8 @@ import 'report_share.dart';
 /// how far back to look, and a form with a date picker on it would turn a
 /// thirty-second job into a task.
 Future<void> showExportSheet(BuildContext context, {required String childId}) {
-  return showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    showDragHandle: true,
+  return showAppSheet<void>(
+    context,
     builder: (_) => _ExportSheet(childId: childId),
   );
 }

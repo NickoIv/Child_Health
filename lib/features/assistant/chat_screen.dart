@@ -6,8 +6,10 @@ import '../../l10n/app_localizations.dart';
 import '../../ai/actions.dart';
 import '../../ai/assistant_service.dart';
 import '../../ai/conversation.dart';
+import '../../ai/suggested_questions.dart';
 import '../../core/theme/app_theme.dart';
 import '../../knowledge/article.dart';
+import '../../models/development_log.dart';
 import '../../providers.dart';
 import '../../core/care/conversation_memory.dart';
 import '../shared/widgets.dart';
@@ -486,32 +488,118 @@ class _SetupCard extends StatelessWidget {
   }
 }
 
-class _Suggestions extends StatelessWidget {
+/// What to ask, worked out from what is already written down.
+///
+/// Five chips of the same five sentences, wrapping onto four lines on a phone,
+/// was both the chip-wall and the reason the assistant looked like a canned
+/// list — see [suggestedQuestions]. These are three rows, each carrying the
+/// entry it came from, so the app's reading of the day is on the screen before
+/// a single word has been sent anywhere.
+class _Suggestions extends ConsumerWidget {
   const _Suggestions({required this.onPick});
 
   final ValueChanged<String> onPick;
 
-  static List<String> _examples(AppLocalizations l) => [
-    l.chatSuggestion1,
-    l.chatSuggestion2,
-    l.chatSuggestion3,
-    l.chatSuggestion4,
-    l.chatSuggestion5,
-  ];
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final child = ref.watch(selectedChildProvider);
+    final picks = suggestedQuestions(
+      logs: ref.watch(logsProvider).value ?? const <DevelopmentLog>[],
+      now: DateTime.now(),
+      ageMonths: child?.ageInMonths,
+    );
+
+    return SectionCard(
+      title: l.chatSuggestionsTitle,
+      icon: Icons.auto_awesome_outlined,
+      action: Text(
+        l.chatSuggestionsHint,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: Warm.onCardSoft(theme.brightness),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final pick in picks)
+            _SuggestionRow(
+              question: pick.question(l),
+              reason: pick.reason(l),
+              onTap: () => onPick(pick.question(l)),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SuggestionRow extends StatelessWidget {
+  const _SuggestionRow({
+    required this.question,
+    required this.reason,
+    required this.onTap,
+  });
+
+  final String question;
+
+  /// Where the app got it from, or null when it came from nowhere in
+  /// particular. Said out loud rather than implied: a suggestion that claims
+  /// to know something has to show what it knows.
+  final String? reason;
+
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context);
-    return SectionCard(
-      title: l.chatSuggestionsTitle,
-      icon: Icons.forum_outlined,
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: [
-          for (final e in _examples(l))
-            ActionChip(label: Text(e), onPressed: () => onPick(e)),
-        ],
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: Warm.soft(theme.brightness),
+        borderRadius: BorderRadius.circular(Warm.chipRadius),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(Warm.chipRadius),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        question,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      if (reason case final why?) ...[
+                        const SizedBox(height: 3),
+                        Text(
+                          why,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: Warm.accent,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Icon(
+                  Icons.north_east,
+                  size: 16,
+                  color: Warm.onCardSoft(theme.brightness),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

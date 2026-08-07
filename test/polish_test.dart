@@ -100,9 +100,9 @@ void main() {
         await tester.tap(find.byIcon(Icons.auto_stories_outlined).first);
         await tester.pumpAndSettle();
         expect(find.text(l.diaryFeed.toUpperCase()), findsWidgets);
-        // The type filter is built from the model enum, which is exactly
-        // where a half-translated app shows its seams.
-        expect(find.text(l.logTypeMilestone), findsWidgets);
+        // The filter bar is the first thing on the screen, and its labels are
+        // exactly where a half-translated app shows its seams.
+        expect(find.text(l.diaryFilterDevelopment), findsWidgets);
         expect(find.text(l.commonAll), findsWidgets);
       });
     }

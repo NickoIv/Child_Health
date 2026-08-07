@@ -27,8 +27,43 @@ class DiaryScreen extends ConsumerStatefulWidget {
   ConsumerState<DiaryScreen> createState() => _DiaryScreenState();
 }
 
+/// The eight kinds of entry, in the four bundles a parent actually filters by.
+///
+/// Nine chips over two rows was the top third of the diary before anything of
+/// the diary had been read. And nobody asks for nappies-but-not-feeds: the
+/// question a parent opens the filter with is which *part* of the day she wants
+/// back — how he was looked after, how he was, what he learned, what somebody
+/// wrote down — and four of those fit on one line.
+///
+/// Every [LogType] belongs to exactly one bundle, which a test holds: a type
+/// nobody grouped would silently vanish from every filter but «Все».
+enum DiaryFilter {
+  care(Icons.water_drop_outlined, [
+    LogType.feeding,
+    LogType.nappy,
+    LogType.sleep,
+  ]),
+  health(Icons.thermostat, [LogType.illness, LogType.measurement]),
+  development(Icons.star_outline, [LogType.milestone]),
+  notes(Icons.notes, [LogType.note, LogType.question]);
+
+  const DiaryFilter(this.icon, this.types);
+
+  final IconData icon;
+  final List<LogType> types;
+
+  bool matches(DevelopmentLog log) => types.contains(log.type);
+
+  String localizedLabel(AppLocalizations l) => switch (this) {
+    DiaryFilter.care => l.diaryFilterCare,
+    DiaryFilter.health => l.diaryFilterHealth,
+    DiaryFilter.development => l.diaryFilterDevelopment,
+    DiaryFilter.notes => l.diaryFilterNotes,
+  };
+}
+
 class _DiaryScreenState extends ConsumerState<DiaryScreen> {
-  LogType? _filter;
+  DiaryFilter? _filter;
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +91,7 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen> {
     final logs = logsAsync.value ?? const <DevelopmentLog>[];
     final visible = _filter == null
         ? logs
-        : logs.where((l) => l.type == _filter).toList();
+        : logs.where(_filter!.matches).toList();
 
     return Scaffold(
       body: PageBody(
@@ -164,31 +199,105 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen> {
   }
 }
 
+/// One row, and it stays one row.
+///
+/// A [Wrap] here grew to whatever the longest translation needed — in Kazakh
+/// the old nine chips took three lines. Scrolling sideways costs a swipe on the
+/// rare occasion the last bundle is off-screen; wrapping cost the top of the
+/// diary on every visit.
 class _FilterBar extends StatelessWidget {
   const _FilterBar({required this.selected, required this.onChanged});
 
-  final LogType? selected;
-  final ValueChanged<LogType?> onChanged;
+  static const _height = 40.0;
+
+  final DiaryFilter? selected;
+  final ValueChanged<DiaryFilter?> onChanged;
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        FilterChip(
-          label: Text(l.commonAll),
-          selected: selected == null,
-          onSelected: (_) => onChanged(null),
-        ),
-        for (final t in LogType.values)
-          FilterChip(
-            label: Text(t.localizedLabel(l)),
-            selected: selected == t,
-            onSelected: (_) => onChanged(t),
+    return SizedBox(
+      height: _height,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.zero,
+        children: [
+          _Pill(
+            label: l.commonAll,
+            icon: Icons.all_inclusive,
+            selected: selected == null,
+            onTap: () => onChanged(null),
           ),
-      ],
+          for (final f in DiaryFilter.values)
+            _Pill(
+              label: f.localizedLabel(l),
+              icon: f.icon,
+              selected: selected == f,
+              onTap: () => onChanged(selected == f ? null : f),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A filter that is on, readable at arm's length.
+///
+/// [FilterChip] with an avatar could not do this: the icon keeps the label
+/// colour of an *unselected* chip when the chip is selected, so on the dark
+/// selected fill it disappeared. Drawing the pill means the icon and the text
+/// are always one colour.
+class _Pill extends StatelessWidget {
+  const _Pill({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    final isDark = brightness == Brightness.dark;
+    final ink = selected
+        ? (isDark ? Colors.black : Colors.white)
+        : Warm.onCard(brightness);
+
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: Material(
+        color: selected
+            ? (isDark ? Warm.accent : Warm.ink)
+            : Warm.soft(brightness),
+        borderRadius: BorderRadius.circular(Warm.chipRadius),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(Warm.chipRadius),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 16, color: ink),
+                const SizedBox(width: 7),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                    color: ink,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

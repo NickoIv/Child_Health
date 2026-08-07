@@ -1564,6 +1564,30 @@ abstract class AppLocalizations {
   /// **'Лента событий'**
   String get diaryFeed;
 
+  /// No description provided for @diaryFilterCare.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уход'**
+  String get diaryFilterCare;
+
+  /// No description provided for @diaryFilterHealth.
+  ///
+  /// In ru, this message translates to:
+  /// **'Здоровье'**
+  String get diaryFilterHealth;
+
+  /// No description provided for @diaryFilterDevelopment.
+  ///
+  /// In ru, this message translates to:
+  /// **'Развитие'**
+  String get diaryFilterDevelopment;
+
+  /// No description provided for @diaryFilterNotes.
+  ///
+  /// In ru, this message translates to:
+  /// **'Заметки'**
+  String get diaryFilterNotes;
+
   /// No description provided for @diaryEmpty.
   ///
   /// In ru, this message translates to:
@@ -2959,8 +2983,80 @@ abstract class AppLocalizations {
   /// No description provided for @chatSuggestionsTitle.
   ///
   /// In ru, this message translates to:
-  /// **'О чём спрашивают чаще всего'**
+  /// **'С чего начать'**
   String get chatSuggestionsTitle;
+
+  /// No description provided for @askTemperature.
+  ///
+  /// In ru, this message translates to:
+  /// **'Температура {value} — что делать и когда звонить врачу'**
+  String askTemperature(String value);
+
+  /// No description provided for @askWhyTemperature.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сегодня вы отметили {value}'**
+  String askWhyTemperature(String value);
+
+  /// No description provided for @askHardNight.
+  ///
+  /// In ru, this message translates to:
+  /// **'{n, plural, one{Ребёнок просыпался {n} раз за ночь — что можно сделать} few{Ребёнок просыпался {n} раза за ночь — что можно сделать} many{Ребёнок просыпался {n} раз за ночь — что можно сделать} other{Ребёнок просыпался {n} раза за ночь — что можно сделать}}'**
+  String askHardNight(int n);
+
+  /// No description provided for @askWhyHardNight.
+  ///
+  /// In ru, this message translates to:
+  /// **'{n, plural, one{Прошлой ночью {n} пробуждение} few{Прошлой ночью {n} пробуждения} many{Прошлой ночью {n} пробуждений} other{Прошлой ночью {n} пробуждения}}'**
+  String askWhyHardNight(int n);
+
+  /// No description provided for @askQuietNappies.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ребёнок давно не какал — когда это повод беспокоиться'**
+  String get askQuietNappies;
+
+  /// No description provided for @askWhyQuietNappies.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подгузник не отмечали больше суток'**
+  String get askWhyQuietNappies;
+
+  /// No description provided for @askNewbornFeeding.
+  ///
+  /// In ru, this message translates to:
+  /// **'Как понять, что новорождённый наедается'**
+  String get askNewbornFeeding;
+
+  /// No description provided for @askSleepNeeds.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сколько сна нужно ребёнку в этом возрасте'**
+  String get askSleepNeeds;
+
+  /// No description provided for @askSolids.
+  ///
+  /// In ru, this message translates to:
+  /// **'Когда начинать прикорм и с чего'**
+  String get askSolids;
+
+  /// No description provided for @askMilestones.
+  ///
+  /// In ru, this message translates to:
+  /// **'Что ребёнок обычно умеет в этом возрасте'**
+  String get askMilestones;
+
+  /// No description provided for @askWhyAge.
+  ///
+  /// In ru, this message translates to:
+  /// **'По возрасту малыша'**
+  String get askWhyAge;
+
+  /// No description provided for @chatSuggestionsHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Собрано из ваших записей'**
+  String get chatSuggestionsHint;
 
   /// No description provided for @chatSuggestion1.
   ///
@@ -3334,11 +3430,23 @@ abstract class AppLocalizations {
   /// **'Сегодня'**
   String get reflectionTitle;
 
+  /// No description provided for @reflectionFeedingsCount.
+  ///
+  /// In ru, this message translates to:
+  /// **'{n, plural, one{{n} кормление} few{{n} кормления} many{{n} кормлений} other{{n} кормления}}'**
+  String reflectionFeedingsCount(int n);
+
   /// No description provided for @reflectionSummary.
   ///
   /// In ru, this message translates to:
-  /// **'Сегодня было {feedings} кормлений и {sleep} сна. Это помогает видеть общую картину дня без подсчётов вручную.'**
-  String reflectionSummary(int feedings, String sleep);
+  /// **'Сегодня: {feedings} и {sleep} сна. Это помогает видеть картину дня, не считая в уме.'**
+  String reflectionSummary(String feedings, String sleep);
+
+  /// No description provided for @reflectionSummaryNoSleep.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сегодня: {feedings}. Сон за день никто не отмечал.'**
+  String reflectionSummaryNoSleep(String feedings);
 
   /// No description provided for @reflectionSupport.
   ///

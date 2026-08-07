@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/l10n/labels.dart';
+import '../../core/theme/app_sheet.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/development_log.dart';
 import '../../providers.dart';
@@ -21,13 +22,11 @@ Future<void> showNightSleepSheet(
   required String childId,
   DevelopmentLog? existing,
 }) {
-  return showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    showDragHandle: true,
-    builder: (_) => Padding(
+  return showAppSheet<void>(
+    context,
+    builder: (sheetContext) => Padding(
       padding: EdgeInsets.only(
-        bottom: MediaQuery.viewInsetsOf(context).bottom,
+        bottom: MediaQuery.viewInsetsOf(sheetContext).bottom,
       ),
       child: _NightSleepSheet(childId: childId, existing: existing),
     ),

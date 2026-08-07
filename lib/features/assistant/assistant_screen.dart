@@ -15,7 +15,6 @@ import '../family/moments_card.dart';
 import '../family/weekly_story_card.dart';
 import '../reports/export_sheet.dart';
 import '../shared/widgets.dart';
-import 'context_block.dart';
 
 /// Home of the knowledge base: search, red-flag check, and material picked
 /// for the child's current age.
@@ -44,10 +43,9 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
 
     return PageBody(
       children: [
-        // Above the search field: the facts a question about a child usually
-        // starts with, so she does not have to go and look them up first.
-        const ChildContextBlock(),
-        const SizedBox(height: Warm.majorGap),
+        // The five facts a question starts with used to be printed here as
+        // well as on the chat screen one tap away — the same block, the same
+        // numbers, twice. It belongs where a question is actually asked.
         _SearchField(
           controller: _controller,
           onChanged: (v) => setState(() => _query = v),

@@ -139,14 +139,14 @@ void main() {
     expect(find.text('перцентиль'), findsOneWidget);
   });
 
-  testWidgets('diary filter narrows the feed to one type', (tester) async {
+  testWidgets('diary filter narrows the feed to one bundle', (tester) async {
     await pumpApp(tester);
     await tester.tap(find.byIcon(Icons.auto_stories_outlined).first);
     await tester.pumpAndSettle();
 
     expect(find.text('Первое слово'), findsOneWidget);
 
-    await tester.tap(find.widgetWithText(FilterChip, 'Болезнь'));
+    await tester.tap(find.text('Здоровье'));
     await tester.pumpAndSettle();
 
     // Milestones are filtered out, illness entries remain.

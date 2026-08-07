@@ -400,6 +400,10 @@
   "noChildHint": "Расскажите о малыше — дальше приложение подстроится под его возраст и само составит календарь прививок",
   "addChild": "Добавить ребёнка",
   "diaryFeed": "Лента событий",
+  "diaryFilterCare": "Уход",
+  "diaryFilterHealth": "Здоровье",
+  "diaryFilterDevelopment": "Развитие",
+  "diaryFilterNotes": "Заметки",
   "diaryEmpty": "Здесь будет история малыша",
   "diaryEmptyHint": "Кормления и подгузники отмечаются кнопками на главной, а первое слово и первый зуб — здесь",
   "diaryAddEntry": "Добавить запись",
@@ -818,7 +822,47 @@
   "chatAiOff": "ИИ-помощник пока не подключён",
   "chatAiOffBody": "База знаний и проверка тревожных признаков работают без него — они не требуют интернета вообще.",
   "chatAiOffHow": "Чтобы включить ИИ, нужно развернуть бесплатный прокси на Cloudflare Workers и пересобрать приложение с его адресом. Инструкция — в файле worker/README.md.",
-  "chatSuggestionsTitle": "О чём спрашивают чаще всего",
+  "chatSuggestionsTitle": "С чего начать",
+  "askTemperature": "Температура {value} — что делать и когда звонить врачу",
+  "@askTemperature": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "askWhyTemperature": "Сегодня вы отметили {value}",
+  "@askWhyTemperature": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "askHardNight": "{n, plural, one{Ребёнок просыпался {n} раз за ночь — что можно сделать} few{Ребёнок просыпался {n} раза за ночь — что можно сделать} many{Ребёнок просыпался {n} раз за ночь — что можно сделать} other{Ребёнок просыпался {n} раза за ночь — что можно сделать}}",
+  "@askHardNight": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "askWhyHardNight": "{n, plural, one{Прошлой ночью {n} пробуждение} few{Прошлой ночью {n} пробуждения} many{Прошлой ночью {n} пробуждений} other{Прошлой ночью {n} пробуждения}}",
+  "@askWhyHardNight": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "askQuietNappies": "Ребёнок давно не какал — когда это повод беспокоиться",
+  "askWhyQuietNappies": "Подгузник не отмечали больше суток",
+  "askNewbornFeeding": "Как понять, что новорождённый наедается",
+  "askSleepNeeds": "Сколько сна нужно ребёнку в этом возрасте",
+  "askSolids": "Когда начинать прикорм и с чего",
+  "askMilestones": "Что ребёнок обычно умеет в этом возрасте",
+  "askWhyAge": "По возрасту малыша",
+  "chatSuggestionsHint": "Собрано из ваших записей",
   "chatSuggestion1": "Температура 38.5, что делать",
   "chatSuggestion2": "Сколько должен спать ребёнок в 6 месяцев",
   "chatSuggestion3": "Когда начинать прикорм",
@@ -929,13 +973,29 @@
   "suggestionNappy": "Давно не отмечали подгузник",
   "suggestionDismiss": "Скрыть",
   "reflectionTitle": "Сегодня",
-  "reflectionSummary": "Сегодня было {feedings} кормлений и {sleep} сна. Это помогает видеть общую картину дня без подсчётов вручную.",
+  "reflectionFeedingsCount": "{n, plural, one{{n} кормление} few{{n} кормления} many{{n} кормлений} other{{n} кормления}}",
+  "@reflectionFeedingsCount": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "reflectionSummary": "Сегодня: {feedings} и {sleep} сна. Это помогает видеть картину дня, не считая в уме.",
   "@reflectionSummary": {
     "placeholders": {
       "feedings": {
-        "type": "int"
+        "type": "String"
       },
       "sleep": {
+        "type": "String"
+      }
+    }
+  },
+  "reflectionSummaryNoSleep": "Сегодня: {feedings}. Сон за день никто не отмечал.",
+  "@reflectionSummaryNoSleep": {
+    "placeholders": {
+      "feedings": {
         "type": "String"
       }
     }

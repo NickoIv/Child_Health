@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/l10n/labels.dart';
+import '../../core/theme/app_sheet.dart';
 import '../../core/theme/app_snack.dart';
 import '../../core/theme/app_theme.dart';
 import '../../l10n/app_localizations.dart';
@@ -26,10 +27,8 @@ Future<void> showReminderSheet(
   required String childId,
   Reminder? existing,
 }) {
-  return showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    showDragHandle: true,
+  return showAppSheet<void>(
+    context,
     builder: (sheetContext) => Padding(
       // Lifts the name field clear of the keyboard. Measured from the sheet's
       // own context: reading the caller's as it is torn down throws while the

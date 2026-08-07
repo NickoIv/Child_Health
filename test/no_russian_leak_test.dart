@@ -218,6 +218,9 @@ void main() {
     testWidgets('$code — the child context block is clean', (tester) async {
       await pump(tester, locale);
       await openScreen(tester, (l) => l.navAssistant);
+      // The block lives on the chat screen now, and only there — it used to be
+      // printed on the hub as well, which is the duplication he asked to stop.
+      await openScreen(tester, (l) => l.assistantChat);
 
       // Only the block the app builds itself. The knowledge-base articles
       // below it are Russian medical content, and translating those is a

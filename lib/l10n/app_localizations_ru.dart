@@ -831,6 +831,18 @@ class AppLocalizationsRu extends AppLocalizations {
   String get diaryFeed => 'Лента событий';
 
   @override
+  String get diaryFilterCare => 'Уход';
+
+  @override
+  String get diaryFilterHealth => 'Здоровье';
+
+  @override
+  String get diaryFilterDevelopment => 'Развитие';
+
+  @override
+  String get diaryFilterNotes => 'Заметки';
+
+  @override
   String get diaryEmpty => 'Здесь будет история малыша';
 
   @override
@@ -1636,7 +1648,68 @@ class AppLocalizationsRu extends AppLocalizations {
       'Чтобы включить ИИ, нужно развернуть бесплатный прокси на Cloudflare Workers и пересобрать приложение с его адресом. Инструкция — в файле worker/README.md.';
 
   @override
-  String get chatSuggestionsTitle => 'О чём спрашивают чаще всего';
+  String get chatSuggestionsTitle => 'С чего начать';
+
+  @override
+  String askTemperature(String value) {
+    return 'Температура $value — что делать и когда звонить врачу';
+  }
+
+  @override
+  String askWhyTemperature(String value) {
+    return 'Сегодня вы отметили $value';
+  }
+
+  @override
+  String askHardNight(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Ребёнок просыпался $n раза за ночь — что можно сделать',
+      many: 'Ребёнок просыпался $n раз за ночь — что можно сделать',
+      few: 'Ребёнок просыпался $n раза за ночь — что можно сделать',
+      one: 'Ребёнок просыпался $n раз за ночь — что можно сделать',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String askWhyHardNight(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Прошлой ночью $n пробуждения',
+      many: 'Прошлой ночью $n пробуждений',
+      few: 'Прошлой ночью $n пробуждения',
+      one: 'Прошлой ночью $n пробуждение',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get askQuietNappies =>
+      'Ребёнок давно не какал — когда это повод беспокоиться';
+
+  @override
+  String get askWhyQuietNappies => 'Подгузник не отмечали больше суток';
+
+  @override
+  String get askNewbornFeeding => 'Как понять, что новорождённый наедается';
+
+  @override
+  String get askSleepNeeds => 'Сколько сна нужно ребёнку в этом возрасте';
+
+  @override
+  String get askSolids => 'Когда начинать прикорм и с чего';
+
+  @override
+  String get askMilestones => 'Что ребёнок обычно умеет в этом возрасте';
+
+  @override
+  String get askWhyAge => 'По возрасту малыша';
+
+  @override
+  String get chatSuggestionsHint => 'Собрано из ваших записей';
 
   @override
   String get chatSuggestion1 => 'Температура 38.5, что делать';
@@ -1846,8 +1919,26 @@ class AppLocalizationsRu extends AppLocalizations {
   String get reflectionTitle => 'Сегодня';
 
   @override
-  String reflectionSummary(int feedings, String sleep) {
-    return 'Сегодня было $feedings кормлений и $sleep сна. Это помогает видеть общую картину дня без подсчётов вручную.';
+  String reflectionFeedingsCount(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n кормления',
+      many: '$n кормлений',
+      few: '$n кормления',
+      one: '$n кормление',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String reflectionSummary(String feedings, String sleep) {
+    return 'Сегодня: $feedings и $sleep сна. Это помогает видеть картину дня, не считая в уме.';
+  }
+
+  @override
+  String reflectionSummaryNoSleep(String feedings) {
+    return 'Сегодня: $feedings. Сон за день никто не отмечал.';
   }
 
   @override

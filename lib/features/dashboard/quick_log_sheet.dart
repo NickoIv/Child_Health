@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/theme/app_sheet.dart';
 import '../../core/theme/app_snack.dart';
 import '../../core/l10n/labels.dart';
 import '../../core/theme/app_theme.dart';
@@ -65,10 +66,8 @@ Future<void> showQuickLogSheet(
   required String childId,
   bool? startNow,
 }) {
-  return showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    showDragHandle: true,
+  return showAppSheet<void>(
+    context,
     builder: (sheetContext) => Padding(
       // Lifts the note field clear of the keyboard rather than letting it be
       // typed into blind. Measured from the sheet's own context: reading the

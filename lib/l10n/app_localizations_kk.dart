@@ -824,6 +824,18 @@ class AppLocalizationsKk extends AppLocalizations {
   String get diaryFeed => 'Оқиғалар лентасы';
 
   @override
+  String get diaryFilterCare => 'Күтім';
+
+  @override
+  String get diaryFilterHealth => 'Денсаулық';
+
+  @override
+  String get diaryFilterDevelopment => 'Даму';
+
+  @override
+  String get diaryFilterNotes => 'Жазбалар';
+
+  @override
   String get diaryEmpty => 'Мұнда бөбектің тарихы болады';
 
   @override
@@ -1617,7 +1629,62 @@ class AppLocalizationsKk extends AppLocalizations {
       'ЖИ-ді қосу үшін Cloudflare Workers-те тегін проксиді орналастырып, қосымшаны оның мекенжайымен қайта жинау керек. Нұсқаулық — worker/README.md файлында.';
 
   @override
-  String get chatSuggestionsTitle => 'Ең жиі не сұрайды';
+  String get chatSuggestionsTitle => 'Неден бастаймыз';
+
+  @override
+  String askTemperature(String value) {
+    return 'Температура $value — не істеу керек және қашан дәрігерге қоңырау шалу';
+  }
+
+  @override
+  String askWhyTemperature(String value) {
+    return 'Бүгін сіз $value деп белгіледіңіз';
+  }
+
+  @override
+  String askHardNight(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Бөбек түнде $n рет оянды — не көмектеседі',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String askWhyHardNight(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Өткен түні $n рет оянған',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get askQuietNappies =>
+      'Бөбек ұзақ дәретке отырмады — қашан алаңдау керек';
+
+  @override
+  String get askWhyQuietNappies => 'Жаялық бір тәуліктен астам белгіленбеген';
+
+  @override
+  String get askNewbornFeeding => 'Нәресте тойып жатқанын қалай білуге болады';
+
+  @override
+  String get askSleepNeeds => 'Осы жаста бөбекке қанша ұйқы керек';
+
+  @override
+  String get askSolids => 'Қосымша тамақты қашан және неден бастау керек';
+
+  @override
+  String get askMilestones => 'Осы жаста бөбек әдетте не істей алады';
+
+  @override
+  String get askWhyAge => 'Бөбектің жасы бойынша';
+
+  @override
+  String get chatSuggestionsHint => 'Сіздің жазбаларыңыздан жиналған';
 
   @override
   String get chatSuggestion1 => 'Дене қызуы 38.5, не істеу керек';
@@ -1828,8 +1895,23 @@ class AppLocalizationsKk extends AppLocalizations {
   String get reflectionTitle => 'Бүгін';
 
   @override
-  String reflectionSummary(int feedings, String sleep) {
-    return 'Бүгін $feedings рет тамақтандыру және $sleep ұйқы тіркелді. Бұл күннің жалпы көрінісін қолмен есептемей көруге көмектеседі.';
+  String reflectionFeedingsCount(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n рет тамақтандыру',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String reflectionSummary(String feedings, String sleep) {
+    return 'Бүгін: $feedings және $sleep ұйқы. Бұл күннің көрінісін қолмен есептемей көруге көмектеседі.';
+  }
+
+  @override
+  String reflectionSummaryNoSleep(String feedings) {
+    return 'Бүгін: $feedings. Ұйқы белгіленбеген.';
   }
 
   @override

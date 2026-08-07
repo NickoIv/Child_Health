@@ -827,6 +827,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get diaryFeed => 'Event feed';
 
   @override
+  String get diaryFilterCare => 'Care';
+
+  @override
+  String get diaryFilterHealth => 'Health';
+
+  @override
+  String get diaryFilterDevelopment => 'Development';
+
+  @override
+  String get diaryFilterNotes => 'Notes';
+
+  @override
   String get diaryEmpty => 'Your baby\'s story will live here';
 
   @override
@@ -1625,7 +1637,64 @@ class AppLocalizationsEn extends AppLocalizations {
       'To switch the AI on, deploy the free proxy on Cloudflare Workers and rebuild the app with its address. The instructions are in worker/README.md.';
 
   @override
-  String get chatSuggestionsTitle => 'What people ask most often';
+  String get chatSuggestionsTitle => 'Where to start';
+
+  @override
+  String askTemperature(String value) {
+    return 'Temperature $value — what to do and when to call a doctor';
+  }
+
+  @override
+  String askWhyTemperature(String value) {
+    return 'You logged $value today';
+  }
+
+  @override
+  String askHardNight(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'The baby woke $n times last night — what can help',
+      one: 'The baby woke $n time last night — what can help',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String askWhyHardNight(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n wakings last night',
+      one: '$n waking last night',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get askQuietNappies =>
+      'No bowel movement for a while — when is it worth worrying';
+
+  @override
+  String get askWhyQuietNappies => 'No nappy logged for over a day';
+
+  @override
+  String get askNewbornFeeding => 'How to tell a newborn is getting enough';
+
+  @override
+  String get askSleepNeeds => 'How much sleep a baby needs at this age';
+
+  @override
+  String get askSolids => 'When to start solids, and with what';
+
+  @override
+  String get askMilestones => 'What babies usually do at this age';
+
+  @override
+  String get askWhyAge => 'For your baby\'s age';
+
+  @override
+  String get chatSuggestionsHint => 'Drawn from your own entries';
 
   @override
   String get chatSuggestion1 => 'Temperature is 38.5, what do I do';
@@ -1836,8 +1905,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reflectionTitle => 'Today';
 
   @override
-  String reflectionSummary(int feedings, String sleep) {
-    return 'Today there were $feedings feedings and $sleep of sleep. This helps you see the overall picture of the day without counting manually.';
+  String reflectionFeedingsCount(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n feeds',
+      one: '$n feed',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String reflectionSummary(String feedings, String sleep) {
+    return 'Today: $feedings and $sleep of sleep. It helps to see the shape of the day without counting it up.';
+  }
+
+  @override
+  String reflectionSummaryNoSleep(String feedings) {
+    return 'Today: $feedings. Nobody logged any sleep.';
   }
 
   @override

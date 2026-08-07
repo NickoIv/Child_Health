@@ -4,10 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/care/daily_reflection.dart';
 import '../../core/care/reflection_store.dart';
 import '../../core/l10n/labels.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/units/units.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/development_log.dart';
 import '../../providers.dart';
+import '../shared/widgets.dart';
 
 /// The day added up, once, in the evening.
 ///
@@ -38,107 +40,134 @@ class ReflectionCard extends ConsumerWidget {
 
     final theme = Theme.of(context);
     final l = AppLocalizations.of(context);
-    final accent = theme.colorScheme.primary;
-    final sleep = localizedDuration(l, day.sleepMinutes);
 
     return Padding(
       // The gap belongs to the card: with nothing to reflect on it takes no
       // room at all, not even a blank line.
       padding: const EdgeInsets.only(top: 16),
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(14, 8, 8, 14),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.primaryContainer.withValues(alpha: 0.35),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SectionLabel(text: l.reflectionTitle),
+          Container(
+            padding: const EdgeInsets.fromLTRB(18, 14, 10, 18),
+            decoration: BoxDecoration(
+              // White on the warm page, like every other card in the app. The
+              // lavender wash this replaces was a fifth of the page's own
+              // colour laid over the page — which is to say it was the page,
+              // and the day's figures were floating on nothing.
+              color: Warm.card(theme.brightness),
+              borderRadius: BorderRadius.circular(Warm.cardRadius),
+              boxShadow: Warm.shadow(theme.brightness),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.nights_stay_outlined, size: 18, color: accent),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    l.reflectionTitle,
-                    style: theme.textTheme.titleSmall,
-                  ),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.nights_stay_outlined,
+                      size: 19,
+                      color: Warm.accent,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        summaryLine(l, day),
+                        style: theme.textTheme.titleMedium,
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: l.suggestionDismiss,
+                      visualDensity: VisualDensity.compact,
+                      onPressed: () => ref
+                          .read(reflectionStoreProvider.notifier)
+                          .dismiss(now: moment),
+                      icon: const Icon(Icons.close, size: 18),
+                    ),
+                  ],
                 ),
-                IconButton(
-                  tooltip: l.suggestionDismiss,
-                  visualDensity: VisualDensity.compact,
-                  onPressed: () => ref
-                      .read(reflectionStoreProvider.notifier)
-                      .dismiss(now: moment),
-                  icon: const Icon(Icons.close, size: 18),
+                const SizedBox(height: 16),
+                // The figures large enough to be taken in without reading:
+                // this card is opened at the end of a day, by someone who has
+                // no attention left to spend on a paragraph.
+                Wrap(
+                  spacing: 26,
+                  runSpacing: 14,
+                  children: [
+                    _Figure(
+                      value: '${day.feedings}',
+                      label: l.countFeedings,
+                    ),
+                    if (day.sleepMinutes > 0)
+                      _Figure(
+                        value: localizedDuration(l, day.sleepMinutes),
+                        label: l.countSleep,
+                      ),
+                    _Figure(
+                      value: '${day.nappies}',
+                      label: l.reflectionNappies,
+                    ),
+                    // A reading that was taken, with no verdict attached to
+                    // the number.
+                    if (day.hasTemperature)
+                      _Figure(
+                        value: Units.formatTemperature(day.temperatureC!),
+                        label: l.quickSheetTemperature.toLowerCase(),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.favorite_outline,
+                      size: 15,
+                      color: Warm.accent,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        l.reflectionSupport,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: Warm.onCardSoft(theme.brightness),
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-            Padding(
-              padding: const EdgeInsets.only(left: 28, right: 6),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Wrap(
-                    spacing: 16,
-                    runSpacing: 6,
-                    children: [
-                      _Figure(value: '${day.feedings}', label: l.countFeedings),
-                      if (day.sleepMinutes > 0)
-                        _Figure(value: sleep, label: l.countSleep),
-                      _Figure(
-                        value: '${day.nappies}',
-                        label: l.reflectionNappies,
-                      ),
-                      // A reading that was taken, with no verdict attached to
-                      // the number.
-                      if (day.hasTemperature)
-                        _Figure(
-                          value: Units.formatTemperature(day.temperatureC!),
-                          label: l.quickSheetTemperature.toLowerCase(),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    l.reflectionSummary(day.feedings, sleep),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                      height: 1.35,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(
-                        Icons.favorite_outline,
-                        size: 15,
-                        color: accent,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          l.reflectionSupport,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            height: 1.35,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
-/// A number and what it counts, side by side rather than stacked: four of
-/// these in a column would make the card as tall as the dashboard.
+/// The day in one line, and it has to be a line somebody could have said.
+///
+/// It used to read «Сегодня было 1 кормлений и — сна»: an int dropped into a
+/// sentence that only had a plural form, and an empty duration printed as the
+/// dash [localizedDuration] returns for nothing. Both halves are now decided
+/// here — the count is pluralised, and a day with no sleep recorded gets a
+/// sentence that does not mention sleep.
+///
+/// Kept out of the widget so a test can read it without building anything.
+String summaryLine(AppLocalizations l, DailyReflection day) {
+  final feedings = l.reflectionFeedingsCount(day.feedings);
+  return day.sleepMinutes > 0
+      ? l.reflectionSummary(feedings, localizedDuration(l, day.sleepMinutes))
+      : l.reflectionSummaryNoSleep(feedings);
+}
+
+/// A number over what it counts.
+///
+/// Stacked rather than side by side, and at the size of a heading: the figure
+/// is the thing being read, and beside a caption at the same weight it was
+/// simply another word in a row of words.
 class _Figure extends StatelessWidget {
   const _Figure({required this.value, required this.label});
 
@@ -148,22 +177,21 @@ class _Figure extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Row(
+    return Column(
       mainAxisSize: MainAxisSize.min,
-      textBaseline: TextBaseline.alphabetic,
-      crossAxisAlignment: CrossAxisAlignment.baseline,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           value,
-          style: theme.textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.w700,
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontFeatures: AppTheme.tabular,
           ),
         ),
-        const SizedBox(width: 4),
+        const SizedBox(height: 2),
         Text(
           label,
-          style: theme.textTheme.labelSmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: Warm.onCardSoft(theme.brightness),
           ),
         ),
       ],

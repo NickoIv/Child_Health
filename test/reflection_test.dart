@@ -178,11 +178,18 @@ void main() {
       await pump(tester, logs: aDay());
       final l = await AppLocalizations.delegate.load(defaultLocale);
 
-      expect(find.text(l.reflectionTitle), findsOneWidget);
+      // The heading is a small-caps label over the card, so it is on screen
+      // in upper case.
+      expect(find.text(l.reflectionTitle.toUpperCase()), findsOneWidget);
       expect(find.text('3'), findsOneWidget); // feedings
       expect(find.text(l.countFeedings), findsOneWidget);
       expect(find.text(l.reflectionNappies), findsOneWidget);
-      expect(find.text(l.reflectionSummary(3, '2 ч 15 мин')), findsOneWidget);
+      expect(
+        find.text(
+          l.reflectionSummary(l.reflectionFeedingsCount(3), '2 ч 15 мин'),
+        ),
+        findsOneWidget,
+      );
       expect(find.text(l.reflectionSupport), findsOneWidget);
     });
 
@@ -221,6 +228,56 @@ void main() {
     });
   });
 
+  group('the sentence', () {
+    DailyReflection day({required int feedings, required int sleepMinutes}) =>
+        DailyReflection(
+          feedings: feedings,
+          sleepMinutes: sleepMinutes,
+          nappies: 2,
+          events: 6,
+        );
+
+    test('agrees with the number in front of it', () async {
+      final l = await AppLocalizations.delegate.load(defaultLocale);
+
+      // The bug this replaces printed «было 1 кормлений» — a plural form with
+      // a one in it, on the card a parent reads at the end of the day.
+      expect(
+        summaryLine(l, day(feedings: 1, sleepMinutes: 60)),
+        contains('1 кормление'),
+      );
+      expect(
+        summaryLine(l, day(feedings: 3, sleepMinutes: 60)),
+        contains('3 кормления'),
+      );
+      expect(
+        summaryLine(l, day(feedings: 8, sleepMinutes: 60)),
+        contains('8 кормлений'),
+      );
+    });
+
+    test('says nothing about sleep nobody recorded', () async {
+      for (final locale in supportedLocales) {
+        final l = await AppLocalizations.delegate.load(locale);
+        final line = summaryLine(l, day(feedings: 4, sleepMinutes: 0));
+
+        // The dash is what localizedDuration returns for nothing, and it was
+        // going straight into the sentence: «и — сна».
+        expect(line, isNot(contains('—')), reason: locale.languageCode);
+        expect(line, equals(l.reflectionSummaryNoSleep(
+          l.reflectionFeedingsCount(4),
+        )), reason: locale.languageCode);
+      }
+    });
+
+    test('spells the duration out when there is one', () async {
+      final l = await AppLocalizations.delegate.load(defaultLocale);
+
+      expect(summaryLine(l, day(feedings: 4, sleepMinutes: 135)), contains('2'));
+      expect(summaryLine(l, day(feedings: 4, sleepMinutes: 135)), contains('15'));
+    });
+  });
+
   test('nothing in the wording reads as advice or a verdict', () async {
     // A guardrail on the copy: this card counts, and the moment it starts
     // telling a parent what her numbers mean it has become something else.
@@ -234,7 +291,8 @@ void main() {
       final l = await AppLocalizations.delegate.load(locale);
       final copy = [
         l.reflectionTitle,
-        l.reflectionSummary(8, '5 h'),
+        l.reflectionSummary(l.reflectionFeedingsCount(8), '5 h'),
+        l.reflectionSummaryNoSleep(l.reflectionFeedingsCount(1)),
         l.reflectionSupport,
         l.reflectionNappies,
       ].join(' ').toLowerCase();
