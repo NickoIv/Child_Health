@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/theme/app_snack.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/development_log.dart';
 import '../../providers.dart';
@@ -156,12 +157,7 @@ class _ExportSheetState extends ConsumerState<_ExportSheet> {
     if (!mounted) return;
     Navigator.of(context).pop();
 
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(l.reportReady),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    messenger.showSnackBar(appSnack(l.reportReady, kind: SnackKind.done));
 
     // Straight to the share sheet on a phone, straight to the downloads
     // folder in a browser. Nothing is uploaded on either.
@@ -173,7 +169,9 @@ class _ExportSheetState extends ConsumerState<_ExportSheet> {
     } catch (_) {
       // The file exists and the sheet has gone; all that failed is the
       // handover, and there is nothing left to retry into.
-      messenger.showSnackBar(SnackBar(content: Text(l.reportShareFailed)));
+      messenger.showSnackBar(
+        appSnack(l.reportShareFailed, kind: SnackKind.problem),
+      );
     }
   }
 }

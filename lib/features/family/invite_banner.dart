@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/theme/app_snack.dart';
 import '../../core/theme/app_theme.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/family_member.dart';
@@ -109,7 +110,9 @@ class _InviteBannerState extends ConsumerState<InviteBanner> {
           .read(familyRepositoryProvider)
           .accept(invitation, ref.read(currentUidProvider));
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(content: Text(l.familyAcceptedToast)));
+      messenger.showSnackBar(
+        appSnack(l.familyAcceptedToast, kind: SnackKind.done),
+      );
     } finally {
       if (mounted) setState(() => _accepting = false);
     }

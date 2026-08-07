@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/theme/app_snack.dart';
 import '../../core/analytics/weekly_story.dart';
 import '../../core/l10n/labels.dart';
 import '../../core/theme/app_theme.dart';
@@ -244,12 +245,7 @@ class _ExportButtonState extends ConsumerState<_ExportButton> {
 
       if (!mounted) return;
       setState(() => _building = false);
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(l.storyPdfReady),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+      messenger.showSnackBar(appSnack(l.storyPdfReady, kind: SnackKind.done));
 
       // Share sheet on a phone, downloads folder in a browser. Nothing is
       // uploaded on either.
@@ -260,7 +256,9 @@ class _ExportButtonState extends ConsumerState<_ExportButton> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _building = false);
-      messenger.showSnackBar(SnackBar(content: Text(friendlyError(l, e))));
+      messenger.showSnackBar(
+        appSnack(friendlyError(l, e), kind: SnackKind.problem),
+      );
     }
   }
 }

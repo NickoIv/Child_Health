@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/theme/app_snack.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/theme/motion.dart';
 import '../../core/voice/voice_commands.dart';
 import '../../l10n/app_localizations.dart';
 import '../../providers.dart';
@@ -217,14 +217,9 @@ class _QuickDictationState extends ConsumerState<QuickDictationField> {
       _dismiss?.cancel();
       messenger.hideCurrentSnackBar();
       final shown = messenger.showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const SuccessCheck(),
-              const SizedBox(width: 10),
-              Expanded(child: Text(l.quickSaved(voiceSummary(l, command)))),
-            ],
-          ),
+        appSnack(
+          l.quickSaved(voiceSummary(l, command)),
+          kind: SnackKind.done,
           // A ceiling only. The real dismissal is the timer below, because
           // the messenger's own one is set when a snackbar finishes
           // arriving — and a snackbar that replaced another never gets one
@@ -250,7 +245,9 @@ class _QuickDictationState extends ConsumerState<QuickDictationField> {
       if (!mounted) return;
       setState(() => _saving = false);
       messenger.hideCurrentSnackBar();
-      messenger.showSnackBar(SnackBar(content: Text(friendlyError(l, e))));
+      messenger.showSnackBar(
+        appSnack(friendlyError(l, e), kind: SnackKind.problem),
+      );
     }
   }
 }

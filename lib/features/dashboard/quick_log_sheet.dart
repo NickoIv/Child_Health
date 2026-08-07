@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/theme/app_snack.dart';
 import '../../core/l10n/labels.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/motion.dart';
@@ -432,7 +433,9 @@ class _QuickLogSheetState extends ConsumerState<_QuickLogSheet> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      messenger.showSnackBar(SnackBar(content: Text(friendlyError(l, e))));
+      messenger.showSnackBar(
+        appSnack(friendlyError(l, e), kind: SnackKind.problem),
+      );
       return;
     }
 
@@ -440,18 +443,13 @@ class _QuickLogSheetState extends ConsumerState<_QuickLogSheet> {
     Navigator.of(context).pop();
 
     messenger.showSnackBar(
-      SnackBar(
-        // The tick draws itself in beside the sentence rather than in front
-        // of it: the sheet is already gone and her hands are already back on
-        // the child, so this has to be readable at a glance and gone.
-        content: Row(
-          children: [
-            const SuccessCheck(),
-            const SizedBox(width: 10),
-            Expanded(child: Text(confirmation)),
-          ],
-        ),
-        duration: const Duration(seconds: 2),
+      // The tick draws itself in beside the sentence rather than in front of
+      // it: the sheet is already gone and her hands are already back on the
+      // child, so this has to be readable at a glance and gone.
+      appSnack(
+        confirmation,
+        kind: SnackKind.done,
+        duration: const Duration(seconds: 3),
         action: articleId == null
             ? null
             : SnackBarAction(

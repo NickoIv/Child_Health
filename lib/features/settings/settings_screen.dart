@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/app_info.dart';
+import '../../core/theme/app_snack.dart';
 import '../../core/l10n/app_locale.dart';
 import '../../core/l10n/auth_errors.dart';
 import '../../core/l10n/labels.dart';
@@ -294,6 +296,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ],
           ),
         ),
+        const SizedBox(height: 16),
+
+        // Last card on the last screen, which is where a credit belongs: it
+        // is the answer to "who made this", asked once, by someone who has
+        // already gone looking for it.
+        SectionCard(
+          title: l.settingsAbout,
+          icon: Icons.info_outline,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _AboutRow(label: l.settingsAuthor, value: AppInfo.author),
+              const SizedBox(height: 10),
+              _AboutRow(label: l.settingsVersion, value: AppInfo.version),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -364,13 +383,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   void _tell(String message, {bool error = false}) {
     if (!mounted) return;
-    final scheme = Theme.of(context).colorScheme;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: error ? scheme.errorContainer : null,
-        showCloseIcon: true,
-      ),
+    ScaffoldMessenger.of(context).showApp(
+      message,
+      kind: error ? SnackKind.problem : SnackKind.done,
     );
   }
 
@@ -471,6 +486,41 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 const [],
           ),
         );
+  }
+}
+
+/// One fact about the app: a small-caps label and the fact itself.
+class _AboutRow extends StatelessWidget {
+  const _AboutRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      children: [
+        SizedBox(
+          width: 96,
+          child: Text(
+            label.toUpperCase(),
+            style: AppTheme.microLabel(theme.brightness),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: Warm.onCard(theme.brightness),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 

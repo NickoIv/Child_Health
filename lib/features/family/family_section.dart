@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/theme/app_snack.dart';
 import '../../core/theme/app_theme.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/family_member.dart';
@@ -178,7 +179,7 @@ class _FamilySectionState extends ConsumerState<FamilySection> {
       );
       if (!mounted) return;
       _email.clear();
-      messenger.showSnackBar(SnackBar(content: Text(l.familyInviteSent)));
+      messenger.showSnackBar(appSnack(l.familyInviteSent, kind: SnackKind.done));
     } catch (e) {
       if (!mounted) return;
       setState(() => _error = friendlyError(l, e));

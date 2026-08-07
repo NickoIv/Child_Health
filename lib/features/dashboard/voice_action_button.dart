@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/theme/app_snack.dart';
 import '../../core/l10n/labels.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/motion.dart';
@@ -297,8 +298,8 @@ class _VoiceActionButtonState extends ConsumerState<VoiceActionButton> {
     // her — so wait, and say so, rather than blaming the room.
     if (dictation.busy) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLocalizations.of(context).voiceBusy),
+        appSnack(
+          AppLocalizations.of(context).voiceBusy,
           duration: const Duration(seconds: 2),
         ),
       );
@@ -394,11 +395,9 @@ class _VoiceActionButtonState extends ConsumerState<VoiceActionButton> {
     String? reason,
   ) {
     messenger.showSnackBar(
-      SnackBar(
-        content: Text(
-          reason == null ? l.voiceUnavailable : '${l.voiceUnavailable} ($reason)',
-        ),
-        duration: const Duration(seconds: 6),
+      appSnack(
+        reason == null ? l.voiceUnavailable : '${l.voiceUnavailable} ($reason)',
+        kind: SnackKind.problem,
       ),
     );
   }
@@ -650,21 +649,18 @@ class _ConfirmSheetState extends ConsumerState<_ConfirmSheet> {
       if (!mounted) return;
       Navigator.of(context).pop();
       messenger.showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const SuccessCheck(),
-              const SizedBox(width: 10),
-              Expanded(child: Text(l.quickSaved(voiceSummary(l, widget.command)))),
-            ],
-          ),
-          duration: const Duration(seconds: 2),
+        appSnack(
+          l.quickSaved(voiceSummary(l, widget.command)),
+          kind: SnackKind.done,
+          duration: const Duration(seconds: 3),
         ),
       );
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      messenger.showSnackBar(SnackBar(content: Text(friendlyError(l, e))));
+      messenger.showSnackBar(
+        appSnack(friendlyError(l, e), kind: SnackKind.problem),
+      );
     }
   }
 }

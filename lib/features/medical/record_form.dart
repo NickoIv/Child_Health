@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../core/theme/app_snack.dart';
 import '../../core/l10n/labels.dart';
 import '../../l10n/app_localizations.dart';
 import '../../core/photos/compression.dart';
@@ -286,12 +287,11 @@ class _MedicalRecordFormState extends ConsumerState<MedicalRecordForm> {
       final parsed = draft.toResult();
       if (parsed == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              AppLocalizations.of(
-                context,
-              ).medicalRowInvalid(draft.name.text.trim()),
-            ),
+          appSnack(
+            AppLocalizations.of(
+              context,
+            ).medicalRowInvalid(draft.name.text.trim()),
+            kind: SnackKind.problem,
           ),
         );
         return;

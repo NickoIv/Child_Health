@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../core/theme/app_snack.dart';
 import '../../core/theme/app_theme.dart';
 import '../../l10n/app_localizations.dart';
 import '../../core/l10n/labels.dart';
@@ -200,10 +201,12 @@ Future<void> _attachPhoto(
     }
   } on PhotoTooLargeException catch (e) {
     messenger?.showSnackBar(
-      SnackBar(content: Text(photoProblemText(l, e.problem))),
+      appSnack(photoProblemText(l, e.problem), kind: SnackKind.problem),
     );
   } catch (e) {
-    messenger?.showSnackBar(SnackBar(content: Text(l.photoSaveFailed('$e'))));
+    messenger?.showSnackBar(
+      appSnack(l.photoSaveFailed('$e'), kind: SnackKind.problem),
+    );
   }
 }
 
@@ -410,10 +413,9 @@ class _ChildFormDialogState extends State<_ChildFormDialog> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_birthDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            AppLocalizations.of(context).childBirthDateRequired,
-          ),
+        appSnack(
+          AppLocalizations.of(context).childBirthDateRequired,
+          kind: SnackKind.problem,
         ),
       );
       return;

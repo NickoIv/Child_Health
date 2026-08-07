@@ -1,5 +1,6 @@
 name: child_health_tracker
 description: "Child Health Tracker - calendar of a child's development and health"
+# Author: Ивашикин Николай
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev

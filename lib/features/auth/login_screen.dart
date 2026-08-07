@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart'
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/theme/app_snack.dart';
 import '../../core/l10n/auth_errors.dart';
 import '../../data/auth_repository.dart';
 import '../../l10n/app_localizations.dart';
@@ -326,8 +327,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       await ref.read(authRepositoryProvider).sendPasswordReset(email);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(AppLocalizations.of(context).authResetSent(email)),
+          appSnack(
+            AppLocalizations.of(context).authResetSent(email),
+            kind: SnackKind.done,
           ),
         );
       }
