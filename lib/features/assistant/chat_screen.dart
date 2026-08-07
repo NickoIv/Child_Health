@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../ai/assistant_service.dart';
+import '../../ai/conversation.dart';
 import '../../core/theme/app_theme.dart';
 import '../../knowledge/article.dart';
 import '../../providers.dart';
@@ -140,6 +141,25 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     });
   }
 
+  /// The thread so far, minus the question being sent.
+  ///
+  /// Only real exchanges travel: an emergency card and an "unavailable"
+  /// notice are the app talking, not the assistant, and replaying them as
+  /// model turns would teach it to produce them.
+  List<ChatTurn> _history() {
+    final turns = <ChatTurn>[];
+    for (final turn in _turns) {
+      if (turn.isQuestion) {
+        turns.add(ChatTurn.parent(turn.text));
+      } else if (turn.reply case AssistantAnswer(:final text)) {
+        turns.add(ChatTurn.assistant(text));
+      }
+    }
+    // The question just appended to _turns is the one being asked.
+    if (turns.isNotEmpty && turns.last.isParent) turns.removeLast();
+    return turns;
+  }
+
   Future<void> _send(String raw) async {
     final question = raw.trim();
     if (question.isEmpty || _busy) return;
@@ -159,13 +179,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         .ask(
           question: question,
           ageMonths: child?.ageInMonths,
-          childContext: child == null
-              ? null
-              : childContextLine(
-                  name: child.name,
-                  ageMonths: child.ageInMonths,
-                  gender: child.gender.label,
-                ),
+          childContext: ref.read(assistantChildContextProvider),
+          // Everything before the question just added, so a follow-up like
+          // «а если не поможет?» is answered instead of misread.
+          history: _history(),
         );
 
     if (!mounted) return;

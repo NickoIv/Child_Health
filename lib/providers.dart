@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'ai/ai_config.dart';
 import 'ai/assistant_service.dart';
+import 'ai/child_snapshot.dart';
 import 'core/analytics/daily_care.dart';
 import 'core/analytics/daily_digest.dart';
 import 'core/analytics/illness_stats.dart';
@@ -367,6 +368,22 @@ final assistantServiceProvider = Provider<AssistantService>((ref) {
   return AiConfig.isConfigured
       ? GeminiAssistantService()
       : const DisabledAssistantService();
+});
+
+/// What the assistant is told about the child before it answers anything.
+///
+/// The same entries the dashboard draws — measurements, today's care, the
+/// week, sick days, the next dose — rendered for the prompt. Null when no
+/// child is selected, which is the only case where the question travels
+/// without any context at all. See `ai/child_snapshot.dart`.
+final assistantChildContextProvider = Provider<String?>((ref) {
+  final child = ref.watch(selectedChildProvider);
+  if (child == null) return null;
+  return childSnapshot(
+    child: child,
+    logs: ref.watch(logsProvider).value ?? const <DevelopmentLog>[],
+    reminders: ref.watch(remindersProvider).value ?? const <Reminder>[],
+  );
 });
 
 // --- Derived views --------------------------------------------------------

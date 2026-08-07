@@ -1,8 +1,10 @@
 import 'dart:convert';
 
 import 'package:child_health_tracker/ai/assistant_service.dart';
+import 'package:child_health_tracker/ai/child_snapshot.dart';
 import 'package:child_health_tracker/ai/prompt.dart';
 import 'package:child_health_tracker/ai/rag.dart';
+import 'package:child_health_tracker/models/child.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -153,10 +155,15 @@ void main() {
       await service.ask(
         question: 'сколько спать',
         ageMonths: 6,
-        childContext: childContextLine(
-          name: 'Айгерим',
-          ageMonths: 6,
-          gender: 'Девочка',
+        childContext: childSnapshot(
+          child: Child(
+            id: 'c',
+            parentUid: 'u',
+            name: 'Айгерим',
+            birthDate: DateTime(2026, 2, 2),
+            gender: Gender.female,
+          ),
+          now: DateTime(2026, 8, 2),
         ),
       );
 

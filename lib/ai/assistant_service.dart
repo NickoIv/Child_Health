@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import '../knowledge/article.dart';
 import '../knowledge/triage.dart';
 import 'ai_config.dart';
+import 'conversation.dart';
 import 'prompt.dart';
 import 'rag.dart';
 
@@ -41,10 +42,12 @@ class AssistantUnavailable extends AssistantReply {
 abstract class AssistantService {
   bool get isConfigured;
 
+  /// [history] is the thread so far, oldest first, excluding [question].
   Future<AssistantReply> ask({
     required String question,
     int? ageMonths,
     String? childContext,
+    List<ChatTurn> history = const [],
   });
 }
 
@@ -149,6 +152,7 @@ class GeminiAssistantService implements AssistantService {
     required String question,
     int? ageMonths,
     String? childContext,
+    List<ChatTurn> history = const [],
   }) async {
     final trimmed = question.trim();
     if (trimmed.isEmpty) {
@@ -170,6 +174,10 @@ class GeminiAssistantService implements AssistantService {
     }
 
     final context = retrieveFor(trimmed, ageMonths: ageMonths);
+    // Retrieval runs on this question alone, on purpose. Searching the whole
+    // thread drags the articles of the previous topic into the answer to the
+    // next one, and the base is the only thing the model may answer from.
+    final past = trimHistory(history);
     final body = jsonEncode({
       'system': systemPrompt,
       'prompt': buildUserPrompt(
@@ -177,6 +185,7 @@ class GeminiAssistantService implements AssistantService {
         knowledgeBlock: context.promptBlock,
         childContext: childContext,
       ),
+      if (past.isNotEmpty) 'history': [for (final t in past) t.toJson()],
     });
 
     try {
@@ -236,6 +245,7 @@ class DisabledAssistantService implements AssistantService {
     required String question,
     int? ageMonths,
     String? childContext,
+    List<ChatTurn> history = const [],
   }) async {
     final matched = detectEmergencyPhrases(question);
     if (matched.isNotEmpty) return AssistantEmergency(matched: matched);
@@ -245,24 +255,6 @@ class DisabledAssistantService implements AssistantService {
       isConfigurationIssue: true,
     );
   }
-}
-
-/// Human-readable summary of a child for the prompt.
-String childContextLine({
-  required String name,
-  required int ageMonths,
-  required String gender,
-  double? weightKg,
-  double? heightCm,
-}) {
-  final parts = <String>[
-    'Имя: $name',
-    'Возраст: $ageMonths мес.',
-    'Пол: $gender',
-    if (weightKg != null) 'Вес: $weightKg кг',
-    if (heightCm != null) 'Рост: $heightCm см',
-  ];
-  return parts.join(', ');
 }
 
 /// Emergency copy shown when the gate fires. Deliberately identical wording to

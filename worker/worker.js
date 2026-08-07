@@ -24,6 +24,11 @@ const DEFAULT_MODEL = 'gemini-flash-latest';
 const MAX_PROMPT_CHARS = 24000;
 const MAX_QUESTION_CHARS = 500;
 
+// Past messages travelling with a question. The app already trims to three
+// exchanges; this is the bound that holds when the caller is not the app.
+const MAX_HISTORY_TURNS = 8;
+const MAX_HISTORY_TURN_CHARS = 2000;
+
 import { runReminderSweep } from './notifications.js';
 
 export default {
@@ -94,7 +99,8 @@ export default {
       `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
     const payload = {
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      contents: [...historyContents(body.history, prompt.length),
+                 { role: 'user', parts: [{ text: prompt }] }],
       generationConfig: {
         temperature: 0.2, // factual recall, not creativity
         // Generous on purpose. Current Flash models reason before answering
@@ -163,6 +169,43 @@ export default {
     return json({ text }, 200, cors);
   },
 };
+
+/**
+ * The thread so far, as Gemini `contents`.
+ *
+ * Real roles rather than text pasted into the question: the system prompt
+ * forbids treating an earlier answer as a source, and it can only keep that
+ * rule if its own words are distinguishable from the parent's.
+ *
+ * Everything here is defensive — the body is whatever a caller sent. Unknown
+ * roles collapse to `user`, oversized messages are cut, and the oldest turns
+ * are dropped until the whole request fits the same budget one prompt has.
+ * The current question is never among them, so a long history degrades the
+ * memory rather than the answer.
+ */
+function historyContents(raw, promptChars) {
+  if (!Array.isArray(raw)) return [];
+
+  const turns = raw
+    .filter((t) => t && typeof t.text === 'string' && t.text.trim())
+    .slice(-MAX_HISTORY_TURNS)
+    .map((t) => ({
+      role: t.role === 'model' ? 'model' : 'user',
+      parts: [{ text: t.text.slice(0, MAX_HISTORY_TURN_CHARS) }],
+    }));
+
+  let total = turns.reduce((n, c) => n + c.parts[0].text.length, 0);
+  while (turns.length && total + promptChars > MAX_PROMPT_CHARS) {
+    total -= turns[0].parts[0].text.length;
+    turns.shift();
+  }
+
+  // A conversation has to open with something the parent said; the API
+  // rejects one that starts with a model turn.
+  while (turns.length && turns[0].role !== 'user') turns.shift();
+
+  return turns;
+}
 
 function corsHeaders(env) {
   // Set ALLOWED_ORIGIN to the hosting domain in production so the quota
