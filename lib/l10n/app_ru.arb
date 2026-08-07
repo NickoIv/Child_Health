@@ -643,6 +643,7 @@
     }
   },
   "illnessEpisodes": "Эпизоды болезни",
+  "illnessAdd": "Отметить болезнь",
   "illnessEmpty": "Записей о болезнях нет",
   "illnessEmptyHint": "Отметить день болезни можно в дневнике",
   "illnessEpisodesCount": "эпизодов",

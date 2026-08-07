@@ -1327,6 +1327,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get illnessEpisodes => 'Illness episodes';
 
   @override
+  String get illnessAdd => 'Log illness';
+
+  @override
   String get illnessEmpty => 'No illness entries';
 
   @override

@@ -398,6 +398,7 @@
   "illnessTitle": "Illness statistics",
   "illnessHeatmap": "Heat map over {months} months",
   "illnessEpisodes": "Illness episodes",
+  "illnessAdd": "Log illness",
   "illnessEmpty": "No illness entries",
   "illnessEmptyHint": "A sick day can be marked in the diary",
   "illnessEpisodesCount": "episodes",

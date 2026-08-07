@@ -1321,6 +1321,9 @@ class AppLocalizationsKk extends AppLocalizations {
   String get illnessEpisodes => 'Ауру эпизодтары';
 
   @override
+  String get illnessAdd => 'Ауруды белгілеу';
+
+  @override
   String get illnessEmpty => 'Ауру туралы жазба жоқ';
 
   @override

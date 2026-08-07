@@ -183,16 +183,6 @@ class _HeaderFigure extends StatelessWidget {
   }
 }
 
-/// The subtitle under the age. Kept out of the widget so a test can read it.
-String warmSubtitle(
-  AppLocalizations l,
-  Child child,
-  DateTime now,
-  int? sinceFeeding,
-) => sinceFeeding == null
-    ? greetingFor(l, now)
-    : '${l.nowLastFeeding}: ${localizedDuration(l, sinceFeeding)}';
-
 /// Morning, day, evening or night, by the clock.
 String greetingFor(AppLocalizations l, DateTime now) {
   if (isNightAt(now)) return l.greetingNight;

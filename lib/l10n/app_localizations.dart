@@ -2488,6 +2488,12 @@ abstract class AppLocalizations {
   /// **'Эпизоды болезни'**
   String get illnessEpisodes;
 
+  /// No description provided for @illnessAdd.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отметить болезнь'**
+  String get illnessAdd;
+
   /// No description provided for @illnessEmpty.
   ///
   /// In ru, this message translates to:

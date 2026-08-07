@@ -1329,6 +1329,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get illnessEpisodes => 'Эпизоды болезни';
 
   @override
+  String get illnessAdd => 'Отметить болезнь';
+
+  @override
   String get illnessEmpty => 'Записей о болезнях нет';
 
   @override

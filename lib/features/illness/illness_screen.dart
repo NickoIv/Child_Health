@@ -8,6 +8,7 @@ import '../../core/theme/app_theme.dart';
 import '../../models/development_log.dart';
 import '../../models/json.dart';
 import '../../providers.dart';
+import '../diary/diary_screen.dart';
 import '../shared/widgets.dart';
 
 /// Illness tracking: statistics and the calendar heat map, per 2.4.
@@ -26,8 +27,22 @@ class IllnessScreen extends ConsumerWidget {
     final illnessLogs = logs.where((l) => l.type == LogType.illness).toList();
     final sickDays = ref.watch(illnessDaysProvider);
 
-    return PageBody(
-      children: [
+    return Scaffold(
+      // The screen a parent opens on the day a child is ill had nothing on it
+      // to press. The empty state pointed at the diary, which is a screen away
+      // and asks for a type first — a detour taken while holding a hot child.
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => showDiaryEntryForm(
+          context,
+          ref,
+          childId: child.id,
+          initialType: LogType.illness,
+        ),
+        icon: const Icon(Icons.add),
+        label: Text(l.illnessAdd),
+      ),
+      body: PageBody(
+        children: [
         SectionCard(
           title: l.illnessTitle,
           icon: Icons.thermostat_outlined,
@@ -64,8 +79,9 @@ class IllnessScreen extends ConsumerWidget {
                     ],
                   ],
                 ),
-        ),
-      ],
+          ),
+        ],
+      ),
     );
   }
 

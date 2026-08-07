@@ -398,6 +398,7 @@
   "illnessTitle": "Аурушаңдық статистикасы",
   "illnessHeatmap": "{months} айдағы жылу картасы",
   "illnessEpisodes": "Ауру эпизодтары",
+  "illnessAdd": "Ауруды белгілеу",
   "illnessEmpty": "Ауру туралы жазба жоқ",
   "illnessEmptyHint": "Ауру күнін күнделікте белгілеуге болады",
   "illnessEpisodesCount": "эпизод",
