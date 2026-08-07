@@ -312,6 +312,53 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recurrenceWeekly => 'Weekly';
 
   @override
+  String get reminderNew => 'New reminder';
+
+  @override
+  String get reminderWhat => 'What to remind about';
+
+  @override
+  String get reminderNameMedication => 'What to give — say “Nurofen, 2.5 ml”';
+
+  @override
+  String get reminderNameAppointment =>
+      'Who to see — say “Paediatrician, 9:00”';
+
+  @override
+  String get reminderWhen => 'When';
+
+  @override
+  String reminderInHours(int h) {
+    return 'in $h h';
+  }
+
+  @override
+  String get reminderTomorrowMorning => 'tomorrow morning';
+
+  @override
+  String get reminderExactTime => 'pick a time';
+
+  @override
+  String get reminderRepeat => 'Repeat';
+
+  @override
+  String reminderSaved(String when) {
+    return 'I will remind you $when';
+  }
+
+  @override
+  String get reminderNameRequired => 'Say what to remind about';
+
+  @override
+  String get reminderAdd => 'Reminder';
+
+  @override
+  String get reminderDelete => 'Delete reminder';
+
+  @override
+  String get reminderDeleted => 'Reminder deleted';
+
+  @override
   String get remindersVaccinations => 'Vaccination schedule';
 
   @override
@@ -1068,6 +1115,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get voiceAsNote => 'Will be saved as a note';
 
   @override
+  String get homeQuickLog => 'Quick log';
+
+  @override
   String get homeRecent => 'Recent events';
 
   @override
@@ -1249,6 +1299,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get growthPercentileWord => 'percentile';
+
+  @override
+  String growthChangeSince(String date) {
+    return 'gain since $date';
+  }
 
   @override
   String get growthZScore => 'z-score';
@@ -1657,6 +1712,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsAppearance => 'Appearance';
+
+  @override
+  String get settingsAbout => 'About';
+
+  @override
+  String get settingsAuthor => 'Author';
+
+  @override
+  String get settingsVersion => 'Version';
 
   @override
   String get settingsDeleteSection => 'Deleting your account';

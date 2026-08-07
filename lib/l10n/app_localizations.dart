@@ -652,6 +652,90 @@ abstract class AppLocalizations {
   /// **'Еженедельно'**
   String get recurrenceWeekly;
 
+  /// No description provided for @reminderNew.
+  ///
+  /// In ru, this message translates to:
+  /// **'Новое напоминание'**
+  String get reminderNew;
+
+  /// No description provided for @reminderWhat.
+  ///
+  /// In ru, this message translates to:
+  /// **'О чём напомнить'**
+  String get reminderWhat;
+
+  /// No description provided for @reminderNameMedication.
+  ///
+  /// In ru, this message translates to:
+  /// **'Что дать — например, «Нурофен, 2,5 мл»'**
+  String get reminderNameMedication;
+
+  /// No description provided for @reminderNameAppointment.
+  ///
+  /// In ru, this message translates to:
+  /// **'К кому — например, «Педиатр, 9:00»'**
+  String get reminderNameAppointment;
+
+  /// No description provided for @reminderWhen.
+  ///
+  /// In ru, this message translates to:
+  /// **'Когда'**
+  String get reminderWhen;
+
+  /// No description provided for @reminderInHours.
+  ///
+  /// In ru, this message translates to:
+  /// **'через {h} ч'**
+  String reminderInHours(int h);
+
+  /// No description provided for @reminderTomorrowMorning.
+  ///
+  /// In ru, this message translates to:
+  /// **'завтра утром'**
+  String get reminderTomorrowMorning;
+
+  /// No description provided for @reminderExactTime.
+  ///
+  /// In ru, this message translates to:
+  /// **'выбрать время'**
+  String get reminderExactTime;
+
+  /// No description provided for @reminderRepeat.
+  ///
+  /// In ru, this message translates to:
+  /// **'Повторять'**
+  String get reminderRepeat;
+
+  /// No description provided for @reminderSaved.
+  ///
+  /// In ru, this message translates to:
+  /// **'Напомню {when}'**
+  String reminderSaved(String when);
+
+  /// No description provided for @reminderNameRequired.
+  ///
+  /// In ru, this message translates to:
+  /// **'Напишите, о чём напомнить'**
+  String get reminderNameRequired;
+
+  /// No description provided for @reminderAdd.
+  ///
+  /// In ru, this message translates to:
+  /// **'Напоминание'**
+  String get reminderAdd;
+
+  /// No description provided for @reminderDelete.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить напоминание'**
+  String get reminderDelete;
+
+  /// No description provided for @reminderDeleted.
+  ///
+  /// In ru, this message translates to:
+  /// **'Напоминание удалено'**
+  String get reminderDeleted;
+
   /// No description provided for @remindersVaccinations.
   ///
   /// In ru, this message translates to:
@@ -2008,6 +2092,12 @@ abstract class AppLocalizations {
   /// **'Сохраним как заметку'**
   String get voiceAsNote;
 
+  /// No description provided for @homeQuickLog.
+  ///
+  /// In ru, this message translates to:
+  /// **'Быстрая запись'**
+  String get homeQuickLog;
+
   /// No description provided for @homeRecent.
   ///
   /// In ru, this message translates to:
@@ -2355,6 +2445,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'перцентиль'**
   String get growthPercentileWord;
+
+  /// No description provided for @growthChangeSince.
+  ///
+  /// In ru, this message translates to:
+  /// **'прибавка с {date}'**
+  String growthChangeSince(String date);
 
   /// No description provided for @growthZScore.
   ///
@@ -3027,6 +3123,24 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Оформление'**
   String get settingsAppearance;
+
+  /// No description provided for @settingsAbout.
+  ///
+  /// In ru, this message translates to:
+  /// **'О приложении'**
+  String get settingsAbout;
+
+  /// No description provided for @settingsAuthor.
+  ///
+  /// In ru, this message translates to:
+  /// **'Автор'**
+  String get settingsAuthor;
+
+  /// No description provided for @settingsVersion.
+  ///
+  /// In ru, this message translates to:
+  /// **'Версия'**
+  String get settingsVersion;
 
   /// No description provided for @settingsDeleteSection.
   ///

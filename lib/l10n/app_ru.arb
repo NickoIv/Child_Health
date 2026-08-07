@@ -134,6 +134,30 @@
   "recurrenceDaily": "Ежедневно",
   "recurrenceTwiceDaily": "Дважды в день",
   "recurrenceWeekly": "Еженедельно",
+  "reminderNew": "Новое напоминание",
+  "reminderWhat": "О чём напомнить",
+  "reminderNameMedication": "Что дать — например, «Нурофен, 2,5 мл»",
+  "reminderNameAppointment": "К кому — например, «Педиатр, 9:00»",
+  "reminderWhen": "Когда",
+  "reminderInHours": "через {h} ч",
+  "reminderTomorrowMorning": "завтра утром",
+  "reminderExactTime": "выбрать время",
+  "reminderRepeat": "Повторять",
+  "reminderSaved": "Напомню {when}",
+  "reminderNameRequired": "Напишите, о чём напомнить",
+  "reminderAdd": "Напоминание",
+  "reminderDelete": "Удалить напоминание",
+  "reminderDeleted": "Напоминание удалено",
+  "@reminderInHours": {
+    "placeholders": {
+      "h": { "type": "int" }
+    }
+  },
+  "@reminderSaved": {
+    "placeholders": {
+      "when": { "type": "String" }
+    }
+  },
   "remindersVaccinations": "Календарь прививок",
   "remindersMedications": "Приём лекарств",
   "remindersAppointments": "Визиты к врачу",
@@ -534,6 +558,7 @@
   "voiceHeard": "Услышано",
   "voiceMl": "мл",
   "voiceAsNote": "Сохраним как заметку",
+  "homeQuickLog": "Быстрая запись",
   "homeRecent": "Последние события",
   "homeNothingYet": "Пока ничего не записано",
   "homeMore": "Всё остальное — во вкладке «Помощник»",
@@ -599,6 +624,12 @@
     }
   },
   "growthPercentileWord": "перцентиль",
+  "growthChangeSince": "прибавка с {date}",
+  "@growthChangeSince": {
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
   "growthZScore": "z-оценка",
   "growthDisclaimer": "Расчёт по нормам ВОЗ для детей 0–5 лет. Перцентиль показывает положение среди сверстников, а не диагноз: отклонение может быть и особенностью конкретного ребёнка. Оценивает врач.",
   "growthHistory": "История измерений",
@@ -815,6 +846,9 @@
   "settingsUnitsHint": "Измерения всегда хранятся в метрических единицах и пересчитываются только для показа — поэтому переключение ничего не портит в уже введённых данных.",
   "settingsTemperatureHint": "Температура остаётся в °C в обеих системах: все пороги в приложении и в рекомендациях указаны в градусах Цельсия.",
   "settingsAppearance": "Оформление",
+  "settingsAbout": "О приложении",
+  "settingsAuthor": "Автор",
+  "settingsVersion": "Версия",
   "settingsDeleteSection": "Удаление учётной записи",
   "settingsDeleteWarning": "Вместе с записью безвозвратно удаляются все дети, дневник, медкарта и напоминания. Отменить это будет нельзя, поэтому сначала выгрузите PDF-отчёт, если он вам нужен.",
   "settingsChangeButton": "Сменить",

@@ -27,7 +27,7 @@ class AppLocalizationsKk extends AppLocalizations {
   String get navIllness => 'Аурулар';
 
   @override
-  String get navMedical => 'Медкарта';
+  String get navMedical => 'Медициналық карта';
 
   @override
   String get navReminders => 'Еске салу';
@@ -310,6 +310,53 @@ class AppLocalizationsKk extends AppLocalizations {
 
   @override
   String get recurrenceWeekly => 'Апта сайын';
+
+  @override
+  String get reminderNew => 'Жаңа еске салу';
+
+  @override
+  String get reminderWhat => 'Не туралы еске салу керек';
+
+  @override
+  String get reminderNameMedication =>
+      'Не беру керек — мысалы, «Нурофен, 2,5 мл»';
+
+  @override
+  String get reminderNameAppointment => 'Кімге — мысалы, «Педиатр, 9:00»';
+
+  @override
+  String get reminderWhen => 'Қашан';
+
+  @override
+  String reminderInHours(int h) {
+    return '$h сағаттан кейін';
+  }
+
+  @override
+  String get reminderTomorrowMorning => 'ертең таңертең';
+
+  @override
+  String get reminderExactTime => 'уақытты таңдау';
+
+  @override
+  String get reminderRepeat => 'Қайталау';
+
+  @override
+  String reminderSaved(String when) {
+    return '$when еске саламын';
+  }
+
+  @override
+  String get reminderNameRequired => 'Не туралы еске салу керегін жазыңыз';
+
+  @override
+  String get reminderAdd => 'Еске салу';
+
+  @override
+  String get reminderDelete => 'Еске салуды жою';
+
+  @override
+  String get reminderDeleted => 'Еске салу жойылды';
 
   @override
   String get remindersVaccinations => 'Екпе күнтізбесі';
@@ -1065,6 +1112,9 @@ class AppLocalizationsKk extends AppLocalizations {
   String get voiceAsNote => 'Ескертпе ретінде сақталады';
 
   @override
+  String get homeQuickLog => 'Жылдам жазба';
+
+  @override
   String get homeRecent => 'Соңғы оқиғалар';
 
   @override
@@ -1245,6 +1295,11 @@ class AppLocalizationsKk extends AppLocalizations {
   String get growthPercentileWord => 'персентиль';
 
   @override
+  String growthChangeSince(String date) {
+    return '$date бері қосылғаны';
+  }
+
+  @override
   String get growthZScore => 'z-баға';
 
   @override
@@ -1392,7 +1447,7 @@ class AppLocalizationsKk extends AppLocalizations {
   String get medicalValue => 'Мәні';
 
   @override
-  String get medicalReference => 'Норма';
+  String get medicalReference => 'Қалыпты';
 
   @override
   String get medicalRecordTitle => 'Медициналық жазба';
@@ -1651,6 +1706,15 @@ class AppLocalizationsKk extends AppLocalizations {
   String get settingsAppearance => 'Безендіру';
 
   @override
+  String get settingsAbout => 'Қосымша туралы';
+
+  @override
+  String get settingsAuthor => 'Авторы';
+
+  @override
+  String get settingsVersion => 'Нұсқасы';
+
+  @override
   String get settingsDeleteSection => 'Тіркелгіні жою';
 
   @override
@@ -1793,7 +1857,7 @@ class AppLocalizationsKk extends AppLocalizations {
   String get vaccineNoteHepB1 => 'Өмірінің алғашқы тәулігінде';
 
   @override
-  String get vaccineBcg => 'Туберкулёз (БЦЖ)';
+  String get vaccineBcg => 'Туберкулез (БЦЖ)';
 
   @override
   String get vaccineNoteBcg => 'Өмірінің 1–4 тәулігінде';

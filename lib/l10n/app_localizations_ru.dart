@@ -311,6 +311,52 @@ class AppLocalizationsRu extends AppLocalizations {
   String get recurrenceWeekly => 'Еженедельно';
 
   @override
+  String get reminderNew => 'Новое напоминание';
+
+  @override
+  String get reminderWhat => 'О чём напомнить';
+
+  @override
+  String get reminderNameMedication => 'Что дать — например, «Нурофен, 2,5 мл»';
+
+  @override
+  String get reminderNameAppointment => 'К кому — например, «Педиатр, 9:00»';
+
+  @override
+  String get reminderWhen => 'Когда';
+
+  @override
+  String reminderInHours(int h) {
+    return 'через $h ч';
+  }
+
+  @override
+  String get reminderTomorrowMorning => 'завтра утром';
+
+  @override
+  String get reminderExactTime => 'выбрать время';
+
+  @override
+  String get reminderRepeat => 'Повторять';
+
+  @override
+  String reminderSaved(String when) {
+    return 'Напомню $when';
+  }
+
+  @override
+  String get reminderNameRequired => 'Напишите, о чём напомнить';
+
+  @override
+  String get reminderAdd => 'Напоминание';
+
+  @override
+  String get reminderDelete => 'Удалить напоминание';
+
+  @override
+  String get reminderDeleted => 'Напоминание удалено';
+
+  @override
   String get remindersVaccinations => 'Календарь прививок';
 
   @override
@@ -1074,6 +1120,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get voiceAsNote => 'Сохраним как заметку';
 
   @override
+  String get homeQuickLog => 'Быстрая запись';
+
+  @override
   String get homeRecent => 'Последние события';
 
   @override
@@ -1252,6 +1301,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get growthPercentileWord => 'перцентиль';
+
+  @override
+  String growthChangeSince(String date) {
+    return 'прибавка с $date';
+  }
 
   @override
   String get growthZScore => 'z-оценка';
@@ -1668,6 +1722,15 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get settingsAppearance => 'Оформление';
+
+  @override
+  String get settingsAbout => 'О приложении';
+
+  @override
+  String get settingsAuthor => 'Автор';
+
+  @override
+  String get settingsVersion => 'Версия';
 
   @override
   String get settingsDeleteSection => 'Удаление учётной записи';
