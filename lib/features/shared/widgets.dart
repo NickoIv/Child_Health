@@ -34,14 +34,30 @@ class PageBody extends StatelessWidget {
   /// narrower than the dashboard's grid of cards.
   final double maxWidth;
 
+  /// Room under the last card for the floating action button, before the tab
+  /// bar is accounted for.
+  static const _bottomGap = 96.0;
+
   @override
   Widget build(BuildContext context) {
+    // The shell lets the page run under the frosted tab bar, and hands the
+    // bar's height back here as bottom padding. Taking the larger of the two
+    // rather than adding them: on the home screen the panel carries the
+    // microphone as well and is 140 px tall, and 96 on top of that would be a
+    // hand's width of nothing under the last card.
+    final chrome = MediaQuery.paddingOf(context).bottom;
+
     return Align(
       alignment: Alignment.topCenter,
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: maxWidth),
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
+          padding: EdgeInsets.fromLTRB(
+            16,
+            12,
+            16,
+            chrome > _bottomGap ? chrome + 16 : _bottomGap,
+          ),
           children: children,
         ),
       ),

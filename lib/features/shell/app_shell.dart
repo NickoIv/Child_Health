@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/l10n/labels.dart';
 import '../../core/router/app_router.dart';
 import '../../l10n/app_localizations.dart';
+import '../../core/theme/glass.dart';
 import '../../core/theme/motion.dart';
 import '../../core/theme/theme_mode.dart';
 import '../../models/child.dart';
@@ -53,6 +54,11 @@ class AppShell extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isWide = MediaQuery.sizeOf(context).width >= 900;
     return Scaffold(
+      // The page runs to the bottom of the screen and the tab bar is laid over
+      // it — which is the only arrangement in which frosting the bar means
+      // anything. [PageBody] takes the bar's height back as padding, so
+      // nothing ends up permanently underneath it.
+      extendBody: !isWide,
       appBar: AppBar(
         title: Text(appDestinations[_index].label(AppLocalizations.of(context))),
         actions: const [
@@ -81,12 +87,14 @@ class AppShell extends ConsumerWidget {
       // outside the list, so it covers nothing.
       bottomNavigationBar: isWide
           ? null
-          : Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (_index == 0) const _PinnedVoice(),
-                _BottomBar(index: _index),
-              ],
+          : GlassPanel(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_index == 0) const _PinnedVoice(),
+                  _BottomBar(index: _index),
+                ],
+              ),
             ),
     );
   }
@@ -97,8 +105,11 @@ class AppShell extends ConsumerWidget {
 /// It sat in the scrolling column and a parent had to go looking for it — on
 /// a phone it was below the fold on the screen it exists to be used from.
 /// Here it is on top of the page rather than in it, which is what "always in
-/// view" has to mean, and it keeps the page's own background so the list
-/// scrolling underneath does not show through.
+/// view" has to mean.
+///
+/// It used to paint the page's own colour behind itself to stop the list
+/// showing through. It no longer has to: it shares the frosted panel with the
+/// tab bar, and what shows through there is the point.
 class _PinnedVoice extends ConsumerWidget {
   const _PinnedVoice();
 
@@ -111,14 +122,11 @@ class _PinnedVoice extends ConsumerWidget {
     // and the shortest way to it is a field a thumb can land on directly.
     final keyboard = ref.watch(keyboardDictationProvider);
 
-    return ColoredBox(
-      color: Theme.of(context).scaffoldBackgroundColor,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
-        child: keyboard
-            ? QuickDictationField(childId: child.id)
-            : VoiceActionButton(childId: child.id),
-      ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
+      child: keyboard
+          ? QuickDictationField(childId: child.id)
+          : VoiceActionButton(childId: child.id),
     );
   }
 }
@@ -170,7 +178,12 @@ class _BottomBar extends StatelessWidget {
     // Anything past the first four lives in the overflow sheet; keep the
     // "more" tab highlighted while one of those screens is open.
     final selected = index < primary ? index : primary;
+    // Transparent here and only here: the theme paints the bar white, which is
+    // exactly right on a rail and exactly wrong inside a pane of glass.
     return NavigationBar(
+      backgroundColor: Colors.transparent,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
       selectedIndex: selected,
       onDestinationSelected: (i) {
         if (i < primary) {

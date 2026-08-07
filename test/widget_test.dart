@@ -39,13 +39,12 @@ void main() {
     await tester.tap(find.text('Помощник').last);
     await tester.pumpAndSettle();
 
-    // The summary card is titled with the child's name, so check the rest by
-    // their own headings.
+    // Five blocks, not eight. The summary, the vaccination list and the
+    // recent entries each repeated something a tap away and are gone — see
+    // DashboardWidgetKind.
     for (final title in const [
       'Рост и вес',
-      'Ближайшие прививки',
       'Заболеваемость',
-      'Последние записи',
       'Ближайшие события',
     ]) {
       await tester.scrollUntilVisible(

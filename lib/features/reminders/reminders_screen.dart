@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/theme/glass.dart';
 import '../../core/l10n/labels.dart';
 import '../../core/theme/app_theme.dart';
 import '../../l10n/app_localizations.dart';
@@ -52,10 +53,13 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
       // This is the button that lets a parent add the reminder she actually
       // needs — a dose in four hours — and it is the reason the screen exists
       // rather than being a read-only calendar.
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => showReminderSheet(context, childId: child.id),
-        icon: const Icon(Icons.add_alert_outlined),
-        label: Text(l.reminderAdd),
+      floatingActionButton: liftedFab(
+        context,
+        FloatingActionButton.extended(
+          onPressed: () => showReminderSheet(context, childId: child.id),
+          icon: const Icon(Icons.add_alert_outlined),
+          label: Text(l.reminderAdd),
+        ),
       ),
       body: PageBody(
         children: [

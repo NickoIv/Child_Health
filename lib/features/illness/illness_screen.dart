@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/theme/glass.dart';
 import '../../l10n/app_localizations.dart';
 import '../../core/l10n/labels.dart';
 import '../../core/analytics/illness_stats.dart';
@@ -31,15 +32,18 @@ class IllnessScreen extends ConsumerWidget {
       // The screen a parent opens on the day a child is ill had nothing on it
       // to press. The empty state pointed at the diary, which is a screen away
       // and asks for a type first — a detour taken while holding a hot child.
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => showDiaryEntryForm(
-          context,
-          ref,
-          childId: child.id,
-          initialType: LogType.illness,
+      floatingActionButton: liftedFab(
+        context,
+        FloatingActionButton.extended(
+          onPressed: () => showDiaryEntryForm(
+            context,
+            ref,
+            childId: child.id,
+            initialType: LogType.illness,
+          ),
+          icon: const Icon(Icons.add),
+          label: Text(l.illnessAdd),
         ),
-        icon: const Icon(Icons.add),
-        label: Text(l.illnessAdd),
       ),
       body: PageBody(
         children: [

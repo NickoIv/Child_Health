@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/theme/glass.dart';
 import '../../l10n/app_localizations.dart';
 import '../../core/l10n/labels.dart';
 import '../../core/growth/who_standards.dart';
@@ -55,15 +56,18 @@ class _GrowthScreenState extends ConsumerState<GrowthScreen> {
     return Scaffold(
       // The chart is where a parent notices a measurement is missing, so the
       // way to add one belongs here rather than only in the diary.
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => showDiaryEntryForm(
-          context,
-          ref,
-          childId: child.id,
-          initialType: LogType.measurement,
+      floatingActionButton: liftedFab(
+        context,
+        FloatingActionButton.extended(
+          onPressed: () => showDiaryEntryForm(
+            context,
+            ref,
+            childId: child.id,
+            initialType: LogType.measurement,
+          ),
+          icon: const Icon(Icons.add),
+          label: Text(l.growthAddMeasurement),
         ),
-        icon: const Icon(Icons.add),
-        label: Text(l.growthAddMeasurement),
       ),
       body: PageBody(
         children: [

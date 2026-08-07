@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../core/theme/glass.dart';
 import '../../core/theme/app_snack.dart';
 import '../../core/theme/app_theme.dart';
 import '../../l10n/app_localizations.dart';
@@ -73,10 +74,13 @@ class ChildrenScreen extends ConsumerWidget {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _openForm(context, ref),
-        icon: const Icon(Icons.add),
-        label: Text(l.addChild),
+      floatingActionButton: liftedFab(
+        context,
+        FloatingActionButton.extended(
+          onPressed: () => _openForm(context, ref),
+          icon: const Icon(Icons.add),
+          label: Text(l.addChild),
+        ),
       ),
     );
   }

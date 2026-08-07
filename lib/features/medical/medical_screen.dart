@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/theme/glass.dart';
 import '../../l10n/app_localizations.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/development_log.dart';
@@ -74,10 +75,13 @@ class _MedicalScreenState extends ConsumerState<MedicalScreen> {
             ],
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _addRecord,
-        icon: const Icon(Icons.add),
-        label: Text(l.medicalAdd),
+      floatingActionButton: liftedFab(
+        context,
+        FloatingActionButton.extended(
+          onPressed: _addRecord,
+          icon: const Icon(Icons.add),
+          label: Text(l.medicalAdd),
+        ),
       ),
     );
   }

@@ -8,7 +8,6 @@ import '../../l10n/app_localizations.dart';
 import '../../core/router/app_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/units/units.dart';
-import '../../core/vaccination/national_calendar.dart';
 import '../../models/child.dart';
 import '../../models/development_log.dart';
 import '../../models/reminder.dart';
@@ -117,12 +116,9 @@ class DashboardBlocks extends ConsumerWidget {
         // either the home screen's single smart card now or sit in the
         // insights section above this one.
         DashboardWidgetKind.now => NowCard(child: child),
-        DashboardWidgetKind.summary => _SummaryCard(child: child),
         DashboardWidgetKind.growth => _GrowthCard(child: child),
-        DashboardWidgetKind.vaccinations => const _VaccinationCard(),
         DashboardWidgetKind.illness => const _IllnessCard(),
         DashboardWidgetKind.milestones => const _MilestonesCard(),
-        DashboardWidgetKind.recentEntries => const _RecentEntriesCard(),
         DashboardWidgetKind.upcoming => const _UpcomingCard(),
       };
 }
@@ -217,38 +213,6 @@ class DashboardLayoutEditor extends ConsumerWidget {
   }
 }
 
-class _SummaryCard extends ConsumerWidget {
-  const _SummaryCard({required this.child});
-
-  final Child child;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l = AppLocalizations.of(context);
-    final logs = ref.watch(logsProvider).value ?? const <DevelopmentLog>[];
-    final milestones =
-        logs.where((l) => l.type == LogType.milestone).length;
-
-    return SectionCard(
-      title: child.name,
-      icon: Icons.child_care_outlined,
-      child: Wrap(
-        spacing: 24,
-        runSpacing: 12,
-        children: [
-          StatTile(value: localizedAge(l, child), caption: l.summaryAge),
-          StatTile(
-            value: shortDate.format(child.birthDate),
-            caption: l.summaryBirthDate,
-          ),
-          StatTile(value: '$milestones', caption: l.summaryMilestonesCount),
-          StatTile(value: '${logs.length}', caption: l.summaryEntriesCount),
-        ],
-      ),
-    );
-  }
-}
-
 class _GrowthCard extends ConsumerWidget {
   const _GrowthCard({required this.child});
 
@@ -332,52 +296,6 @@ class _MetricWithPercentile extends StatelessWidget {
         context,
       ).growthPercentileWith(label, percentileFromZ(z!).round()),
       color: color,
-    );
-  }
-}
-
-class _VaccinationCard extends ConsumerWidget {
-  const _VaccinationCard();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l = AppLocalizations.of(context);
-    final reminders = ref.watch(remindersProvider).value ?? const <Reminder>[];
-    final upcoming = upcomingVaccinations(reminders, limit: 3);
-
-    return SectionCard(
-      title: l.widgetVaccinations,
-      icon: Icons.vaccines_outlined,
-      action: TextButton(
-        onPressed: () => context.go('/reminders'),
-        child: Text(l.commonAll),
-      ),
-      child: upcoming.isEmpty
-          ? EmptyState(
-              icon: Icons.done_all,
-              message: l.vaccinationsNone,
-              compact: true,
-            )
-          : Column(
-              children: [
-                for (final r in upcoming)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(localizedVaccinationName(l, r.title)),
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          shortDate.format(r.scheduledTime),
-                          style: Theme.of(context).textTheme.labelMedium,
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
     );
   }
 }
@@ -475,52 +393,12 @@ class _MilestonesCard extends ConsumerWidget {
   }
 }
 
-class _RecentEntriesCard extends ConsumerWidget {
-  const _RecentEntriesCard();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // Named `loc` here: the entry loop below already uses `l` for a log.
-    final loc = AppLocalizations.of(context);
-    final l = loc;
-    final logs = ref.watch(logsProvider).value ?? const <DevelopmentLog>[];
-    final recent = logs.take(4).toList();
-
-    return SectionCard(
-      title: l.widgetRecent,
-      icon: Icons.auto_stories_outlined,
-      action: TextButton(
-        onPressed: () => context.go('/diary'),
-        child: Text(l.navDiary),
-      ),
-      child: recent.isEmpty
-          ? EmptyState(
-              icon: Icons.edit_note,
-              message: l.recentEmpty,
-              compact: true,
-            )
-          : Column(
-              children: [
-                for (final l in recent)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: Row(
-                      children: [
-                        Expanded(child: Text(localizedLogTitle(loc, l))),
-                        const SizedBox(width: 12),
-                        Text(
-                          dayMonth.format(l.date),
-                          style: Theme.of(context).textTheme.labelSmall,
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-    );
-  }
-}
-
+/// Everything scheduled, vaccinations included.
+///
+/// The separate vaccination block that used to sit above this one read the
+/// same provider, filtered it to one type, and linked to the same screen —
+/// so on a newborn, whose only scheduled events *are* vaccinations, the two
+/// cards were the same card twice.
 class _UpcomingCard extends ConsumerWidget {
   const _UpcomingCard();
 

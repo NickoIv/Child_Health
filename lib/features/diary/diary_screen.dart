@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../core/theme/glass.dart';
 import '../../core/theme/app_snack.dart';
 import '../../core/l10n/labels.dart';
 import '../../core/photos/compression.dart';
@@ -148,20 +149,23 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen> {
       // The one control on this screen that writes. A viewer keeps it, sees
       // the padlock, and is told once what it means rather than being left to
       // wonder where the button went.
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: readOnly
-            ? () => ScaffoldMessenger.of(
-                context,
-              ).showApp(l.familyReadOnlyHint)
-            : () => _openForm(context),
-        backgroundColor: readOnly
-            ? Theme.of(context).colorScheme.surfaceContainerHighest
-            : null,
-        foregroundColor: readOnly
-            ? Theme.of(context).colorScheme.onSurfaceVariant
-            : null,
-        icon: Icon(readOnly ? Icons.lock_outline : Icons.add),
-        label: Text(readOnly ? l.familyReadOnly : l.diaryAddEntry),
+      floatingActionButton: liftedFab(
+        context,
+        FloatingActionButton.extended(
+          onPressed: readOnly
+              ? () => ScaffoldMessenger.of(
+                  context,
+                ).showApp(l.familyReadOnlyHint)
+              : () => _openForm(context),
+          backgroundColor: readOnly
+              ? Theme.of(context).colorScheme.surfaceContainerHighest
+              : null,
+          foregroundColor: readOnly
+              ? Theme.of(context).colorScheme.onSurfaceVariant
+              : null,
+          icon: Icon(readOnly ? Icons.lock_outline : Icons.add),
+          label: Text(readOnly ? l.familyReadOnly : l.diaryAddEntry),
+        ),
       ),
     );
   }
