@@ -32,7 +32,15 @@ RetrievedContext retrieveFor(
   int limit = 4,
   bool ageFallback = true,
 }) {
-  var matches = searchArticles(question, ageMonths: ageMonths);
+  // Named, not merely mentioned. What comes back here is the only thing the
+  // strict prompt may answer from, so an article that shares one common word
+  // with the question is not a source — it is noise that turns into «в моей
+  // базе нет ответа».
+  var matches = searchArticles(
+    question,
+    ageMonths: ageMonths,
+    requireStrongMatch: true,
+  );
 
   // A question the search cannot place at all still deserves the age-relevant
   // basics rather than an empty context, which would make the model refuse

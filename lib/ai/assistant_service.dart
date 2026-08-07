@@ -33,7 +33,9 @@ class AssistantAnswer extends AssistantReply {
   /// pass for something the app has vetted.
   final AnswerMode mode;
 
-  bool get isFromGeneralKnowledge => mode == AnswerMode.everyday;
+  /// True whenever the answer came from the model rather than from a vetted
+  /// article — an everyday question, or a health one the base did not cover.
+  bool get isFromGeneralKnowledge => mode != AnswerMode.medical;
 
   /// What the model proposes the app should do about it, if anything. Nothing
   /// happens until the parent confirms — see `ai/actions.dart`.
@@ -193,17 +195,27 @@ class GeminiAssistantService implements AssistantService {
 
     // Decided here, in Dart, before anything is sent: whether this question is
     // answered strictly from the articles or may draw on what the model knows.
-    // See `ai/topics.dart` — silence means strict.
-    final mode = modeFor(trimmed);
+    // See `ai/topics.dart` — silence means health.
+    final topic = modeFor(trimmed);
 
-    final context = retrieveFor(
-      trimmed,
-      ageMonths: ageMonths,
-      // The age-relevant fallback exists so a medical question is never left
-      // without material. Attaching it to «как встать в очередь в садик»
-      // would only dress an everyday answer up as a vetted one.
-      ageFallback: mode == AnswerMode.medical,
-    );
+    // No age fallback any more, in either direction. It was there so a health
+    // question was never left without material, but what it actually did was
+    // staple four unrelated articles to the prompt — which the strict rules
+    // then had to refuse from, and which the screen listed underneath as the
+    // «источники» of an answer they had nothing to do with. An empty result is
+    // now allowed to mean what it says.
+    final context = retrieveFor(trimmed, ageMonths: ageMonths,
+        ageFallback: false);
+
+    // Three ways to answer, and which one this is depends on what retrieval
+    // found rather than on the question alone: a health question the base
+    // covers is answered from the base, and one it does not is answered
+    // honestly instead of not at all.
+    final mode = switch (topic) {
+      AnswerMode.everyday => AnswerMode.everyday,
+      _ when context.isEmpty => AnswerMode.generalHealth,
+      _ => AnswerMode.medical,
+    };
     // Retrieval runs on this question alone, on purpose. Searching the whole
     // thread drags the articles of the previous topic into the answer to the
     // next one, and the base is the only thing the model may answer from.

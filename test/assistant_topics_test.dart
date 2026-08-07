@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:child_health_tracker/ai/assistant_service.dart';
 import 'package:child_health_tracker/ai/prompt.dart';
-import 'package:child_health_tracker/ai/rag.dart';
 import 'package:child_health_tracker/ai/topics.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -164,21 +163,65 @@ void main() {
       expect(reply.isFromGeneralKnowledge, isTrue);
     });
 
-    test('an everyday answer is not dressed in unrelated sources', () {
-      // The age fallback exists so a medical question is never left without
-      // material. Attached to a question the base has nothing on, it would
-      // list four paediatric articles as where the answer came from, which is
-      // not where it came from.
+    test('no answer is dressed in unrelated sources', () async {
+      // The age fallback used to attach four paediatric articles to any
+      // question the search could not place — which the screen then listed
+      // underneath as where the answer came from. It was not.
       const unplaceable = 'абракадабра непонятная';
-      expect(
-        retrieveFor(unplaceable, ageMonths: 3, ageFallback: false).articles,
-        isEmpty,
+      final service = GeminiAssistantService(
+        client: client(),
+        endpoint: endpoint,
       );
-      expect(
-        retrieveFor(unplaceable, ageMonths: 3).articles,
-        isNotEmpty,
-        reason: 'a medical question still gets the age-relevant basics',
+      final reply =
+          await service.ask(question: unplaceable, ageMonths: 3)
+              as AssistantAnswer;
+
+      expect(reply.sources, isEmpty);
+    });
+
+    test('a health question the base misses is answered, not refused', () async {
+      // «Остались заготовленные вопросы и ответы»: forty-seven articles cannot
+      // cover what parents ask, and everything outside them used to come back
+      // as «В моей базе нет ответа на этот вопрос».
+      const outside = 'ребёнок скрипит зубами ночью';
+      expect(modeFor(outside), AnswerMode.medical, reason: 'a health topic');
+
+      final service = GeminiAssistantService(
+        client: client(),
+        endpoint: endpoint,
       );
+      final reply =
+          await service.ask(question: outside, ageMonths: 6)
+              as AssistantAnswer;
+
+      expect(reply.mode, AnswerMode.generalHealth);
+      expect(sent!['system'], systemPromptFor(AnswerMode.generalHealth));
+      // Said out loud on screen rather than passed off as vetted.
+      expect(reply.isFromGeneralKnowledge, isTrue);
+    });
+
+    test('but a question the base does cover is still answered from it', () async {
+      final service = GeminiAssistantService(
+        client: client(),
+        endpoint: endpoint,
+      );
+      final reply =
+          await service.ask(question: 'температура 38', ageMonths: 6)
+              as AssistantAnswer;
+
+      expect(reply.mode, AnswerMode.medical);
+      expect(sent!['system'], systemPrompt);
+      expect(reply.sources, isNotEmpty);
+    });
+
+    test('the wider mode still forbids what can hurt somebody', () {
+      final p = systemPromptFor(AnswerMode.generalHealth);
+      expect(p, contains('Ставить диагноз'));
+      expect(p, contains('дозировк'));
+      expect(p, contains('педиатру'));
+      // And it has to admit where it came from, in the answer itself.
+      expect(p, contains('ПО ЭТОМУ ВОПРОСУ В БАЗЕ НИЧЕГО НЕ НАШЛОСЬ'));
+      expect(p, contains('отвечаю общими'));
     });
 
     test('the emergency gate still runs before any of this', () async {

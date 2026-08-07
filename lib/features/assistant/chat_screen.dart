@@ -7,6 +7,7 @@ import '../../ai/actions.dart';
 import '../../ai/assistant_service.dart';
 import '../../ai/conversation.dart';
 import '../../ai/suggested_questions.dart';
+import '../../ai/topics.dart';
 import '../../core/theme/app_theme.dart';
 import '../../knowledge/article.dart';
 import '../../models/development_log.dart';
@@ -237,17 +238,12 @@ class _ReplyView extends StatelessWidget {
   Widget build(BuildContext context) {
     return switch (reply) {
       AssistantEmergency(:final matched) => _EmergencyCard(matched: matched),
-      AssistantAnswer(
-        :final text,
-        :final sources,
-        :final action,
-        :final isFromGeneralKnowledge,
-      ) =>
+      AssistantAnswer(:final text, :final sources, :final action, :final mode) =>
         _AnswerCard(
           text: text,
           sources: sources,
           action: action,
-          fromGeneralKnowledge: isFromGeneralKnowledge,
+          mode: mode,
         ),
       AssistantUnavailable(:final reason, :final isConfigurationIssue) =>
         _UnavailableCard(
@@ -334,17 +330,28 @@ class _AnswerCard extends StatelessWidget {
   const _AnswerCard({
     required this.text,
     required this.sources,
+    required this.mode,
     this.action,
-    this.fromGeneralKnowledge = false,
   });
 
   final String text;
   final List<KbArticle> sources;
   final AssistantAction? action;
 
-  /// An everyday answer, drawn on the model's own knowledge. Said out loud
-  /// rather than left to look like everything else the app has vetted.
-  final bool fromGeneralKnowledge;
+  /// Which rules produced this. Two of the three draw on the model's own
+  /// knowledge, and each says so in its own words: a question about the
+  /// nursery queue and a health question the base does not cover are both
+  /// unvetted, but they are unvetted for different reasons and only one of
+  /// them ends with "show the child to a doctor".
+  final AnswerMode mode;
+
+  /// What to say under the answer, or null when it came from the base and
+  /// needs no disclaimer at all.
+  String? _notice(AppLocalizations l) => switch (mode) {
+    AnswerMode.medical => null,
+    AnswerMode.generalHealth => l.chatGeneralHealthAnswer,
+    AnswerMode.everyday => l.chatGeneralAnswer,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -357,7 +364,7 @@ class _AnswerCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SelectableText(text, style: theme.textTheme.bodyMedium),
-            if (fromGeneralKnowledge) ...[
+            if (_notice(l) case final notice?) ...[
               const SizedBox(height: 12),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -370,7 +377,7 @@ class _AnswerCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      l.chatGeneralAnswer,
+                      notice,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),

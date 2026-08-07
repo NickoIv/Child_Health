@@ -142,20 +142,31 @@ void main() {
     expect(find.text(l.recurrenceDaily), findsWidgets);
   });
 
-  testWidgets('the planner offers the same sheet from its own button', (
+  testWidgets('each section adds its own kind, and only its own', (
     tester,
   ) async {
     await pumpApp(tester);
     final l = await AppLocalizations.delegate.load(const Locale('ru'));
 
-    // Both entry points must open the same form; two ways in that ask
-    // different questions is how a planner ends up with two kinds of entry.
     await openPlanner(tester, l);
 
-    await tester.tap(find.widgetWithText(FloatingActionButton, l.reminderAdd));
+    // The floating button is gone: it asked «о чём напомнить» when the answer
+    // was the heading she had just tapped.
+    expect(find.byType(FloatingActionButton), findsNothing);
+
+    // Two adds, not three. A hand-typed vaccination beside a generated one is
+    // worse than no entry, so that section has no way in.
+    expect(find.widgetWithText(TextButton, l.commonAdd), findsNWidgets(2));
+
+    // The one under «Визиты к врачу» opens the sheet on that type.
+    await tester.tap(find.widgetWithText(TextButton, l.commonAdd).last);
     await tester.pumpAndSettle();
 
     expect(find.text(l.reminderNew), findsOneWidget);
     expect(find.text(l.reminderWhen.toUpperCase()), findsOneWidget);
+    expect(
+      find.widgetWithText(InkWell, l.reminderTypeAppointment),
+      findsOneWidget,
+    );
   });
 }

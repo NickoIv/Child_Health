@@ -21,11 +21,26 @@
 library;
 
 enum AnswerMode {
-  /// Only the retrieved articles. The default, and what silence means.
+  /// Only the retrieved articles. What a health question gets whenever the
+  /// base has something to say about it.
   medical,
 
+  /// A health question the base has nothing on.
+  ///
+  /// It used to get [medical] with four unrelated age articles attached, and
+  /// the strict prompt then did the only thing it could: «В моей базе нет
+  /// ответа на этот вопрос». Forty-seven articles cannot cover what parents
+  /// ask, so that reply was most of what the assistant ever said — which is
+  /// what «остались заготовленные вопросы и ответы» was describing.
+  ///
+  /// The model answers from what it knows here, and the answer says so. What
+  /// does not move: the emergency gate still runs first and is untouched by
+  /// this, and no dose, no drug name and no diagnosis may appear — those are
+  /// forbidden in every mode, not softened in this one.
+  generalHealth,
+
   /// The model's own knowledge, for things a paediatric knowledge base was
-  /// never going to contain.
+  /// never going to contain — the paperwork, the nursery, the pushchair.
   everyday,
 }
 

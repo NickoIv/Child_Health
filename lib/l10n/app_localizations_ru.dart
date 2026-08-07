@@ -1627,6 +1627,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Это бытовой вопрос — ответ из общих знаний, а не из проверенной базы приложения.';
 
   @override
+  String get chatGeneralHealthAnswer =>
+      'В проверенной базе приложения по этому вопросу материалов нет — это общие сведения. При сомнениях покажите ребёнка врачу.';
+
+  @override
   String get chatEmergency => 'Вызывайте скорую — 103';
 
   @override

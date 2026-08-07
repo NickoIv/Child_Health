@@ -2944,6 +2944,12 @@ abstract class AppLocalizations {
   /// **'Это бытовой вопрос — ответ из общих знаний, а не из проверенной базы приложения.'**
   String get chatGeneralAnswer;
 
+  /// No description provided for @chatGeneralHealthAnswer.
+  ///
+  /// In ru, this message translates to:
+  /// **'В проверенной базе приложения по этому вопросу материалов нет — это общие сведения. При сомнениях покажите ребёнка врачу.'**
+  String get chatGeneralHealthAnswer;
+
   /// No description provided for @chatEmergency.
   ///
   /// In ru, this message translates to:

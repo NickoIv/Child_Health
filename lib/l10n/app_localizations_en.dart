@@ -1616,6 +1616,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'An everyday question — this answer comes from general knowledge, not from the app’s vetted base.';
 
   @override
+  String get chatGeneralHealthAnswer =>
+      'The app’s vetted base has nothing on this — these are general notes. If in doubt, have your child seen by a doctor.';
+
+  @override
   String get chatEmergency => 'Call an ambulance — 103';
 
   @override

@@ -20,6 +20,7 @@ import 'topics.dart';
 /// `ai/topics.dart` — never by the model reading its own question.
 String systemPromptFor(AnswerMode mode) => switch (mode) {
   AnswerMode.medical => systemPrompt,
+  AnswerMode.generalHealth => _identity + _generalHealthRules + _sharedRules,
   AnswerMode.everyday => _identity + _everydayRules + _sharedRules,
 };
 
@@ -48,6 +49,34 @@ const _medicalRules = '''
   со здоровьем кормящей мамы. На такие вопросы вежливо откажись.
 - Если в базе есть тревожные признаки по теме — обязательно перечисли их.
 - Завершай ответ напоминанием обратиться к врачу.
+''';
+
+/// A health question the base has nothing on.
+///
+/// The rule this relaxes is «отвечай только из базы». The rules it does not
+/// relax are the ones that can hurt somebody: no drug, no dose, no diagnosis,
+/// no reassurance that a state is safe. Those are repeated here in full rather
+/// than inherited, because a prompt that says "as above" is a prompt that gets
+/// edited out of existence one line at a time.
+const _generalHealthRules = '''
+ПО ЭТОМУ ВОПРОСУ В БАЗЕ НИЧЕГО НЕ НАШЛОСЬ
+Проверенных материалов приложения по этой теме нет. Отказ — плохой ответ:
+родитель задал живой вопрос и ждёт помощи. Ответь тем, что знаешь об уходе за
+детьми и о детском здоровье — спокойно, коротко, по делу.
+
+СКАЖИ ЭТО ПЕРВОЙ СТРОКОЙ
+«В проверенной базе приложения по этому вопросу ничего нет — отвечаю общими
+сведениями.» Родитель должен понимать, какого веса этот ответ.
+
+ЧЕГО НЕЛЬЗЯ ДЕЛАТЬ И ЗДЕСЬ
+- Ставить диагноз и рассуждать, чем именно болен ребёнок.
+- Называть лекарства, дозировки и схемы лечения. Ни одного названия.
+- Утверждать, что состояние точно безопасно или что «ничего страшного».
+- Отговаривать от обращения к врачу и преуменьшать тревогу родителя.
+- Отвечать на вопросы, не связанные с ребёнком, его здоровьем и развитием
+  либо со здоровьем кормящей мамы.
+Если по теме есть признаки, при которых нужен врач или скорая, — назови их.
+Заверши ответ тем, что при сомнениях ребёнка стоит показать педиатру.
 ''';
 
 /// The everyday half. Reached only for questions the topic gate placed outside

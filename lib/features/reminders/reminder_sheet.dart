@@ -26,6 +26,7 @@ Future<void> showReminderSheet(
   BuildContext context, {
   required String childId,
   Reminder? existing,
+  ReminderType initialType = ReminderType.medication,
 }) {
   return showAppSheet<void>(
     context,
@@ -36,7 +37,11 @@ Future<void> showReminderSheet(
       padding: EdgeInsets.only(
         bottom: MediaQuery.viewInsetsOf(sheetContext).bottom,
       ),
-      child: _ReminderSheet(childId: childId, existing: existing),
+      child: _ReminderSheet(
+        childId: childId,
+        existing: existing,
+        initialType: initialType,
+      ),
     ),
   );
 }
@@ -51,17 +56,25 @@ const reminderNameFieldKey = Key('reminder-name');
 const _quickHours = [4, 6, 8];
 
 class _ReminderSheet extends ConsumerStatefulWidget {
-  const _ReminderSheet({required this.childId, this.existing});
+  const _ReminderSheet({
+    required this.childId,
+    required this.initialType,
+    this.existing,
+  });
 
   final String childId;
   final Reminder? existing;
+
+  /// Which kind the section she tapped is for. The sheet no longer opens with
+  /// «о чём напомнить» as an open question — it opens on the answer.
+  final ReminderType initialType;
 
   @override
   ConsumerState<_ReminderSheet> createState() => _ReminderSheetState();
 }
 
 class _ReminderSheetState extends ConsumerState<_ReminderSheet> {
-  late ReminderType _type = widget.existing?.type ?? ReminderType.medication;
+  late ReminderType _type = widget.existing?.type ?? widget.initialType;
   late Recurrence _repeat = widget.existing?.recurrence ?? Recurrence.none;
   late DateTime _at =
       widget.existing?.scheduledTime ??
@@ -131,9 +144,12 @@ class _ReminderSheetState extends ConsumerState<_ReminderSheet> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
+                          // Editing an appointment used to be headed
+                          // «Лекарство», which is the sort of thing nobody
+                          // reports and everybody notices.
                           widget.existing == null
                               ? l.reminderNew
-                              : l.reminderTypeMedication,
+                              : _type.localizedLabel(l),
                           style: theme.textTheme.titleLarge,
                         ),
                       ),

@@ -474,6 +474,7 @@
   "chatSend": "Send",
   "chatDisclaimer": "On health the assistant answers only from the app’s vetted knowledge base and does not diagnose. Everyday questions it answers from general knowledge. The decision is always your doctor’s.",
   "chatGeneralAnswer": "An everyday question — this answer comes from general knowledge, not from the app’s vetted base.",
+  "chatGeneralHealthAnswer": "The app’s vetted base has nothing on this — these are general notes. If in doubt, have your child seen by a doctor.",
   "chatEmergency": "Call an ambulance — 103",
   "chatEmergencyBody": "Your question contains a sign that cannot wait. Questions like this are deliberately never sent to the AI — what is needed here is help, not advice.",
   "chatWhatToDo": "What to do until the ambulance arrives",

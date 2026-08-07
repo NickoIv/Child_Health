@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/theme/glass.dart';
 import '../../core/l10n/labels.dart';
 import '../../core/theme/app_theme.dart';
 import '../../l10n/app_localizations.dart';
@@ -48,19 +47,12 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
         ? all
         : all.where((r) => !r.isCompleted).toList();
 
+    // No floating button any more. It asked «напоминание о чём?» on the sheet
+    // as its first question, when the answer was already on the screen behind
+    // it: a parent who wants a dose at two in the morning is looking at
+    // «Приём лекарств» when she decides. The add now lives in each section's
+    // own header and arrives with the type already chosen — «так удобнее».
     return Scaffold(
-      // The planner could only ever show what the app had generated itself.
-      // This is the button that lets a parent add the reminder she actually
-      // needs — a dose in four hours — and it is the reason the screen exists
-      // rather than being a read-only calendar.
-      floatingActionButton: liftedFab(
-        context,
-        FloatingActionButton.extended(
-          onPressed: () => showReminderSheet(context, childId: child.id),
-          icon: const Icon(Icons.add_alert_outlined),
-          label: Text(l.reminderAdd),
-        ),
-      ),
       body: PageBody(
         children: [
           Row(
@@ -98,6 +90,15 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
                       childId: child.id,
                       existing: r,
                     ),
+              // And the same rule decides who may add one: a hand-typed
+              // vaccination beside a generated one is worse than no entry.
+              onAdd: type == ReminderType.vaccination
+                  ? null
+                  : () => showReminderSheet(
+                      context,
+                      childId: child.id,
+                      initialType: type,
+                    ),
             ),
             const SizedBox(height: 16),
           ],
@@ -113,6 +114,7 @@ class _TypeSection extends StatelessWidget {
     required this.reminders,
     required this.onToggle,
     this.onOpen,
+    this.onAdd,
   });
 
   final ReminderType type;
@@ -123,16 +125,30 @@ class _TypeSection extends StatelessWidget {
   /// which belong to the national calendar rather than to a parent.
   final ValueChanged<Reminder>? onOpen;
 
+  /// Writes a new one of this kind. Null on the vaccination section, where
+  /// the national calendar is the only author.
+  final VoidCallback? onAdd;
+
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final brightness = Theme.of(context).brightness;
     return SectionCard(
-      title: type.sectionTitle(AppLocalizations.of(context)),
+      title: type.sectionTitle(l),
       icon: switch (type) {
         ReminderType.vaccination => Icons.vaccines_outlined,
         ReminderType.medication => Icons.medication_outlined,
         ReminderType.appointment => Icons.event_available_outlined,
       },
+      // The heading is where the decision is made, so it is where the button
+      // goes — on the same line as the section it will write into.
+      action: onAdd == null
+          ? null
+          : TextButton.icon(
+              onPressed: onAdd,
+              icon: const Icon(Icons.add, size: 18),
+              label: Text(l.commonAdd),
+            ),
       accentColor: switch (type) {
         ReminderType.vaccination => VizPalette.slot(0, brightness),
         ReminderType.medication => VizPalette.slot(2, brightness),
@@ -141,7 +157,7 @@ class _TypeSection extends StatelessWidget {
       child: reminders.isEmpty
           ? EmptyState(
               icon: Icons.done_all,
-              message: AppLocalizations.of(context).remindersNothingPlanned,
+              message: l.remindersNothingPlanned,
             )
           : Column(
               children: [

@@ -58,6 +58,14 @@ const _stopWords = {
   'что', 'как', 'при', 'для', 'ли', 'же', 'бы', 'то', 'это', 'его', 'её',
   'ее', 'мой', 'моя', 'мне', 'ему', 'ей', 'мы', 'он', 'она', 'они',
   'есть', 'быть', 'делать', 'можно', 'нужно', 'надо',
+  // The words every question about a child contains, and several article
+  // titles with them. «Ребёнок трёт глаза когда устал» scored ten points on
+  // «Ребёнок подавился» for the word «ребёнок» and ten more on «Когда
+  // начинать прикорм» for «когда» — four unrelated articles handed to the
+  // model as the only thing it was allowed to answer from.
+  'когда', 'почему', 'зачем', 'сколько', 'какой', 'какая', 'какие',
+  'ребёнок', 'ребенок', 'ребёнка', 'ребенка', 'ребёнку', 'ребенку',
+  'малыш', 'малыша', 'малышу', 'него', 'неё', 'нее', 'нам', 'меня',
 };
 
 /// Ranked full-text search over the base.
@@ -65,7 +73,22 @@ const _stopWords = {
 /// Plain substring scoring, no stemming: the base is small enough that the
 /// simple thing works, and a parent typing "сопли" should find the article
 /// titled "Насморк" — which is what the `tags` field is for.
-List<KbArticle> searchArticles(String query, {int? ageMonths}) {
+/// [requireStrongMatch] keeps only articles a query actually named — one whose
+/// title or tags matched, rather than one that merely contains the word
+/// «ребёнок» somewhere in its body.
+///
+/// Off for the search screen, where a loose hit is a suggestion a person can
+/// glance at and dismiss. On for the assistant, where the retrieved articles
+/// are the entire universe the answer may come from: «ребёнок трёт глаза»
+/// pulled in *milestones, complementary-feeding, red-flags, choking* on a
+/// single common word each, and the model, told to answer only from those,
+/// could do nothing but refuse. That refusal was most of what the assistant
+/// ever said.
+List<KbArticle> searchArticles(
+  String query, {
+  int? ageMonths,
+  bool requireStrongMatch = false,
+}) {
   final q = query.trim().toLowerCase();
   if (q.isEmpty) return const [];
 
@@ -83,18 +106,22 @@ List<KbArticle> searchArticles(String query, {int? ageMonths}) {
     final body = article.searchableText;
 
     var score = 0;
+    var named = false;
     for (final term in terms) {
       if (title.contains(term)) {
         score += 10;
+        named = true;
       }
       if (tags.contains(term)) {
         score += 6;
+        named = true;
       }
       if (body.contains(term)) {
         score += 1;
       }
     }
     if (score == 0) continue;
+    if (requireStrongMatch && !named) continue;
 
     // Urgent material wins ties: when a parent's words are ambiguous, the
     // safer article should be the one they see first.

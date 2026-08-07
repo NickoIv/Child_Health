@@ -670,7 +670,20 @@ class _ConfirmSheetState extends ConsumerState<_ConfirmSheet> {
 /// Kept out of the widget so a test can read it without building anything,
 /// and phrased as the record rather than as a confirmation question — the
 /// question is the button underneath it.
-String voiceSummary(AppLocalizations l, VoiceCommand command) =>
+///
+/// A moment she named out loud is printed here too. It is the one thing on
+/// this line she cannot check against the record afterwards without going to
+/// look, and a misheard «вчера» would otherwise file a feed on the wrong day
+/// in silence.
+String voiceSummary(AppLocalizations l, VoiceCommand command) {
+  final what = _voiceWhat(l, command);
+  if (command.at case final moment?) {
+    return '$what · ${dayMonth.format(moment)}, ${timeOfDay.format(moment)}';
+  }
+  return what;
+}
+
+String _voiceWhat(AppLocalizations l, VoiceCommand command) =>
     switch (command.intent) {
       VoiceIntent.temperature =>
         '${l.quickSheetTemperature}: '

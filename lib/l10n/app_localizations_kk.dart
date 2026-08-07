@@ -1608,6 +1608,10 @@ class AppLocalizationsKk extends AppLocalizations {
       'Бұл тұрмыстық сұрақ — жауап тексерілген базадан емес, жалпы білімнен алынды.';
 
   @override
+  String get chatGeneralHealthAnswer =>
+      'Қосымшаның тексерілген базасында бұл тақырып жоқ — бұл жалпы мәліметтер. Күмәндансаңыз, баланы дәрігерге көрсетіңіз.';
+
+  @override
   String get chatEmergency => 'Жедел жәрдем шақырыңыз — 103';
 
   @override
