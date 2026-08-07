@@ -1650,6 +1650,45 @@ class AppLocalizationsRu extends AppLocalizations {
   String get chatSuggestion5 => 'Ребёнок не какал два дня';
 
   @override
+  String get actionSuggested => 'Помощник предлагает';
+
+  @override
+  String get actionConfirm => 'Подтвердить';
+
+  @override
+  String get actionDismiss => 'Не надо';
+
+  @override
+  String get actionReadOnly =>
+      'У вас доступ только для просмотра — записать может родитель, который вас пригласил.';
+
+  @override
+  String get actionFailed => 'Не удалось выполнить';
+
+  @override
+  String actionWrite(String what) {
+    return 'Записать: $what';
+  }
+
+  @override
+  String actionCreateReminder(String title, String when) {
+    return 'Создать напоминание «$title» — $when';
+  }
+
+  @override
+  String actionOpenScreen(String screen) {
+    return 'Открыть раздел «$screen»';
+  }
+
+  @override
+  String actionOpenArticle(String title) {
+    return 'Открыть статью «$title»';
+  }
+
+  @override
+  String get actionBuildReport => 'Собрать PDF-отчёт для врача';
+
+  @override
   String get triageTitle => 'Проверка тревожных признаков';
 
   @override

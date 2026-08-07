@@ -823,6 +823,47 @@
   "chatSuggestion3": "Когда начинать прикорм",
   "chatSuggestion4": "Можно ли мне антибиотик при ГВ",
   "chatSuggestion5": "Ребёнок не какал два дня",
+  "actionSuggested": "Помощник предлагает",
+  "actionConfirm": "Подтвердить",
+  "actionDismiss": "Не надо",
+  "actionReadOnly": "У вас доступ только для просмотра — записать может родитель, который вас пригласил.",
+  "actionFailed": "Не удалось выполнить",
+  "actionWrite": "Записать: {what}",
+  "@actionWrite": {
+    "placeholders": {
+      "what": {
+        "type": "String"
+      }
+    }
+  },
+  "actionCreateReminder": "Создать напоминание «{title}» — {when}",
+  "@actionCreateReminder": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "actionOpenScreen": "Открыть раздел «{screen}»",
+  "@actionOpenScreen": {
+    "placeholders": {
+      "screen": {
+        "type": "String"
+      }
+    }
+  },
+  "actionOpenArticle": "Открыть статью «{title}»",
+  "@actionOpenArticle": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "actionBuildReport": "Собрать PDF-отчёт для врача",
   "triageTitle": "Проверка тревожных признаков",
   "triageNeedChild": "Нужен профиль ребёнка",
   "triageNeedChildHint": "Возраст влияет на оценку — особенно до 3 месяцев",

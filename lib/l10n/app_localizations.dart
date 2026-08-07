@@ -2986,6 +2986,66 @@ abstract class AppLocalizations {
   /// **'Ребёнок не какал два дня'**
   String get chatSuggestion5;
 
+  /// No description provided for @actionSuggested.
+  ///
+  /// In ru, this message translates to:
+  /// **'Помощник предлагает'**
+  String get actionSuggested;
+
+  /// No description provided for @actionConfirm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подтвердить'**
+  String get actionConfirm;
+
+  /// No description provided for @actionDismiss.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не надо'**
+  String get actionDismiss;
+
+  /// No description provided for @actionReadOnly.
+  ///
+  /// In ru, this message translates to:
+  /// **'У вас доступ только для просмотра — записать может родитель, который вас пригласил.'**
+  String get actionReadOnly;
+
+  /// No description provided for @actionFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось выполнить'**
+  String get actionFailed;
+
+  /// No description provided for @actionWrite.
+  ///
+  /// In ru, this message translates to:
+  /// **'Записать: {what}'**
+  String actionWrite(String what);
+
+  /// No description provided for @actionCreateReminder.
+  ///
+  /// In ru, this message translates to:
+  /// **'Создать напоминание «{title}» — {when}'**
+  String actionCreateReminder(String title, String when);
+
+  /// No description provided for @actionOpenScreen.
+  ///
+  /// In ru, this message translates to:
+  /// **'Открыть раздел «{screen}»'**
+  String actionOpenScreen(String screen);
+
+  /// No description provided for @actionOpenArticle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Открыть статью «{title}»'**
+  String actionOpenArticle(String title);
+
+  /// No description provided for @actionBuildReport.
+  ///
+  /// In ru, this message translates to:
+  /// **'Собрать PDF-отчёт для врача'**
+  String get actionBuildReport;
+
   /// No description provided for @triageTitle.
   ///
   /// In ru, this message translates to:

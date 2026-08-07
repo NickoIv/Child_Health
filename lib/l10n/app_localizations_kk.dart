@@ -1631,6 +1631,45 @@ class AppLocalizationsKk extends AppLocalizations {
   String get chatSuggestion5 => 'Бала екі күн дәреті келмеді';
 
   @override
+  String get actionSuggested => 'Көмекші ұсынады';
+
+  @override
+  String get actionConfirm => 'Растау';
+
+  @override
+  String get actionDismiss => 'Керек емес';
+
+  @override
+  String get actionReadOnly =>
+      'Сізде тек көру рұқсаты бар — мұны сізді шақырған ата-ана жаза алады.';
+
+  @override
+  String get actionFailed => 'Орындау мүмкін болмады';
+
+  @override
+  String actionWrite(String what) {
+    return 'Жазу: $what';
+  }
+
+  @override
+  String actionCreateReminder(String title, String when) {
+    return '«$title» еске салуын құру — $when';
+  }
+
+  @override
+  String actionOpenScreen(String screen) {
+    return '«$screen» бөлімін ашу';
+  }
+
+  @override
+  String actionOpenArticle(String title) {
+    return '«$title» мақаласын ашу';
+  }
+
+  @override
+  String get actionBuildReport => 'Дәрігерге арналған PDF есеп жасау';
+
+  @override
   String get triageTitle => 'Қауіпті белгілерді тексеру';
 
   @override

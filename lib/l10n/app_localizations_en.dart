@@ -1639,6 +1639,45 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chatSuggestion5 => 'My baby has not pooed for two days';
 
   @override
+  String get actionSuggested => 'The assistant suggests';
+
+  @override
+  String get actionConfirm => 'Confirm';
+
+  @override
+  String get actionDismiss => 'No thanks';
+
+  @override
+  String get actionReadOnly =>
+      'You have view-only access — the parent who invited you can write this.';
+
+  @override
+  String get actionFailed => 'Could not do that';
+
+  @override
+  String actionWrite(String what) {
+    return 'Log: $what';
+  }
+
+  @override
+  String actionCreateReminder(String title, String when) {
+    return 'Create the reminder “$title” — $when';
+  }
+
+  @override
+  String actionOpenScreen(String screen) {
+    return 'Open “$screen”';
+  }
+
+  @override
+  String actionOpenArticle(String title) {
+    return 'Open the article “$title”';
+  }
+
+  @override
+  String get actionBuildReport => 'Build a PDF report for the doctor';
+
+  @override
   String get triageTitle => 'Warning-sign check';
 
   @override

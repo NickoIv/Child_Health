@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../../ai/actions.dart';
 import '../../ai/assistant_service.dart';
 import '../../ai/conversation.dart';
 import '../../core/theme/app_theme.dart';
@@ -10,6 +11,7 @@ import '../../knowledge/article.dart';
 import '../../providers.dart';
 import '../../core/care/conversation_memory.dart';
 import '../shared/widgets.dart';
+import 'action_card.dart';
 import 'context_block.dart';
 import 'continue_block.dart';
 
@@ -233,10 +235,8 @@ class _ReplyView extends StatelessWidget {
   Widget build(BuildContext context) {
     return switch (reply) {
       AssistantEmergency(:final matched) => _EmergencyCard(matched: matched),
-      AssistantAnswer(:final text, :final sources) => _AnswerCard(
-        text: text,
-        sources: sources,
-      ),
+      AssistantAnswer(:final text, :final sources, :final action) =>
+        _AnswerCard(text: text, sources: sources, action: action),
       AssistantUnavailable(:final reason, :final isConfigurationIssue) =>
         _UnavailableCard(
           reason: reason,
@@ -319,10 +319,11 @@ class _EmergencyCard extends StatelessWidget {
 }
 
 class _AnswerCard extends StatelessWidget {
-  const _AnswerCard({required this.text, required this.sources});
+  const _AnswerCard({required this.text, required this.sources, this.action});
 
   final String text;
   final List<KbArticle> sources;
+  final AssistantAction? action;
 
   @override
   Widget build(BuildContext context) {
@@ -335,6 +336,9 @@ class _AnswerCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SelectableText(text, style: theme.textTheme.bodyMedium),
+            // Under the answer, not instead of it: the parent decides with
+            // the reasoning in front of her, and declining costs nothing.
+            if (action != null) AssistantActionCard(action: action!),
             if (sources.isNotEmpty) ...[
               const SizedBox(height: 16),
               Text(

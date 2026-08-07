@@ -481,6 +481,47 @@
   "chatSuggestion3": "Қосымша тамақты қашан бастау керек",
   "chatSuggestion4": "Емізу кезінде антибиотик ішуге бола ма",
   "chatSuggestion5": "Бала екі күн дәреті келмеді",
+  "actionSuggested": "Көмекші ұсынады",
+  "actionConfirm": "Растау",
+  "actionDismiss": "Керек емес",
+  "actionReadOnly": "Сізде тек көру рұқсаты бар — мұны сізді шақырған ата-ана жаза алады.",
+  "actionFailed": "Орындау мүмкін болмады",
+  "actionWrite": "Жазу: {what}",
+  "@actionWrite": {
+    "placeholders": {
+      "what": {
+        "type": "String"
+      }
+    }
+  },
+  "actionCreateReminder": "«{title}» еске салуын құру — {when}",
+  "@actionCreateReminder": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "actionOpenScreen": "«{screen}» бөлімін ашу",
+  "@actionOpenScreen": {
+    "placeholders": {
+      "screen": {
+        "type": "String"
+      }
+    }
+  },
+  "actionOpenArticle": "«{title}» мақаласын ашу",
+  "@actionOpenArticle": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "actionBuildReport": "Дәрігерге арналған PDF есеп жасау",
   "triageTitle": "Қауіпті белгілерді тексеру",
   "triageNeedChild": "Бала профилі қажет",
   "triageNeedChildHint": "Жас бағаға әсер етеді — әсіресе 3 айға дейін",

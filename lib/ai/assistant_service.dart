@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 
 import '../knowledge/article.dart';
 import '../knowledge/triage.dart';
+import 'actions.dart';
 import 'ai_config.dart';
 import 'conversation.dart';
 import 'prompt.dart';
@@ -16,10 +17,18 @@ sealed class AssistantReply {
 
 /// A normal answer, with the articles it was built from.
 class AssistantAnswer extends AssistantReply {
-  const AssistantAnswer({required this.text, required this.sources});
+  const AssistantAnswer({
+    required this.text,
+    required this.sources,
+    this.action,
+  });
 
   final String text;
   final List<KbArticle> sources;
+
+  /// What the model proposes the app should do about it, if anything. Nothing
+  /// happens until the parent confirms — see `ai/actions.dart`.
+  final AssistantAction? action;
 }
 
 /// The question described a red flag. The model was never called: this is a
@@ -213,12 +222,21 @@ class GeminiAssistantService implements AssistantService {
 
       final decoded =
           jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
-      final text = (decoded['text'] as String? ?? '').trim();
-      if (text.isEmpty) {
+      final raw = (decoded['text'] as String? ?? '').trim();
+
+      // The action line is stripped here, so nothing downstream can put the
+      // machinery on screen — including the failure case where the JSON was
+      // malformed and there is no action to show.
+      final parsed = parseAssistantReply(raw);
+      if (parsed.text.isEmpty) {
         return const AssistantUnavailable('Помощник вернул пустой ответ.');
       }
 
-      return AssistantAnswer(text: text, sources: context.articles);
+      return AssistantAnswer(
+        text: parsed.text,
+        sources: context.articles,
+        action: parsed.action,
+      );
     } on Exception catch (e) {
       return AssistantUnavailable('Не удалось получить ответ: $e');
     }

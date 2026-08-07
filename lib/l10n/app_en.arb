@@ -481,6 +481,47 @@
   "chatSuggestion3": "When to start solids",
   "chatSuggestion4": "Can I take antibiotics while breastfeeding",
   "chatSuggestion5": "My baby has not pooed for two days",
+  "actionSuggested": "The assistant suggests",
+  "actionConfirm": "Confirm",
+  "actionDismiss": "No thanks",
+  "actionReadOnly": "You have view-only access — the parent who invited you can write this.",
+  "actionFailed": "Could not do that",
+  "actionWrite": "Log: {what}",
+  "@actionWrite": {
+    "placeholders": {
+      "what": {
+        "type": "String"
+      }
+    }
+  },
+  "actionCreateReminder": "Create the reminder “{title}” — {when}",
+  "@actionCreateReminder": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "actionOpenScreen": "Open “{screen}”",
+  "@actionOpenScreen": {
+    "placeholders": {
+      "screen": {
+        "type": "String"
+      }
+    }
+  },
+  "actionOpenArticle": "Open the article “{title}”",
+  "@actionOpenArticle": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "actionBuildReport": "Build a PDF report for the doctor",
   "triageTitle": "Warning-sign check",
   "triageNeedChild": "A child profile is needed",
   "triageNeedChildHint": "Age changes the assessment — especially under three months",
