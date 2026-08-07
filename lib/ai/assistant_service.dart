@@ -9,6 +9,7 @@ import 'ai_config.dart';
 import 'conversation.dart';
 import 'prompt.dart';
 import 'rag.dart';
+import 'topics.dart';
 
 /// What the assistant produced.
 sealed class AssistantReply {
@@ -21,10 +22,18 @@ class AssistantAnswer extends AssistantReply {
     required this.text,
     required this.sources,
     this.action,
+    this.mode = AnswerMode.medical,
   });
 
   final String text;
   final List<KbArticle> sources;
+
+  /// Which rules the answer was produced under. An everyday answer may draw on
+  /// the model's own knowledge, and the screen says so rather than letting it
+  /// pass for something the app has vetted.
+  final AnswerMode mode;
+
+  bool get isFromGeneralKnowledge => mode == AnswerMode.everyday;
 
   /// What the model proposes the app should do about it, if anything. Nothing
   /// happens until the parent confirms — see `ai/actions.dart`.
@@ -182,13 +191,25 @@ class GeminiAssistantService implements AssistantService {
       );
     }
 
-    final context = retrieveFor(trimmed, ageMonths: ageMonths);
+    // Decided here, in Dart, before anything is sent: whether this question is
+    // answered strictly from the articles or may draw on what the model knows.
+    // See `ai/topics.dart` — silence means strict.
+    final mode = modeFor(trimmed);
+
+    final context = retrieveFor(
+      trimmed,
+      ageMonths: ageMonths,
+      // The age-relevant fallback exists so a medical question is never left
+      // without material. Attaching it to «как встать в очередь в садик»
+      // would only dress an everyday answer up as a vetted one.
+      ageFallback: mode == AnswerMode.medical,
+    );
     // Retrieval runs on this question alone, on purpose. Searching the whole
     // thread drags the articles of the previous topic into the answer to the
     // next one, and the base is the only thing the model may answer from.
     final past = trimHistory(history);
     final body = jsonEncode({
-      'system': systemPrompt,
+      'system': systemPromptFor(mode),
       'prompt': buildUserPrompt(
         question: trimmed,
         knowledgeBlock: context.promptBlock,
@@ -236,6 +257,7 @@ class GeminiAssistantService implements AssistantService {
         text: parsed.text,
         sources: context.articles,
         action: parsed.action,
+        mode: mode,
       );
     } on Exception catch (e) {
       return AssistantUnavailable('Не удалось получить ответ: $e');

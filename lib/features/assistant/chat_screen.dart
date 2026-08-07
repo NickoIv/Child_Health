@@ -235,8 +235,18 @@ class _ReplyView extends StatelessWidget {
   Widget build(BuildContext context) {
     return switch (reply) {
       AssistantEmergency(:final matched) => _EmergencyCard(matched: matched),
-      AssistantAnswer(:final text, :final sources, :final action) =>
-        _AnswerCard(text: text, sources: sources, action: action),
+      AssistantAnswer(
+        :final text,
+        :final sources,
+        :final action,
+        :final isFromGeneralKnowledge,
+      ) =>
+        _AnswerCard(
+          text: text,
+          sources: sources,
+          action: action,
+          fromGeneralKnowledge: isFromGeneralKnowledge,
+        ),
       AssistantUnavailable(:final reason, :final isConfigurationIssue) =>
         _UnavailableCard(
           reason: reason,
@@ -319,11 +329,20 @@ class _EmergencyCard extends StatelessWidget {
 }
 
 class _AnswerCard extends StatelessWidget {
-  const _AnswerCard({required this.text, required this.sources, this.action});
+  const _AnswerCard({
+    required this.text,
+    required this.sources,
+    this.action,
+    this.fromGeneralKnowledge = false,
+  });
 
   final String text;
   final List<KbArticle> sources;
   final AssistantAction? action;
+
+  /// An everyday answer, drawn on the model's own knowledge. Said out loud
+  /// rather than left to look like everything else the app has vetted.
+  final bool fromGeneralKnowledge;
 
   @override
   Widget build(BuildContext context) {
@@ -336,6 +355,28 @@ class _AnswerCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SelectableText(text, style: theme.textTheme.bodyMedium),
+            if (fromGeneralKnowledge) ...[
+              const SizedBox(height: 12),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    size: 16,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      l.chatGeneralAnswer,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
             // Under the answer, not instead of it: the parent decides with
             // the reasoning in front of her, and declining costs nothing.
             if (action != null) AssistantActionCard(action: action!),

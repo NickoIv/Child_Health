@@ -22,17 +22,22 @@ class RetrievedContext {
 ///
 /// [ageMonths] biases retrieval towards age-appropriate material — advice for
 /// a newborn and for a five-year-old differ enough that mixing them is unsafe.
+///
+/// [ageFallback] is what a medical question gets when the search finds nothing;
+/// an everyday one is left with an empty context rather than a handful of
+/// unrelated articles listed underneath it as its sources.
 RetrievedContext retrieveFor(
   String question, {
   int? ageMonths,
   int limit = 4,
+  bool ageFallback = true,
 }) {
   var matches = searchArticles(question, ageMonths: ageMonths);
 
   // A question the search cannot place at all still deserves the age-relevant
   // basics rather than an empty context, which would make the model refuse
   // even simple things.
-  if (matches.isEmpty && ageMonths != null) {
+  if (matches.isEmpty && ageMonths != null && ageFallback) {
     matches = articlesForAge(ageMonths).take(limit).toList();
   }
 

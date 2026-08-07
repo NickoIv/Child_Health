@@ -1591,7 +1591,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chatDisclaimer =>
-      'The assistant answers only from the app’s vetted knowledge base and does not diagnose. The decision is always your doctor’s.';
+      'On health the assistant answers only from the app’s vetted knowledge base and does not diagnose. Everyday questions it answers from general knowledge. The decision is always your doctor’s.';
+
+  @override
+  String get chatGeneralAnswer =>
+      'An everyday question — this answer comes from general knowledge, not from the app’s vetted base.';
 
   @override
   String get chatEmergency => 'Call an ambulance — 103';

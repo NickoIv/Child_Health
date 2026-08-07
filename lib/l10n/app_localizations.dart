@@ -2899,8 +2899,14 @@ abstract class AppLocalizations {
   /// No description provided for @chatDisclaimer.
   ///
   /// In ru, this message translates to:
-  /// **'Помощник отвечает только по проверенной базе приложения и не ставит диагнозов. Решение всегда за врачом.'**
+  /// **'О здоровье помощник отвечает только по проверенной базе приложения и не ставит диагнозов. На бытовые вопросы — своими знаниями. Решение всегда за врачом.'**
   String get chatDisclaimer;
+
+  /// No description provided for @chatGeneralAnswer.
+  ///
+  /// In ru, this message translates to:
+  /// **'Это бытовой вопрос — ответ из общих знаний, а не из проверенной базы приложения.'**
+  String get chatGeneralAnswer;
 
   /// No description provided for @chatEmergency.
   ///
