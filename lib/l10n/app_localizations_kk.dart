@@ -1564,7 +1564,7 @@ class AppLocalizationsKk extends AppLocalizations {
 
   @override
   String get assistantChatHint =>
-      'Қосымшаның өз базасы бойынша жауап, мақалаларға сілтемелермен';
+      'Кез келген сұраққа жауап береді — бала туралы да, басқа да';
 
   @override
   String get assistantChatOff =>
@@ -1593,7 +1593,7 @@ class AppLocalizationsKk extends AppLocalizations {
 
   @override
   String chatHint(String name) {
-    return '$name туралы сұраңыз: ұйқы, тамақ, дене қызуы…';
+    return 'Кез келген нәрсені сұраңыз — $name туралы да, өзіңіз туралы да';
   }
 
   @override
@@ -1601,15 +1601,11 @@ class AppLocalizationsKk extends AppLocalizations {
 
   @override
   String get chatDisclaimer =>
-      'Денсаулық туралы көмекші тек қосымшаның тексерілген базасы бойынша жауап береді және диагноз қоймайды. Тұрмыстық сұрақтарға жалпы білімімен жауап береді. Шешім әрқашан дәрігерде.';
+      'Көмекші кез келген сұраққа жауап береді. Бала денсаулығы туралы ол қосымшаның тексерілген базасына сүйенеді және диагноз қоймайды — шешім әрқашан дәрігерде.';
 
   @override
   String get chatGeneralAnswer =>
-      'Бұл тұрмыстық сұрақ — жауап тексерілген базадан емес, жалпы білімнен алынды.';
-
-  @override
-  String get chatGeneralHealthAnswer =>
-      'Қосымшаның тексерілген базасында бұл тақырып жоқ — бұл жалпы мәліметтер. Күмәндансаңыз, баланы дәрігерге көрсетіңіз.';
+      'Жауап тексерілген базадан емес, ЖИ білімінен алынды. Денсаулық туралы болса, дәрігерден нақтылаңыз.';
 
   @override
   String get chatEmergency => 'Жедел жәрдем шақырыңыз — 103';
@@ -1700,10 +1696,10 @@ class AppLocalizationsKk extends AppLocalizations {
   String get chatSuggestion1 => 'Дене қызуы 38.5, не істеу керек';
 
   @override
-  String get chatSuggestion2 => 'Алты айлық бала қанша ұйықтауы керек';
+  String get chatSuggestion2 => 'Аптаға азық-түлік тізімін жасап бер';
 
   @override
-  String get chatSuggestion3 => 'Қосымша тамақты қашан бастау керек';
+  String get chatSuggestion3 => 'Әжеме мерейтойға құттықтау жаз';
 
   @override
   String get chatSuggestion4 => 'Емізу кезінде антибиотик ішуге бола ма';

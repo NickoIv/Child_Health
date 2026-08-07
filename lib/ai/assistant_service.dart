@@ -22,20 +22,17 @@ class AssistantAnswer extends AssistantReply {
     required this.text,
     required this.sources,
     this.action,
-    this.mode = AnswerMode.medical,
+    this.mode = AnswerMode.general,
   });
 
   final String text;
   final List<KbArticle> sources;
 
-  /// Which rules the answer was produced under. An everyday answer may draw on
-  /// the model's own knowledge, and the screen says so rather than letting it
-  /// pass for something the app has vetted.
+  /// Where it came from. Not a restriction any more — the model answers the
+  /// question either way — only what the screen prints underneath.
   final AnswerMode mode;
 
-  /// True whenever the answer came from the model rather than from a vetted
-  /// article — an everyday question, or a health one the base did not cover.
-  bool get isFromGeneralKnowledge => mode != AnswerMode.medical;
+  bool get isFromGeneralKnowledge => mode == AnswerMode.general;
 
   /// What the model proposes the app should do about it, if anything. Nothing
   /// happens until the parent confirms — see `ai/actions.dart`.
@@ -193,35 +190,25 @@ class GeminiAssistantService implements AssistantService {
       );
     }
 
-    // Decided here, in Dart, before anything is sent: whether this question is
-    // answered strictly from the articles or may draw on what the model knows.
-    // See `ai/topics.dart` — silence means health.
-    final topic = modeFor(trimmed);
-
-    // No age fallback any more, in either direction. It was there so a health
-    // question was never left without material, but what it actually did was
-    // staple four unrelated articles to the prompt — which the strict rules
-    // then had to refuse from, and which the screen listed underneath as the
-    // «источники» of an answer they had nothing to do with. An empty result is
-    // now allowed to mean what it says.
-    final context = retrieveFor(trimmed, ageMonths: ageMonths,
-        ageFallback: false);
-
-    // Three ways to answer, and which one this is depends on what retrieval
-    // found rather than on the question alone: a health question the base
-    // covers is answered from the base, and one it does not is answered
-    // honestly instead of not at all.
-    final mode = switch (topic) {
-      AnswerMode.everyday => AnswerMode.everyday,
-      _ when context.isEmpty => AnswerMode.generalHealth,
-      _ => AnswerMode.medical,
-    };
+    // What the base happens to have on this, if anything. No age fallback:
+    // stapling four age-relevant articles to «как убрать пятно от смеси» only
+    // ever produced an answer with four unrelated «источники» under it.
+    //
+    // Nothing here decides whether the question gets answered any more. Every
+    // question does. This only decides whether the answer has articles behind
+    // it and what the screen says underneath.
+    final context = retrieveFor(
+      trimmed,
+      ageMonths: ageMonths,
+      ageFallback: false,
+    );
+    final mode = context.isEmpty ? AnswerMode.general : AnswerMode.fromBase;
     // Retrieval runs on this question alone, on purpose. Searching the whole
     // thread drags the articles of the previous topic into the answer to the
     // next one, and the base is the only thing the model may answer from.
     final past = trimHistory(history);
     final body = jsonEncode({
-      'system': systemPromptFor(mode),
+      'system': systemPrompt,
       'prompt': buildUserPrompt(
         question: trimmed,
         knowledgeBlock: context.promptBlock,

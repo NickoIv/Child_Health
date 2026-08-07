@@ -138,7 +138,7 @@ void main() {
     test('with no child chosen it falls back to the general list', () {
       expect(
         topicsFor(const []),
-        [AskTopic.commonFever, AskTopic.commonSleep, AskTopic.commonSolids],
+        [AskTopic.commonHealth, AskTopic.commonEveryday, AskTopic.commonAnything],
       );
     });
   });
@@ -198,9 +198,9 @@ void main() {
     test('the general three admit they came from nowhere', () async {
       final l = await AppLocalizations.delegate.load(defaultLocale);
       for (final topic in const [
-        AskTopic.commonFever,
-        AskTopic.commonSleep,
-        AskTopic.commonSolids,
+        AskTopic.commonHealth,
+        AskTopic.commonEveryday,
+        AskTopic.commonAnything,
       ]) {
         expect(SuggestedQuestion(topic).reason(l), isNull);
       }

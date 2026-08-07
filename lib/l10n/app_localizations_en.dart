@@ -1573,7 +1573,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get assistantChatHint =>
-      'An answer from the app’s own knowledge base, with links to the articles';
+      'Answers anything — about your child and beyond';
 
   @override
   String get assistantChatOff => 'AI is not connected yet — open to see how';
@@ -1601,7 +1601,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String chatHint(String name) {
-    return 'Ask about $name: sleep, food, temperature…';
+    return 'Ask anything — about $name or about your own day';
   }
 
   @override
@@ -1609,15 +1609,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chatDisclaimer =>
-      'On health the assistant answers only from the app’s vetted knowledge base and does not diagnose. Everyday questions it answers from general knowledge. The decision is always your doctor’s.';
+      'The assistant answers any question. On your child’s health it leans on the app’s vetted base where there is one, and it does not diagnose — the decision is always your doctor’s.';
 
   @override
   String get chatGeneralAnswer =>
-      'An everyday question — this answer comes from general knowledge, not from the app’s vetted base.';
-
-  @override
-  String get chatGeneralHealthAnswer =>
-      'The app’s vetted base has nothing on this — these are general notes. If in doubt, have your child seen by a doctor.';
+      'This answer comes from the AI’s own knowledge, not from the app’s vetted base. If it is about health, check with a doctor.';
 
   @override
   String get chatEmergency => 'Call an ambulance — 103';
@@ -1710,10 +1706,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chatSuggestion1 => 'Temperature is 38.5, what do I do';
 
   @override
-  String get chatSuggestion2 => 'How much should a six-month-old sleep';
+  String get chatSuggestion2 => 'Make me a shopping list for the week';
 
   @override
-  String get chatSuggestion3 => 'When to start solids';
+  String get chatSuggestion3 => 'Write a birthday message for grandma';
 
   @override
   String get chatSuggestion4 => 'Can I take antibiotics while breastfeeding';

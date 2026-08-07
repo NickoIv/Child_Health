@@ -308,22 +308,26 @@ void main() {
   });
 
   group('system prompt guardrails', () {
-    test('forbids answering outside the provided base', () {
-      expect(systemPrompt, contains('ТОЛЬКО на основании'));
-      expect(systemPrompt, contains('нет ответа на этот вопрос'));
+    // The base is no longer the only thing the model may answer from — it
+    // outranks the model where it has something and is silent where it does
+    // not. See assistant_topics_test.dart for the whole shape of that.
+    test('prefers the base over the model on health', () {
+      expect(systemPrompt, contains('БАЗА ЗНАНИЙ'));
+      expect(systemPrompt, contains('Он\n  проверен, твоя память нет'));
     });
 
     test('forbids diagnosing and prescribing', () {
-      expect(systemPrompt, contains('Ставить диагноз'));
-      expect(systemPrompt, contains('Назначать лекарства'));
+      expect(systemPrompt, contains('Не ставь диагноз по переписке'));
+      expect(systemPrompt, contains('Называя лекарство, не назначай его'));
     });
 
-    test('requires pointing at a doctor at the end', () {
-      expect(systemPrompt, contains('обратиться к врачу'));
+    test('requires pointing at a doctor', () {
+      expect(systemPrompt, contains('идут к врачу'));
     });
 
     test('forbids talking a worried parent down', () {
-      expect(systemPrompt, contains('Отговаривать от обращения к врачу'));
+      expect(systemPrompt, contains('Не преуменьшай тревогу родителя'));
+      expect(systemPrompt, contains('не отговаривай от визита к врачу'));
     });
   });
 }

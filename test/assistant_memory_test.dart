@@ -338,12 +338,17 @@ void main() {
   group('system prompt', () {
     test('tells the model the child data is fact, not advice', () {
       expect(systemPrompt, contains('КОНТЕКСТ РЕБЁНКА'));
-      expect(systemPrompt, contains('Не ставь по ним диагноз'));
+      expect(systemPrompt, contains('Это факты об этом ребёнке'));
+      expect(systemPrompt, contains('Не придумывай цифры'));
     });
 
-    test('forbids treating its own past answers as a source', () {
+    test('carries the thread without re-asking', () {
       expect(systemPrompt, contains('ХОД РАЗГОВОРА'));
-      expect(systemPrompt, contains('базой знаний не считай'));
+      expect(systemPrompt, contains('он продолжает прежнюю тему'));
+    });
+
+    test('leaves the context alone when the question is not about the child', () {
+      expect(systemPrompt, contains('контекст просто не нужен'));
     });
   });
 }

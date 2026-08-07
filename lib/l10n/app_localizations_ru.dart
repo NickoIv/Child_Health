@@ -1583,7 +1583,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get assistantChatHint =>
-      'Ответ по базе приложения, со ссылками на статьи';
+      'Ответит на любой вопрос — о ребёнке и не только';
 
   @override
   String get assistantChatOff =>
@@ -1612,7 +1612,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String chatHint(String name) {
-    return 'Спросите про $name: сон, еда, температура…';
+    return 'Спросите о чём угодно — про $name или про своё';
   }
 
   @override
@@ -1620,15 +1620,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get chatDisclaimer =>
-      'О здоровье помощник отвечает только по проверенной базе приложения и не ставит диагнозов. На бытовые вопросы — своими знаниями. Решение всегда за врачом.';
+      'Помощник отвечает на любые вопросы. О здоровье ребёнка он опирается на проверенную базу приложения, где она есть, и не ставит диагнозов — решение всегда за врачом.';
 
   @override
   String get chatGeneralAnswer =>
-      'Это бытовой вопрос — ответ из общих знаний, а не из проверенной базы приложения.';
-
-  @override
-  String get chatGeneralHealthAnswer =>
-      'В проверенной базе приложения по этому вопросу материалов нет — это общие сведения. При сомнениях покажите ребёнка врачу.';
+      'Ответ из знаний ИИ, а не из проверенной базы приложения. Если вопрос о здоровье — уточните у врача.';
 
   @override
   String get chatEmergency => 'Вызывайте скорую — 103';
@@ -1725,10 +1721,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get chatSuggestion1 => 'Температура 38.5, что делать';
 
   @override
-  String get chatSuggestion2 => 'Сколько должен спать ребёнок в 6 месяцев';
+  String get chatSuggestion2 => 'Составь список покупок на неделю';
 
   @override
-  String get chatSuggestion3 => 'Когда начинать прикорм';
+  String get chatSuggestion3 => 'Напиши поздравление бабушке на юбилей';
 
   @override
   String get chatSuggestion4 => 'Можно ли мне антибиотик при ГВ';

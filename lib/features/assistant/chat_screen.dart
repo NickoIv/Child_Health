@@ -338,19 +338,14 @@ class _AnswerCard extends StatelessWidget {
   final List<KbArticle> sources;
   final AssistantAction? action;
 
-  /// Which rules produced this. Two of the three draw on the model's own
-  /// knowledge, and each says so in its own words: a question about the
-  /// nursery queue and a health question the base does not cover are both
-  /// unvetted, but they are unvetted for different reasons and only one of
-  /// them ends with "show the child to a doctor".
+  /// Where the answer came from.
   final AnswerMode mode;
 
-  /// What to say under the answer, or null when it came from the base and
-  /// needs no disclaimer at all.
+  /// What to say under the answer, or null when the base is already listed
+  /// beneath it as the source.
   String? _notice(AppLocalizations l) => switch (mode) {
-    AnswerMode.medical => null,
-    AnswerMode.generalHealth => l.chatGeneralHealthAnswer,
-    AnswerMode.everyday => l.chatGeneralAnswer,
+    AnswerMode.fromBase => null,
+    AnswerMode.general => l.chatGeneralAnswer,
   };
 
   @override

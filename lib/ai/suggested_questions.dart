@@ -38,9 +38,13 @@ enum AskTopic {
   milestones,
 
   /// The general list, for a child with nothing recorded yet.
-  commonFever,
-  commonSleep,
-  commonSolids,
+  ///
+  /// Three, and deliberately not three medical ones: the assistant answers
+  /// anything now, and a panel that only ever proposes fevers and feeds is how
+  /// a parent concludes it does not.
+  commonHealth,
+  commonEveryday,
+  commonAnything,
 }
 
 /// A question, and the fact behind it.
@@ -100,9 +104,9 @@ List<SuggestedQuestion> suggestedQuestions({
   // Whatever is left over goes to the general list, so the panel is never
   // half-empty on a child whose diary has just been started.
   for (final topic in const [
-    AskTopic.commonFever,
-    AskTopic.commonSleep,
-    AskTopic.commonSolids,
+    AskTopic.commonHealth,
+    AskTopic.commonEveryday,
+    AskTopic.commonAnything,
   ]) {
     if (picked.length >= maxSuggestions) break;
     picked.add(SuggestedQuestion(topic));
@@ -185,9 +189,9 @@ extension SuggestedQuestionL10n on SuggestedQuestion {
     AskTopic.sleepNeeds => l.askSleepNeeds,
     AskTopic.solids => l.askSolids,
     AskTopic.milestones => l.askMilestones,
-    AskTopic.commonFever => l.chatSuggestion1,
-    AskTopic.commonSleep => l.chatSuggestion2,
-    AskTopic.commonSolids => l.chatSuggestion3,
+    AskTopic.commonHealth => l.chatSuggestion1,
+    AskTopic.commonEveryday => l.chatSuggestion2,
+    AskTopic.commonAnything => l.chatSuggestion3,
   };
 
   /// The line under it: where the app got this from. Null where there is no
@@ -202,8 +206,8 @@ extension SuggestedQuestionL10n on SuggestedQuestion {
     AskTopic.sleepNeeds ||
     AskTopic.solids ||
     AskTopic.milestones => l.askWhyAge,
-    AskTopic.commonFever ||
-    AskTopic.commonSleep ||
-    AskTopic.commonSolids => null,
+    AskTopic.commonHealth ||
+    AskTopic.commonEveryday ||
+    AskTopic.commonAnything => null,
   };
 }

@@ -2875,7 +2875,7 @@ abstract class AppLocalizations {
   /// No description provided for @assistantChatHint.
   ///
   /// In ru, this message translates to:
-  /// **'Ответ по базе приложения, со ссылками на статьи'**
+  /// **'Ответит на любой вопрос — о ребёнке и не только'**
   String get assistantChatHint;
 
   /// No description provided for @assistantChatOff.
@@ -2923,7 +2923,7 @@ abstract class AppLocalizations {
   /// No description provided for @chatHint.
   ///
   /// In ru, this message translates to:
-  /// **'Спросите про {name}: сон, еда, температура…'**
+  /// **'Спросите о чём угодно — про {name} или про своё'**
   String chatHint(String name);
 
   /// No description provided for @chatSend.
@@ -2935,20 +2935,14 @@ abstract class AppLocalizations {
   /// No description provided for @chatDisclaimer.
   ///
   /// In ru, this message translates to:
-  /// **'О здоровье помощник отвечает только по проверенной базе приложения и не ставит диагнозов. На бытовые вопросы — своими знаниями. Решение всегда за врачом.'**
+  /// **'Помощник отвечает на любые вопросы. О здоровье ребёнка он опирается на проверенную базу приложения, где она есть, и не ставит диагнозов — решение всегда за врачом.'**
   String get chatDisclaimer;
 
   /// No description provided for @chatGeneralAnswer.
   ///
   /// In ru, this message translates to:
-  /// **'Это бытовой вопрос — ответ из общих знаний, а не из проверенной базы приложения.'**
+  /// **'Ответ из знаний ИИ, а не из проверенной базы приложения. Если вопрос о здоровье — уточните у врача.'**
   String get chatGeneralAnswer;
-
-  /// No description provided for @chatGeneralHealthAnswer.
-  ///
-  /// In ru, this message translates to:
-  /// **'В проверенной базе приложения по этому вопросу материалов нет — это общие сведения. При сомнениях покажите ребёнка врачу.'**
-  String get chatGeneralHealthAnswer;
 
   /// No description provided for @chatEmergency.
   ///
@@ -3085,13 +3079,13 @@ abstract class AppLocalizations {
   /// No description provided for @chatSuggestion2.
   ///
   /// In ru, this message translates to:
-  /// **'Сколько должен спать ребёнок в 6 месяцев'**
+  /// **'Составь список покупок на неделю'**
   String get chatSuggestion2;
 
   /// No description provided for @chatSuggestion3.
   ///
   /// In ru, this message translates to:
-  /// **'Когда начинать прикорм'**
+  /// **'Напиши поздравление бабушке на юбилей'**
   String get chatSuggestion3;
 
   /// No description provided for @chatSuggestion4.

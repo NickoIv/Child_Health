@@ -7,114 +7,71 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
-/// Step C: the assistant may answer everyday questions from what it knows,
-/// and medicine still comes only from the forty-seven vetted articles.
+/// «Я хочу полноценного ИИ помощника, который будет отвечать на любые
+/// вопросы.»
 ///
-/// The whole feature rests on one property — which side of that line a
-/// question lands on is decided here, in Dart, before anything is sent. So
-/// that is what most of this file is about.
+/// This file used to test a gate: two word lists that decided, before the
+/// model was called, whether a question was medical or everyday — and anything
+/// unrecognised was treated as medical, which meant answered from forty-seven
+/// articles or refused. The gate is gone, and so is everything here that
+/// tested it.
+///
+/// What is left is the shape of what replaced it: one prompt that answers
+/// anything, the base preferred where it has something, and the one interlock
+/// that never cost an answer — the deterministic red-flag check.
 void main() {
   const endpoint = 'https://example.invalid/ai';
 
-  group('the topic gate', () {
-    test('anything about health is answered from the base', () {
-      for (final q in const [
-        'температура 37.5 второй день',
-        'у него сыпь на щеках',
-        'можно ли ибупрофен в 8 месяцев',
-        'когда делать прививку от кори',
-        'сколько раз кормить в 4 месяца',
-        'когда вводить прикорм',
-        'он не спит всю ночь',
-        'ребёнок мало весит, весит 6 кг в год',
-        'болит живот после еды',
-        'нормально ли что он ещё не ползает',
-        'какие капли в нос можно',
-        'что за анализ назначил врач',
-      ]) {
-        expect(
-          modeFor(q),
-          AnswerMode.medical,
-          reason: '«$q» must stay on the vetted base',
-        );
-      }
+  group('the prompt', () {
+    test('forbids the refusals the old one required', () {
+      // Each of these was a sentence the assistant was previously instructed
+      // to produce, and each is what «заготовленные ответы» looked like.
+      expect(systemPrompt, contains('Отвечай на любой вопрос'));
+      expect(systemPrompt, contains('это не моя тема'));
+      expect(systemPrompt, contains('в моей базе нет ответа на этот вопрос'));
+      expect(systemPrompt, contains('Такого ответа больше не существует'));
     });
 
-    test('the four everyday topics are allowed through', () {
-      for (final q in const [
-        'как встать в очередь в садик',
-        'какие документы нужны на пособие',
-        'когда отучать от соски',
-        'как построить режим дня',
-        'какое автокресло выбрать',
-        'что взять в поездку с ребёнком',
-        'он закатывает истерики в магазине',
-        'сколько можно смотреть мультики',
-      ]) {
-        expect(
-          modeFor(q),
-          AnswerMode.everyday,
-          reason: '«$q» is not a medical question',
-        );
-      }
-    });
-
-    test('a medical word inside a domestic question wins', () {
-      // The dangerous shape: it reads like a nursery question and is not.
-      expect(modeFor('можно ли в садик с температурой'), AnswerMode.medical);
-      expect(modeFor('соска и прикус зубов'), AnswerMode.medical);
+    test('does not tell the model to stay on the subject of children', () {
+      // The line that used to end everything off-topic.
       expect(
-        modeFor('какие документы нужны для прививки'),
-        AnswerMode.medical,
+        systemPrompt,
+        isNot(contains('Отвечать на вопросы, не связанные со здоровьем')),
       );
       expect(
-        modeFor('режим дня когда ребёнок болеет'),
-        AnswerMode.medical,
+        systemPrompt,
+        isNot(contains('Не отвечай на вопросы, не связанные с ребёнком')),
+      );
+      expect(
+        systemPrompt,
+        isNot(contains('Не добавляй ничего из собственных знаний')),
       );
     });
 
-    test('a question the lists do not know is treated as medical', () {
-      // Silence is not permission. Strict is the default and the fallback.
-      expect(modeFor('абракадабра'), AnswerMode.medical);
-      expect(modeFor(''), AnswerMode.medical);
-      expect(modeFor('что думаешь'), AnswerMode.medical);
+    test('still prefers the base where the base has something', () {
+      expect(systemPrompt, contains('Он\n  проверен, твоя память нет'));
     });
 
-    test('ё and е are the same letter here', () {
-      expect(modeFor('ребенок весит мало'), AnswerMode.medical);
-      expect(modeFor('РЕБЁНОК ВЕСИТ МАЛО'), AnswerMode.medical);
-    });
-  });
-
-  group('the two prompts', () {
-    test('the medical one is unchanged in what it forbids', () {
-      final p = systemPromptFor(AnswerMode.medical);
-      expect(p, systemPrompt);
-      expect(p, contains('ТОЛЬКО на основании'));
-      expect(p, contains('Не добавляй ничего из собственных знаний'));
-      expect(p, contains('Ставить диагноз'));
+    test('keeps what protects somebody rather than what refuses them', () {
+      expect(systemPrompt, contains('Не ставь диагноз по переписке'));
+      expect(systemPrompt, contains('Называя лекарство, не назначай его'));
+      expect(systemPrompt, contains('«на глаз» не выдумывай'));
+      expect(systemPrompt, contains('не отговаривай от визита к врачу'));
     });
 
-    test('the everyday one never lets its own knowledge near medicine', () {
-      final p = systemPromptFor(AnswerMode.everyday);
-      expect(p, contains('ГРАНИЦА, КОТОРУЮ НЕЛЬЗЯ ПЕРЕХОДИТЬ'));
-      expect(p, contains('Про здоровье я отвечаю'));
-      expect(p, contains('Никогда не называй лекарств'));
-      expect(p, contains('Никогда не ставь диагноз'));
-      expect(p, isNot(contains('Не добавляй ничего из собственных знаний')));
+    test('keeps the context, the format and the actions', () {
+      expect(systemPrompt, contains('КОНТЕКСТ РЕБЁНКА'));
+      expect(systemPrompt, contains('ДЕЙСТВИЯ В ПРИЛОЖЕНИИ'));
+      expect(systemPrompt, contains('Запрещены: markdown'));
     });
 
-    test('both keep the format, the child context and the actions', () {
-      for (final mode in AnswerMode.values) {
-        final p = systemPromptFor(mode);
-        expect(p, contains('КОНТЕКСТ РЕБЁНКА'));
-        expect(p, contains('ДЕЙСТВИЯ В ПРИЛОЖЕНИИ'));
-        expect(p, contains('Запрещены: markdown'));
-      }
-    });
-
-    test('the everyday one is honest about Kazakh paperwork going stale', () {
-      expect(systemPromptFor(AnswerMode.everyday), contains('egov.kz'));
+    test('an empty base reads as a fact, not as an answer to give back', () {
+      final built = buildUserPrompt(
+        question: 'как вывести пятно от смеси',
+        knowledgeBlock: '',
+      );
+      expect(built, contains('отвечай своими знаниями'));
+      expect(built, isNot(contains('нет ответа')));
     });
   });
 
@@ -132,7 +89,26 @@ void main() {
 
     setUp(() => sent = null);
 
-    test('a medical question gets the strict prompt', () async {
+    test('one prompt, whatever the question is about', () async {
+      final service = GeminiAssistantService(
+        client: client(),
+        endpoint: endpoint,
+      );
+
+      for (final q in const [
+        'температура 38',
+        'как встать в очередь в садик',
+        'сколько варить гречку',
+        'напиши поздравление бабушке',
+        'что такое ипотека простыми словами',
+      ]) {
+        final reply = await service.ask(question: q, ageMonths: 6);
+        expect(reply, isA<AssistantAnswer>(), reason: q);
+        expect(sent!['system'], systemPrompt, reason: q);
+      }
+    });
+
+    test('a question the base covers carries its articles', () async {
       final service = GeminiAssistantService(
         client: client(),
         endpoint: endpoint,
@@ -141,87 +117,25 @@ void main() {
           await service.ask(question: 'температура 38', ageMonths: 6)
               as AssistantAnswer;
 
-      expect(sent!['system'], systemPrompt);
-      expect(reply.mode, AnswerMode.medical);
+      expect(reply.mode, AnswerMode.fromBase);
+      expect(reply.sources, isNotEmpty);
       expect(reply.isFromGeneralKnowledge, isFalse);
-      expect(reply.sources, isNotEmpty);
     });
 
-    test('an everyday question gets the wider prompt', () async {
+    test('one the base does not is answered anyway, and says so', () async {
       final service = GeminiAssistantService(
         client: client(),
         endpoint: endpoint,
       );
       final reply =
-          await service.ask(
-                question: 'как встать в очередь в садик',
-                ageMonths: 24,
-              )
+          await service.ask(question: 'сколько варить гречку', ageMonths: 6)
               as AssistantAnswer;
 
-      expect(sent!['system'], systemPromptFor(AnswerMode.everyday));
-      expect(reply.isFromGeneralKnowledge, isTrue);
-    });
-
-    test('no answer is dressed in unrelated sources', () async {
-      // The age fallback used to attach four paediatric articles to any
-      // question the search could not place — which the screen then listed
-      // underneath as where the answer came from. It was not.
-      const unplaceable = 'абракадабра непонятная';
-      final service = GeminiAssistantService(
-        client: client(),
-        endpoint: endpoint,
-      );
-      final reply =
-          await service.ask(question: unplaceable, ageMonths: 3)
-              as AssistantAnswer;
-
+      expect(reply.mode, AnswerMode.general);
+      // And is not dressed in four unrelated paediatric articles, which is
+      // what the old age fallback did to every question it could not place.
       expect(reply.sources, isEmpty);
-    });
-
-    test('a health question the base misses is answered, not refused', () async {
-      // «Остались заготовленные вопросы и ответы»: forty-seven articles cannot
-      // cover what parents ask, and everything outside them used to come back
-      // as «В моей базе нет ответа на этот вопрос».
-      const outside = 'ребёнок скрипит зубами ночью';
-      expect(modeFor(outside), AnswerMode.medical, reason: 'a health topic');
-
-      final service = GeminiAssistantService(
-        client: client(),
-        endpoint: endpoint,
-      );
-      final reply =
-          await service.ask(question: outside, ageMonths: 6)
-              as AssistantAnswer;
-
-      expect(reply.mode, AnswerMode.generalHealth);
-      expect(sent!['system'], systemPromptFor(AnswerMode.generalHealth));
-      // Said out loud on screen rather than passed off as vetted.
       expect(reply.isFromGeneralKnowledge, isTrue);
-    });
-
-    test('but a question the base does cover is still answered from it', () async {
-      final service = GeminiAssistantService(
-        client: client(),
-        endpoint: endpoint,
-      );
-      final reply =
-          await service.ask(question: 'температура 38', ageMonths: 6)
-              as AssistantAnswer;
-
-      expect(reply.mode, AnswerMode.medical);
-      expect(sent!['system'], systemPrompt);
-      expect(reply.sources, isNotEmpty);
-    });
-
-    test('the wider mode still forbids what can hurt somebody', () {
-      final p = systemPromptFor(AnswerMode.generalHealth);
-      expect(p, contains('Ставить диагноз'));
-      expect(p, contains('дозировк'));
-      expect(p, contains('педиатру'));
-      // And it has to admit where it came from, in the answer itself.
-      expect(p, contains('ПО ЭТОМУ ВОПРОСУ В БАЗЕ НИЧЕГО НЕ НАШЛОСЬ'));
-      expect(p, contains('отвечаю общими'));
     });
 
     test('the emergency gate still runs before any of this', () async {
@@ -234,8 +148,8 @@ void main() {
         endpoint: endpoint,
       );
 
-      // Everyday words in the sentence change nothing: red flags are caught
-      // deterministically, before the topic gate is even consulted.
+      // The one thing that did not get looser. It is deterministic, it runs
+      // before the model, and it costs an ordinary question nothing.
       final reply = await service.ask(
         question: 'в садике он упал с горки и не реагирует',
       );
