@@ -7,6 +7,7 @@ import '../../l10n/app_localizations.dart';
 import '../../models/reminder.dart';
 import '../../providers.dart';
 import '../shared/widgets.dart';
+import 'reminder_sheet.dart';
 
 /// Planner: vaccination schedule, medication and appointments, per 2.6.
 class RemindersScreen extends ConsumerStatefulWidget {
@@ -46,37 +47,57 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
         ? all
         : all.where((r) => !r.isCompleted).toList();
 
-    return PageBody(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                l.remindersActiveCount(
-                  all.where((r) => !r.isCompleted).length,
+    return Scaffold(
+      // The planner could only ever show what the app had generated itself.
+      // This is the button that lets a parent add the reminder she actually
+      // needs — a dose in four hours — and it is the reason the screen exists
+      // rather than being a read-only calendar.
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => showReminderSheet(context, childId: child.id),
+        icon: const Icon(Icons.add_alert_outlined),
+        label: Text(l.reminderAdd),
+      ),
+      body: PageBody(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l.remindersActiveCount(
+                    all.where((r) => !r.isCompleted).length,
+                  ),
+                  style: Theme.of(context).textTheme.bodyMedium,
                 ),
-                style: Theme.of(context).textTheme.bodyMedium,
               ),
-            ),
-            FilterChip(
-              label: Text(AppLocalizations.of(context).remindersShowCompleted),
-              selected: _showCompleted,
-              onSelected: (v) => setState(() => _showCompleted = v),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        for (final type in ReminderType.values) ...[
-          _TypeSection(
-            type: type,
-            reminders: visible.where((r) => r.type == type).toList(),
-            onToggle: (r) => ref
-                .read(reminderRepositoryProvider)
-                .update(r.copyWith(isCompleted: !r.isCompleted)),
+              FilterChip(
+                label: Text(l.remindersShowCompleted),
+                selected: _showCompleted,
+                onSelected: (v) => setState(() => _showCompleted = v),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
+          for (final type in ReminderType.values) ...[
+            _TypeSection(
+              type: type,
+              reminders: visible.where((r) => r.type == type).toList(),
+              onToggle: (r) => ref
+                  .read(reminderRepositoryProvider)
+                  .update(r.copyWith(isCompleted: !r.isCompleted)),
+              // A generated vaccination is the calendar's to move, not a
+              // parent's; the two she wrote herself open for editing.
+              onOpen: type == ReminderType.vaccination
+                  ? null
+                  : (r) => showReminderSheet(
+                      context,
+                      childId: child.id,
+                      existing: r,
+                    ),
+            ),
+            const SizedBox(height: 16),
+          ],
         ],
-      ],
+      ),
     );
   }
 }
@@ -86,11 +107,16 @@ class _TypeSection extends StatelessWidget {
     required this.type,
     required this.reminders,
     required this.onToggle,
+    this.onOpen,
   });
 
   final ReminderType type;
   final List<Reminder> reminders;
   final ValueChanged<Reminder> onToggle;
+
+  /// Opens the reminder for editing. Null for the generated vaccinations,
+  /// which belong to the national calendar rather than to a parent.
+  final ValueChanged<Reminder>? onOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -119,6 +145,9 @@ class _TypeSection extends StatelessWidget {
                   _ReminderRow(
                     reminder: reminders[i],
                     onToggle: () => onToggle(reminders[i]),
+                    onOpen: onOpen == null
+                        ? null
+                        : () => onOpen!(reminders[i]),
                   ),
                 ],
               ],
@@ -128,10 +157,15 @@ class _TypeSection extends StatelessWidget {
 }
 
 class _ReminderRow extends StatelessWidget {
-  const _ReminderRow({required this.reminder, required this.onToggle});
+  const _ReminderRow({
+    required this.reminder,
+    required this.onToggle,
+    this.onOpen,
+  });
 
   final Reminder reminder;
   final VoidCallback onToggle;
+  final VoidCallback? onOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -147,6 +181,8 @@ class _ReminderRow extends StatelessWidget {
       _ => l.remindersInDays(days),
     };
 
+    // The row opens for editing, the box ticks it off. Two targets on one
+    // line, and the smaller of them is the one that changes nothing.
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -156,30 +192,34 @@ class _ReminderRow extends StatelessWidget {
         ),
         const SizedBox(width: 4),
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                reminder.type == ReminderType.vaccination
-                    ? localizedVaccinationName(l, reminder.title)
-                    : reminder.title,
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  decoration: reminder.isCompleted
-                      ? TextDecoration.lineThrough
-                      : null,
-                  color: reminder.isCompleted
-                      ? theme.colorScheme.onSurfaceVariant
-                      : null,
-                ),
-              ),
-              if (reminder.details.isNotEmpty)
+          child: InkWell(
+            onTap: onOpen,
+            borderRadius: BorderRadius.circular(Warm.chipRadius),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Text(
-                  localizedVaccinationDetails(l, reminder.details),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+                  reminder.type == ReminderType.vaccination
+                      ? localizedVaccinationName(l, reminder.title)
+                      : reminder.title,
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    decoration: reminder.isCompleted
+                        ? TextDecoration.lineThrough
+                        : null,
+                    color: reminder.isCompleted
+                        ? theme.colorScheme.onSurfaceVariant
+                        : null,
                   ),
                 ),
-            ],
+                if (reminder.details.isNotEmpty)
+                  Text(
+                    localizedVaccinationDetails(l, reminder.details),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
         const SizedBox(width: 12),
