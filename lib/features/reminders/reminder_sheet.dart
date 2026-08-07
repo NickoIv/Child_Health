@@ -105,154 +105,188 @@ class _ReminderSheetState extends ConsumerState<_ReminderSheet> {
     final theme = Theme.of(context);
     final l = AppLocalizations.of(context);
 
+    // The form scrolls; «Сохранить» does not.
+    //
+    // It used to be the last widget in the scrolling column, and on his phone
+    // that put it half off the bottom of the screen — the one button the sheet
+    // exists for, cut in two, with nothing on screen to say it could be
+    // scrolled to. A [Flexible] scroll view over a pinned footer is the fix:
+    // whatever the form's height turns out to be in whichever language, the
+    // action is whole and in the same place.
     return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.notifications_outlined, color: Warm.accent),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    widget.existing == null
-                        ? l.reminderNew
-                        : l.reminderTypeMedication,
-                    style: theme.textTheme.titleLarge,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.notifications_outlined, color: Warm.accent),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          widget.existing == null
+                              ? l.reminderNew
+                              : l.reminderTypeMedication,
+                          style: theme.textTheme.titleLarge,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 18),
+                  const SizedBox(height: 18),
 
-            SectionLabel(text: l.reminderWhat),
-            Row(
-              children: [
-                for (final type in const [
-                  ReminderType.medication,
-                  ReminderType.appointment,
-                ]) ...[
-                  if (type != ReminderType.medication)
-                    const SizedBox(width: 10),
-                  Expanded(
-                    child: _Choice(
-                      label: type.localizedLabel(l),
-                      icon: type == ReminderType.medication
-                          ? Icons.medication_outlined
-                          : Icons.event_available_outlined,
-                      selected: _type == type,
-                      onTap: () => setState(() => _type = type),
+                  SectionLabel(text: l.reminderWhat),
+                  Row(
+                    children: [
+                      for (final type in const [
+                        ReminderType.medication,
+                        ReminderType.appointment,
+                      ]) ...[
+                        if (type != ReminderType.medication)
+                          const SizedBox(width: 10),
+                        Expanded(
+                          child: _Choice(
+                            label: type.localizedLabel(l),
+                            icon: type == ReminderType.medication
+                                ? Icons.medication_outlined
+                                : Icons.event_available_outlined,
+                            selected: _type == type,
+                            onTap: () => setState(() => _type = type),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  TextField(
+                    key: reminderNameFieldKey,
+                    controller: _name,
+                    autofocus: widget.existing == null,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: InputDecoration(
+                      hintText: _type == ReminderType.medication
+                          ? l.reminderNameMedication
+                          : l.reminderNameAppointment,
+                      errorText: _error,
                     ),
+                    onChanged: (_) {
+                      if (_error != null) setState(() => _error = null);
+                    },
+                  ),
+                  const SizedBox(height: 18),
+
+                  SectionLabel(text: l.reminderWhen),
+                  // The answer to "when" for a dose is nearly always a number of
+                  // hours from now, and a date picker asks for a year to get it.
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final h in _quickHours)
+                        ChoicePill(
+                          label: l.reminderInHours(h),
+                          selected: _selectedOffset == h,
+                          onTap: () => setState(() {
+                            _exact = false;
+                            _at = DateTime.now().add(Duration(hours: h));
+                          }),
+                        ),
+                      ChoicePill(
+                        label: l.reminderTomorrowMorning,
+                        selected: _isTomorrowMorning,
+                        onTap: () => setState(() {
+                          _exact = false;
+                          final t = DateTime.now().add(const Duration(days: 1));
+                          _at = DateTime(t.year, t.month, t.day, 9);
+                        }),
+                      ),
+                      ChoicePill(
+                        label: l.reminderExactTime,
+                        selected: _exact,
+                        onTap: () => setState(() => _exact = true),
+                      ),
+                    ],
+                  ),
+                  if (_exact) ...[
+                    const SizedBox(height: 12),
+                    DateTimeField(
+                      value: _at,
+                      future: true,
+                      onChanged: (v) => setState(() => _at = v),
+                    ),
+                  ] else ...[
+                    const SizedBox(height: 10),
+                    Text(
+                      '${dayMonth.format(_at)}, ${timeOfDay.format(_at)}',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: Warm.onCardSoft(theme.brightness),
+                        fontWeight: FontWeight.w600,
+                        fontFeatures: AppTheme.tabular,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 18),
+
+                  SectionLabel(text: l.reminderRepeat),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final r in Recurrence.values)
+                        ChoicePill(
+                          label: r.localizedLabel(l),
+                          selected: _repeat == r,
+                          onTap: () => setState(() => _repeat = r),
+                        ),
+                    ],
                   ),
                 ],
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            TextField(
-              key: reminderNameFieldKey,
-              controller: _name,
-              autofocus: widget.existing == null,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: InputDecoration(
-                hintText: _type == ReminderType.medication
-                    ? l.reminderNameMedication
-                    : l.reminderNameAppointment,
-                errorText: _error,
               ),
-              onChanged: (_) {
-                if (_error != null) setState(() => _error = null);
-              },
             ),
-            const SizedBox(height: 18),
+          ),
 
-            SectionLabel(text: l.reminderWhen),
-            // The answer to "when" for a dose is nearly always a number of
-            // hours from now, and a date picker asks for a year to get it.
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final h in _quickHours)
-                  ChoiceChip(
-                    label: Text(l.reminderInHours(h)),
-                    selected: _selectedOffset == h,
-                    onSelected: (_) => setState(() {
-                      _exact = false;
-                      _at = DateTime.now().add(Duration(hours: h));
-                    }),
+          // The footer. Its own hairline, so that when the form above is long
+          // enough to scroll the button reads as sitting over it rather than
+          // as the next thing in the list.
+          DecoratedBox(
+            decoration: BoxDecoration(
+              border: Border(
+                top: BorderSide(color: Warm.hairline(theme.brightness)),
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 8),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  FilledButton(
+                    onPressed: _saving ? null : _save,
+                    child: Text(l.commonSave),
                   ),
-                ChoiceChip(
-                  label: Text(l.reminderTomorrowMorning),
-                  selected: _isTomorrowMorning,
-                  onSelected: (_) => setState(() {
-                    _exact = false;
-                    final t = DateTime.now().add(const Duration(days: 1));
-                    _at = DateTime(t.year, t.month, t.day, 9);
-                  }),
-                ),
-                ChoiceChip(
-                  label: Text(l.reminderExactTime),
-                  selected: _exact,
-                  onSelected: (_) => setState(() => _exact = true),
-                ),
-              ],
-            ),
-            if (_exact) ...[
-              const SizedBox(height: 12),
-              DateTimeField(
-                value: _at,
-                future: true,
-                onChanged: (v) => setState(() => _at = v),
+                  if (widget.existing != null) ...[
+                    const SizedBox(height: 4),
+                    TextButton.icon(
+                      onPressed: _saving ? null : _delete,
+                      style: TextButton.styleFrom(
+                        foregroundColor: theme.colorScheme.error,
+                      ),
+                      icon: const Icon(Icons.delete_outline),
+                      label: Text(l.reminderDelete),
+                    ),
+                  ],
+                ],
               ),
-            ] else ...[
-              const SizedBox(height: 10),
-              Text(
-                '${dayMonth.format(_at)}, ${timeOfDay.format(_at)}',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: Warm.onCardSoft(theme.brightness),
-                  fontWeight: FontWeight.w600,
-                  fontFeatures: AppTheme.tabular,
-                ),
-              ),
-            ],
-            const SizedBox(height: 18),
-
-            SectionLabel(text: l.reminderRepeat),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final r in Recurrence.values)
-                  ChoiceChip(
-                    label: Text(r.localizedLabel(l)),
-                    selected: _repeat == r,
-                    onSelected: (_) => setState(() => _repeat = r),
-                  ),
-              ],
             ),
-            const SizedBox(height: 22),
-
-            FilledButton(
-              onPressed: _saving ? null : _save,
-              child: Text(l.commonSave),
-            ),
-            if (widget.existing != null) ...[
-              const SizedBox(height: 8),
-              TextButton.icon(
-                onPressed: _saving ? null : _delete,
-                style: TextButton.styleFrom(
-                  foregroundColor: theme.colorScheme.error,
-                ),
-                icon: const Icon(Icons.delete_outline),
-                label: Text(l.reminderDelete),
-              ),
-            ],
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -333,9 +367,7 @@ class _ReminderSheetState extends ConsumerState<_ReminderSheet> {
 
     if (!mounted) return;
     navigator.pop();
-    messenger.showSnackBar(
-      appSnack(l.reminderDeleted, kind: SnackKind.done),
-    );
+    messenger.showSnackBar(appSnack(l.reminderDeleted, kind: SnackKind.done));
   }
 }
 
@@ -389,9 +421,7 @@ class _Choice extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                   letterSpacing: -0.2,
                   height: 1.15,
-                  color: selected
-                      ? Warm.accent
-                      : Warm.onCard(theme.brightness),
+                  color: selected ? Warm.accent : Warm.onCard(theme.brightness),
                 ),
               ),
             ),

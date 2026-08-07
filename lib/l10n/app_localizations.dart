@@ -2146,6 +2146,18 @@ abstract class AppLocalizations {
   /// **'Наблюдения и отчёты'**
   String get assistantInsights;
 
+  /// No description provided for @assistantViewKnowledge.
+  ///
+  /// In ru, this message translates to:
+  /// **'Справочник'**
+  String get assistantViewKnowledge;
+
+  /// No description provided for @assistantViewInsights.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сводка'**
+  String get assistantViewInsights;
+
   /// No description provided for @familyTitle.
   ///
   /// In ru, this message translates to:

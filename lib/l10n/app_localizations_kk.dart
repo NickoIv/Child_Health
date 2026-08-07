@@ -1139,6 +1139,12 @@ class AppLocalizationsKk extends AppLocalizations {
   String get assistantInsights => 'Бақылаулар мен есептер';
 
   @override
+  String get assistantViewKnowledge => 'Анықтамалық';
+
+  @override
+  String get assistantViewInsights => 'Шолу';
+
+  @override
   String get familyTitle => 'Отбасы';
 
   @override

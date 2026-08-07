@@ -347,6 +347,10 @@ void main() {
       final l = await AppLocalizations.delegate.load(defaultLocale);
       await tester.tap(find.text(l.navAssistant).last);
       await tester.pumpAndSettle();
+      // The tab is two halves now; everything that is read rather than looked
+      // up lives behind «Сводка».
+      await tester.tap(find.text(l.assistantViewInsights));
+      await tester.pumpAndSettle();
       await tester.scrollUntilVisible(
         find.byType(WeeklyStoryCard),
         400,
@@ -415,6 +419,8 @@ void main() {
       await pump(tester, family: family, email: 'demo@example.com');
       final l = await AppLocalizations.delegate.load(defaultLocale);
       await tester.tap(find.text(l.navAssistant).last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l.assistantViewInsights));
       await tester.pumpAndSettle();
 
       expect(find.text(l.storyFeedings), findsNothing);

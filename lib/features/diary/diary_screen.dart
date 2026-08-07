@@ -226,81 +226,26 @@ class _FilterBar extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         padding: EdgeInsets.zero,
         children: [
-          _Pill(
-            label: l.commonAll,
-            icon: Icons.all_inclusive,
-            selected: selected == null,
-            onTap: () => onChanged(null),
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ChoicePill(
+              label: l.commonAll,
+              icon: Icons.all_inclusive,
+              selected: selected == null,
+              onTap: () => onChanged(null),
+            ),
           ),
           for (final f in DiaryFilter.values)
-            _Pill(
-              label: f.localizedLabel(l),
-              icon: f.icon,
-              selected: selected == f,
-              onTap: () => onChanged(selected == f ? null : f),
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: ChoicePill(
+                label: f.localizedLabel(l),
+                icon: f.icon,
+                selected: selected == f,
+                onTap: () => onChanged(selected == f ? null : f),
+              ),
             ),
         ],
-      ),
-    );
-  }
-}
-
-/// A filter that is on, readable at arm's length.
-///
-/// [FilterChip] with an avatar could not do this: the icon keeps the label
-/// colour of an *unselected* chip when the chip is selected, so on the dark
-/// selected fill it disappeared. Drawing the pill means the icon and the text
-/// are always one colour.
-class _Pill extends StatelessWidget {
-  const _Pill({
-    required this.label,
-    required this.icon,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final IconData icon;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
-    final isDark = brightness == Brightness.dark;
-    final ink = selected
-        ? (isDark ? Colors.black : Colors.white)
-        : Warm.onCard(brightness);
-
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: Material(
-        color: selected
-            ? (isDark ? Warm.accent : Warm.ink)
-            : Warm.soft(brightness),
-        borderRadius: BorderRadius.circular(Warm.chipRadius),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(Warm.chipRadius),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icon, size: 16, color: ink),
-                const SizedBox(width: 7),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
-                    color: ink,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }

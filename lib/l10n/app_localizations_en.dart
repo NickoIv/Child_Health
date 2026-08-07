@@ -1142,6 +1142,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get assistantInsights => 'Insights and reports';
 
   @override
+  String get assistantViewKnowledge => 'Library';
+
+  @override
+  String get assistantViewInsights => 'Insights';
+
+  @override
   String get familyTitle => 'Family';
 
   @override

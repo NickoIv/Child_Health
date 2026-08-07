@@ -330,14 +330,24 @@ abstract final class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(Warm.chipRadius),
         ),
-        labelStyle: WidgetStateTextStyle.resolveWith(
-          (states) => TextStyle(
-            fontFamily: fontFamily,
-            fontSize: 13,
-            fontWeight: states.contains(WidgetState.selected)
-                ? FontWeight.w700
-                : FontWeight.w600,
-            color: states.contains(WidgetState.selected)
+        // A [WidgetStateTextStyle] here was the black-on-black bug he reported
+        // twice. A chip merges the theme's label style into its own defaults as
+        // an ordinary [TextStyle] and then resolves the *colour* alone — so a
+        // style whose state-dependence lives in `resolve()` is flattened to its
+        // base, which for `resolveWith` carries no colour at all. The label
+        // then fell back to the dark ink meant for an unselected chip and was
+        // painted on the near-black fill meant to carry white.
+        //
+        // The state has to live in the colour itself, which is the one thing a
+        // chip does resolve. Selectable controls are [ChoicePill] now and none
+        // of this is load-bearing, but the next chip added should not have to
+        // rediscover it.
+        labelStyle: TextStyle(
+          fontFamily: fontFamily,
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: WidgetStateColor.resolveWith(
+            (states) => states.contains(WidgetState.selected)
                 ? (isDark ? Colors.black : Colors.white)
                 : Warm.onCard(brightness),
           ),

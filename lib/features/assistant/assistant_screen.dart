@@ -25,9 +25,37 @@ class AssistantScreen extends ConsumerStatefulWidget {
   ConsumerState<AssistantScreen> createState() => _AssistantScreenState();
 }
 
+/// The two halves this tab turned out to be.
+///
+/// It had grown into one scroll carrying a search field, an emergency card, a
+/// way into the chat, five articles for the age, eight collapsible sections of
+/// the knowledge base, and then — under a heading nobody scrolled to — the
+/// digest, the patterns, the evening card, the week, and five configurable
+/// blocks. «Слишком загружено информацией».
+///
+/// They are not one thing badly arranged; they are two things. One is read
+/// when there is a question, the other when there is a minute. Naming that
+/// split and putting it behind one control is the whole compaction: each half
+/// is now a page a tired person can reach the bottom of.
+enum AssistantView {
+  knowledge,
+  insights;
+
+  String label(AppLocalizations l) => switch (this) {
+    AssistantView.knowledge => l.assistantViewKnowledge,
+    AssistantView.insights => l.assistantViewInsights,
+  };
+
+  IconData get icon => switch (this) {
+    AssistantView.knowledge => Icons.menu_book_outlined,
+    AssistantView.insights => Icons.insights_outlined,
+  };
+}
+
 class _AssistantScreenState extends ConsumerState<AssistantScreen> {
   final _controller = TextEditingController();
   String _query = '';
+  AssistantView _view = AssistantView.knowledge;
 
   @override
   void dispose() {
@@ -40,6 +68,7 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
     final child = ref.watch(selectedChildProvider);
     final ageMonths = child?.ageInMonths;
     final results = searchArticles(_query, ageMonths: ageMonths);
+    final searching = _query.trim().isNotEmpty;
 
     return PageBody(
       children: [
@@ -51,28 +80,35 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
           onChanged: (v) => setState(() => _query = v),
         ),
         const SizedBox(height: Warm.majorGap),
-        if (_query.trim().isNotEmpty)
+
+        if (searching)
           _SearchResults(query: _query, results: results)
         else ...[
-          // One gap between stacked cards, everywhere on this tab. The old
-          // mix of 12, 16 and 24 read as three different screens scrolled
-          // into one.
-          const _RedFlagCard(),
+          // Searching answers the question the switch is for, so the switch
+          // gets out of the way rather than sitting above the results.
+          _ViewSwitch(
+            selected: _view,
+            onChanged: (v) => setState(() => _view = v),
+          ),
           const SizedBox(height: Warm.majorGap),
-          const _AskCard(),
-          const SizedBox(height: Warm.majorGap),
-          if (ageMonths != null) ...[
-            _ForAgeCard(ageMonths: ageMonths, childName: child!.name),
+
+          if (_view == AssistantView.knowledge) ...[
+            // One gap between stacked cards, everywhere on this tab. The old
+            // mix of 12, 16 and 24 read as three different screens scrolled
+            // into one.
+            const _RedFlagCard(),
             const SizedBox(height: Warm.majorGap),
-          ],
-          const _SectionsCard(),
-          const SizedBox(height: 28),
-          // Everything the home screen used to carry and no longer does.
-          // It lives here because this is the tab a parent opens to read
-          // rather than to log — see [DashboardScreen].
-          const _InsightsSection(),
-          const SizedBox(height: 16),
-          const _Disclaimer(),
+            const _AskCard(),
+            const SizedBox(height: Warm.majorGap),
+            if (ageMonths != null) ...[
+              _ForAgeCard(ageMonths: ageMonths, childName: child!.name),
+              const SizedBox(height: Warm.majorGap),
+            ],
+            const _SectionsCard(),
+            const SizedBox(height: 16),
+            const _Disclaimer(),
+          ] else
+            const _InsightsSection(),
         ],
       ],
     );
@@ -91,15 +127,15 @@ class _InsightsSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     final child = ref.watch(selectedChildProvider);
     if (child == null) return const SizedBox.shrink();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(l.assistantInsights, style: theme.textTheme.titleLarge),
-        const SizedBox(height: Warm.majorGap),
+        // No heading of its own any more: the switch above says which half
+        // this is, and printing the same word twice was part of what made the
+        // tab feel like a pile.
 
         // For the parent who was not in the room, and nothing for the one who
         // was: both of these draw themselves only for a viewer.
@@ -123,6 +159,37 @@ class _InsightsSection extends ConsumerWidget {
             label: Text(l.reportExport),
           ),
         ),
+      ],
+    );
+  }
+}
+
+/// The one control that decides which half of the tab is on screen.
+///
+/// Two [ChoicePill]s rather than a [SegmentedButton]: the same selected look
+/// as the diary's filter row, and the same guarantee about its colours.
+class _ViewSwitch extends StatelessWidget {
+  const _ViewSwitch({required this.selected, required this.onChanged});
+
+  final AssistantView selected;
+  final ValueChanged<AssistantView> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    return Row(
+      children: [
+        for (final view in AssistantView.values) ...[
+          if (view != AssistantView.values.first) const SizedBox(width: 8),
+          Expanded(
+            child: ChoicePill(
+              label: view.label(l),
+              icon: view.icon,
+              selected: selected == view,
+              onTap: () => onChanged(view),
+            ),
+          ),
+        ],
       ],
     );
   }

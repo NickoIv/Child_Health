@@ -1147,6 +1147,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get assistantInsights => 'Наблюдения и отчёты';
 
   @override
+  String get assistantViewKnowledge => 'Справочник';
+
+  @override
+  String get assistantViewInsights => 'Сводка';
+
+  @override
   String get familyTitle => 'Семья';
 
   @override

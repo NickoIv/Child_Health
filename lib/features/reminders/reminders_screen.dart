@@ -73,10 +73,11 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ),
-              FilterChip(
-                label: Text(l.remindersShowCompleted),
+              ChoicePill(
+                label: l.remindersShowCompleted,
+                icon: Icons.done_all,
                 selected: _showCompleted,
-                onSelected: (v) => setState(() => _showCompleted = v),
+                onTap: () => setState(() => _showCompleted = !_showCompleted),
               ),
             ],
           ),

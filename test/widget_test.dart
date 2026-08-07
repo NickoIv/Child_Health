@@ -38,6 +38,9 @@ void main() {
     // a feed — see DashboardScreen.
     await tester.tap(find.text('Помощник').last);
     await tester.pumpAndSettle();
+    // The tab is two halves now; the blocks are the «Сводка» one.
+    await tester.tap(find.text('Сводка'));
+    await tester.pumpAndSettle();
 
     // Five blocks, not eight. The summary, the vaccination list and the
     // recent entries each repeated something a tap away and are gone — see

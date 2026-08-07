@@ -162,6 +162,10 @@ void main() {
       final l = await AppLocalizations.delegate.load(defaultLocale);
       await tester.tap(find.text(l.navAssistant).last);
       await tester.pumpAndSettle();
+      // The tab is two halves now — «Справочник» is what it opens on, and
+      // everything that moved off the home screen is behind «Сводка».
+      await tester.tap(find.text(l.assistantViewInsights));
+      await tester.pumpAndSettle();
     }
 
     testWidgets('is all still there', (tester) async {
@@ -169,7 +173,8 @@ void main() {
       await openAssistant(tester);
       final l = await AppLocalizations.delegate.load(defaultLocale);
 
-      expect(find.text(l.assistantInsights), findsOneWidget);
+      // The switch names the half; the heading that used to repeat it is gone.
+      expect(find.text(l.assistantViewInsights), findsOneWidget);
       // Each of these draws nothing when it has nothing to say, so the
       // widgets are what is asserted rather than their contents.
       expect(find.byType(PatternCard), findsOneWidget);

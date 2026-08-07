@@ -65,6 +65,99 @@ class PageBody extends StatelessWidget {
   }
 }
 
+/// One choice among a few, and the only one the app draws itself.
+///
+/// Every selectable chip in the app is this now, because Material's were not
+/// readable when selected: he reported black-on-black twice — «И СНОВА ЧЕРНЫЙ
+/// ФОН ВЫДЕЛЕННЫХ КНОПКАХ, НЕ ВИДНО ТЕКСТ». The cause is that a
+/// [WidgetStateTextStyle] in [ChipThemeData.labelStyle] is merged into the
+/// chip's defaults as a plain [TextStyle] before anything resolves it, so the
+/// white the theme specifies for the selected state never reaches the label —
+/// it keeps the dark ink meant for the unselected fill, on the near-black fill
+/// meant to carry white.
+///
+/// A theme cannot be trusted with a colour pair that has to hold together. So
+/// the fill, the label and the icon are decided here, in one place, from one
+/// value — there is no arrangement of states in which they disagree.
+class ChoicePill extends StatelessWidget {
+  const ChoicePill({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    this.icon,
+    super.key,
+  });
+
+  final String label;
+
+  /// Optional: the hour chips on a reminder have nothing to draw, and an icon
+  /// invented for «через 6 ч» would be decoration pretending to be meaning.
+  final IconData? icon;
+
+  final bool selected;
+  final VoidCallback onTap;
+
+  /// Tall enough to hit with a thumb while holding a child.
+  static const height = 40.0;
+
+  /// What the label and the icon are painted in, given the fill below it.
+  /// Public so a contrast test can check the pair rather than trusting it.
+  static Color ink(Brightness b, {required bool selected}) => selected
+      ? (b == Brightness.dark ? Colors.black : Colors.white)
+      : Warm.onCard(b);
+
+  static Color fill(Brightness b, {required bool selected}) => selected
+      ? (b == Brightness.dark ? Warm.accent : Warm.ink)
+      : Warm.soft(b);
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    final foreground = ink(brightness, selected: selected);
+
+    return Material(
+      color: fill(brightness, selected: selected),
+      borderRadius: BorderRadius.circular(Warm.chipRadius),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(Warm.chipRadius),
+        child: Container(
+          height: height,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          alignment: Alignment.center,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icon case final glyph?) ...[
+                Icon(glyph, size: 16, color: foreground),
+                const SizedBox(width: 6),
+              ],
+              // Flexible, so the same pill works in a scrolling row where it
+              // sizes to its label and in an [Expanded] where it is handed a
+              // width. Unconstrained this changes nothing; constrained it is
+              // the difference between an ellipsis and a layout error.
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  softWrap: false,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: AppTheme.fontFamily,
+                    fontSize: 13,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                    color: foreground,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// The name of a block, printed on the page above it.
 ///
 /// The heading inside a card cannot mark the card's edge — it is drawn on the
