@@ -63,7 +63,7 @@ void main() {
 
     // The two that used to be cards of their own are still one tap away:
     // a night under the sleep action, and the assistant in the bottom bar.
-    expect(find.widgetWithText(TextButton, 'Ночной сон'), findsOneWidget);
+    expect(find.text('Ночной сон'), findsOneWidget);
     expect(find.text('Помощник'), findsWidgets);
   });
 
@@ -146,7 +146,7 @@ void main() {
     expect(
       find.descendant(
         of: find.byType(WarmHeader),
-        matching: find.textContaining('Последнее кормление'),
+        matching: find.textContaining('ПОСЛЕДНЕЕ КОРМЛЕНИЕ'),
       ),
       findsOneWidget,
     );

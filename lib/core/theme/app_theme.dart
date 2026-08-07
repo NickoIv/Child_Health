@@ -15,12 +15,12 @@ export 'palette.dart';
 /// white at 10% goes muddy on a dark surface, and the ink is the one thing
 /// here that has to stay readable. A test holds every pair at 4.5:1.
 enum SoftTone {
-  peach(Color(0xFFFADFD3), Color(0xFF8B5136), Color(0xFF3A2A22), Color(0xFFEBB999)),
-  lavender(Color(0xFFEDE3FA), Color(0xFF5B4C97), Color(0xFF292338), Color(0xFFC4B8F0)),
-  mint(Color(0xFFD7EFE3), Color(0xFF35705C), Color(0xFF1D302A), Color(0xFF9FD6C0)),
-  rose(Color(0xFFFBDDE9), Color(0xFF94485F), Color(0xFF37232B), Color(0xFFEFAABE)),
-  sky(Color(0xFFDCEAF9), Color(0xFF3D6588), Color(0xFF1F2A37), Color(0xFFA8C8E6)),
-  sand(Color(0xFFF8F0D4), Color(0xFF7D6339), Color(0xFF332C20), Color(0xFFDFC79E));
+  peach(Color(0xFFFBE0D0), Color(0xFF7A4225), Color(0xFF3A2A22), Color(0xFFEBB999)),
+  lavender(Color(0xFFEDE3FA), Color(0xFF4E3F8A), Color(0xFF292338), Color(0xFFC4B8F0)),
+  mint(Color(0xFFD3EFE0), Color(0xFF27614E), Color(0xFF1D302A), Color(0xFF9FD6C0)),
+  rose(Color(0xFFFBDCE7), Color(0xFF853A52), Color(0xFF37232B), Color(0xFFEFAABE)),
+  sky(Color(0xFFDCEAF9), Color(0xFF33587A), Color(0xFF1F2A37), Color(0xFFA8C8E6)),
+  sand(Color(0xFFF7EFCC), Color(0xFF6B542C), Color(0xFF332C20), Color(0xFFDFC79E));
 
   const SoftTone(this._lightFill, this._lightInk, this._darkFill, this._darkInk);
 
@@ -48,15 +48,22 @@ enum SoftTone {
 /// and a peach card at 3am is the thing this palette exists to avoid.
 abstract final class Warm {
   /// The page behind everything.
-  static const background = Color(0xFFFFF8F2);
+  ///
+  /// Still warm, but two steps back from the cream it was: the page's job is
+  /// to be the thing a card is *not*, and at #FFF8F2 it was the same colour
+  /// as the card with a different name. Every card edge in the app exists
+  /// because of this one value.
+  static const background = Color(0xFFFAF7F4);
 
-  /// The surface of a card. One tint for all of them: two shades of cream a
-  /// few points apart read as a mistake rather than as a hierarchy, and the
-  /// hierarchy on this screen is carried by size and air instead.
-  static const primaryCard = Color(0xFFFDEADC);
+  /// The surface of a card. White, and white on purpose: cream on cream is
+  /// what made three passes of visual work invisible. The warmth stayed in
+  /// the page, where it is the largest surface and costs nothing to read.
+  static const primaryCard = Color(0xFFFFFFFF);
 
-  /// Kept for the surfaces that sit *on* a card and need to separate from it.
-  static const secondaryCard = Color(0xFFF9DDCB);
+  /// Kept for the surfaces that sit *on* a card and need to separate from it —
+  /// a text field, a chip, a filter. Warm grey rather than deeper cream: on
+  /// white, cream reads as a stain rather than as a second level.
+  static const secondaryCard = Color(0xFFF3EEE9);
 
   /// The one cool note left, and the only place violet is still allowed on a
   /// warm screen — under ten percent of what is visible, by design.
@@ -73,10 +80,16 @@ abstract final class Warm {
   static const accentSoft = Color(0xFFE8B899);
 
   /// Reading colour on any of the above.
-  static const ink = Color(0xFF3B2B23);
-  /// Darkened from #8A6B5C. On a cream card the old value sat at 3.1:1 and
-  /// read as disabled text rather than as a second line.
-  static const inkSoft = Color(0xFF75574A);
+  ///
+  /// Near-black with a grain of warmth left in it. The old #3B2B23 was brown,
+  /// and brown text sat at 9:1 where this sits at 15:1 — the difference is
+  /// whether a sentence can be read at arm's length with one eye open.
+  static const ink = Color(0xFF1E1A18);
+
+  /// The second line. Warm grey rather than the old brown #75574A: on white
+  /// a brown second line competes with the accent for attention it does not
+  /// want, and this one simply steps back.
+  static const inkSoft = Color(0xFF6E645F);
 
   /// The three colours that mean something.
   ///
@@ -98,23 +111,31 @@ abstract final class Warm {
           // rather than as lift: everything on the page had a soft grey halo
           // and nothing had an edge. The tight one draws the edge, the wide
           // one does the lifting.
+          //
+          // Both moved closer and darker with the white card: on cream the
+          // shadow was the only thing separating card from page and had to
+          // spread to be seen at all; on white the edge does that work, and
+          // the shadow only has to say which of the two is on top.
           BoxShadow(
-            color: Color(0x0F3B2B23),
+            color: Color(0x0F1E1A18),
             blurRadius: 2,
             offset: Offset(0, 1),
           ),
           BoxShadow(
-            color: Color(0x1A3B2B23),
-            blurRadius: 20,
-            offset: Offset(0, 6),
+            color: Color(0x121E1A18),
+            blurRadius: 22,
+            offset: Offset(0, 8),
           ),
         ];
 
   /// The four radii. Nothing in the app rounds to a number off this list.
-  static const cardRadius = 24.0;
-  static const buttonRadius = 22.0;
-  static const chipRadius = 16.0;
-  static const dialogRadius = 28.0;
+  ///
+  /// All four came down a step when the cards went white: rounding that read
+  /// as soft on a cream rectangle reads as a bubble on a white one.
+  static const cardRadius = 22.0;
+  static const buttonRadius = 18.0;
+  static const chipRadius = 14.0;
+  static const dialogRadius = 26.0;
 
   /// The three gaps: between blocks, between cards, inside one.
   static const majorGap = 16.0;
@@ -135,16 +156,25 @@ abstract final class Warm {
       b == Brightness.dark ? dark : light;
 
   static Color card(Brightness b) =>
-      surface(b, primaryCard, const Color(0xFF2A2320));
+      surface(b, primaryCard, const Color(0xFF1E1C1B));
 
+  /// Lighter than the card in the dark, darker than it in the light. A field
+  /// sits *in* a card, and in an unlit room "in" is drawn by going up.
   static Color soft(Brightness b) =>
-      surface(b, secondaryCard, const Color(0xFF221D1B));
+      surface(b, secondaryCard, const Color(0xFF2A2724));
 
   static Color onCard(Brightness b) =>
-      surface(b, ink, const Color(0xFFF0E4DC));
+      surface(b, ink, const Color(0xFFEDE9E5));
 
   static Color onCardSoft(Brightness b) =>
-      surface(b, inkSoft, const Color(0xFFBCA79A));
+      surface(b, inkSoft, const Color(0xFFA69E97));
+
+  /// The line between two rows of the same list.
+  ///
+  /// Not a divider between blocks — those are drawn by space. This is what
+  /// keeps eight events in one card from reading as one paragraph.
+  static Color hairline(Brightness b) =>
+      onCard(b).withValues(alpha: b == Brightness.dark ? 0.10 : 0.07);
 }
 
 /// Visual language of the app.
@@ -208,7 +238,7 @@ abstract final class AppTheme {
       // Warm rather than the old violet-tinted white: the page is the largest
       // surface in the app, so it is where most of the purple used to live.
       scaffoldBackgroundColor: isDark
-          ? const Color(0xFF141110)
+          ? const Color(0xFF121110)
           : Warm.background,
       appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,
@@ -287,37 +317,65 @@ abstract final class AppTheme {
           borderRadius: BorderRadius.circular(18),
         ),
       ),
+      // A filter that is on has to be legible from a metre away, and a pale
+      // orange wash was not it: on a bright screen the selected chip and the
+      // eleven beside it were the same rectangle. Selected is now the ink
+      // itself, which is the strongest thing the palette owns short of the
+      // alert colours.
       chipTheme: ChipThemeData(
         side: BorderSide.none,
         backgroundColor: Warm.soft(brightness),
-        selectedColor: Warm.accent.withValues(alpha: 0.18),
+        selectedColor: isDark ? Warm.accent : Warm.ink,
+        checkmarkColor: isDark ? Colors.black : Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(Warm.chipRadius),
         ),
-        labelStyle: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w500,
-          color: Warm.onCard(brightness),
+        labelStyle: WidgetStateTextStyle.resolveWith(
+          (states) => TextStyle(
+            fontFamily: fontFamily,
+            fontSize: 13,
+            fontWeight: states.contains(WidgetState.selected)
+                ? FontWeight.w700
+                : FontWeight.w600,
+            color: states.contains(WidgetState.selected)
+                ? (isDark ? Colors.black : Colors.white)
+                : Warm.onCard(brightness),
+          ),
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: isDark
-            ? const Color(0xFF16151C)
+            ? const Color(0xFF1A1817)
             : Colors.white,
         surfaceTintColor: Colors.transparent,
-        indicatorColor: scheme.primaryContainer,
+        // The accent, not the violet container. The tab bar is the one piece
+        // of chrome visible on every screen, and a violet pill under an
+        // orange app was the last thing left over from the old palette.
+        indicatorColor: Warm.accent.withValues(alpha: isDark ? 0.22 : 0.14),
         elevation: 0,
         height: 68,
-        labelTextStyle: WidgetStatePropertyAll(
-          TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
-              color: scheme.onSurfaceVariant),
+        // Selected reads as selected in weight and colour as well as by the
+        // pill behind it: at 11px the pill alone is doing all the work, and
+        // in a dark room it is the first thing to disappear.
+        labelTextStyle: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: isDark ? const Color(0xFFF2A25C) : Warm.accent,
+                )
+              : TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Warm.onCardSoft(brightness),
+                ),
         ),
       ),
       navigationRailTheme: NavigationRailThemeData(
         backgroundColor: isDark
-            ? const Color(0xFF16151C)
+            ? const Color(0xFF1A1817)
             : Colors.white,
-        indicatorColor: scheme.primaryContainer,
+        indicatorColor: Warm.accent.withValues(alpha: isDark ? 0.22 : 0.14),
         selectedLabelTextStyle: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,
@@ -349,10 +407,26 @@ abstract final class AppTheme {
           ),
         ),
       ),
+      // A confirmation has to be seen from across a room by someone who is
+      // not looking at the phone. On a cream page the Material default was a
+      // slightly darker cream rectangle; this is the one dark surface in the
+      // light theme, and that is the whole reason it registers.
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
+        backgroundColor: const Color(0xFF2B2623),
+        contentTextStyle: const TextStyle(
+          fontFamily: fontFamily,
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+          height: 1.3,
+          color: Color(0xFFF7F2EE),
+        ),
+        actionTextColor: const Color(0xFFF2A25C),
+        actionBackgroundColor: Colors.transparent,
+        elevation: 8,
+        insetPadding: const EdgeInsets.fromLTRB(12, 12, 12, 14),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(20),
         ),
       ),
       // Softer and thinner than a hair: on cream a divider hints that two
@@ -376,19 +450,45 @@ abstract final class AppTheme {
   /// colours are, because the eye has to rank them before it can read. These
   /// are the four the app actually needs: 28 for the one heading that greets,
   /// 20 for a section, 16 to read, 13 for the caption under it.
-  static const headerSize = 30.0;
-  static const sectionSize = 22.0;
+  static const headerSize = 32.0;
+  static const sectionSize = 20.0;
   static const titleSize = 17.0;
   static const bodySize = 16.0;
   static const secondarySize = 13.0;
+
+  /// The fifth, and it is not part of the reading scale.
+  ///
+  /// Small caps over a block — «ПОСЛЕДНИЕ СОБЫТИЯ» — and nothing else. It is
+  /// a sign that says where a block starts, which is the one job the section
+  /// headings inside the cards could not do: a heading printed on the card it
+  /// belongs to cannot mark the card's edge.
+  static const microSize = 11.0;
+
+  /// Digits that line up in a column.
+  ///
+  /// Times, weights and durations are read down a list rather than along a
+  /// line, and proportional digits make a column of them wobble. Applied at
+  /// every number the app prints beside another number.
+  static const tabular = <FontFeature>[FontFeature.tabularFigures()];
+
+  /// The style small-caps labels are set in, so there is one of them.
+  static TextStyle microLabel(Brightness brightness) => TextStyle(
+    fontFamily: fontFamily,
+    fontSize: microSize,
+    fontWeight: FontWeight.w800,
+    letterSpacing: 1.3,
+    color: Warm.onCardSoft(brightness),
+  );
 
   static TextTheme _typography(TextTheme base, ColorScheme scheme) {
     return base.copyWith(
       headlineSmall: base.headlineSmall?.copyWith(
         fontSize: headerSize,
         fontWeight: FontWeight.w700,
-        letterSpacing: -0.5,
-        height: 1.15,
+        // Tighter as it got bigger: at 32 the default tracking opens gaps
+        // between letters that read as a logo rather than as a name.
+        letterSpacing: -0.9,
+        height: 1.08,
         color: scheme.onSurface,
       ),
       // Down from the Material 22, not up: a section heading should name the
@@ -419,7 +519,17 @@ abstract final class AppTheme {
         height: 1.35,
       ),
       labelLarge: base.labelLarge?.copyWith(fontWeight: FontWeight.w600),
-      labelMedium: base.labelMedium?.copyWith(fontWeight: FontWeight.w600),
+      // The two label sizes are where the app prints a time or a date beside
+      // another one, so they carry the tabular figures by default rather than
+      // by each caller remembering to ask.
+      labelMedium: base.labelMedium?.copyWith(
+        fontWeight: FontWeight.w600,
+        fontFeatures: tabular,
+      ),
+      labelSmall: base.labelSmall?.copyWith(
+        fontWeight: FontWeight.w600,
+        fontFeatures: tabular,
+      ),
     );
   }
 

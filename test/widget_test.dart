@@ -124,7 +124,7 @@ void main() {
     await tester.tap(find.byIcon(Icons.auto_stories_outlined).first);
     await tester.pumpAndSettle();
 
-    expect(find.text('Лента событий'), findsOneWidget);
+    expect(find.text('ЛЕНТА СОБЫТИЙ'), findsOneWidget);
     expect(find.text('Первое слово'), findsOneWidget);
   });
 

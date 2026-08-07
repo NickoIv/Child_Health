@@ -221,12 +221,21 @@ class _MicPulseState extends State<MicPulse>
 /// a mother and the next thing she has to do. It never delays anything — the
 /// sheet has already closed by the time this draws.
 class SuccessCheck extends StatelessWidget {
-  const SuccessCheck({this.size = 20, this.color, super.key});
+  const SuccessCheck({
+    this.size = 20,
+    this.color,
+    this.icon = Icons.check_circle_outline,
+    super.key,
+  });
 
   static const duration = Duration(milliseconds: 800);
 
   final double size;
   final Color? color;
+
+  /// The glyph that draws itself in. Overridden where the tick already sits
+  /// inside a disc of its own and a second ring would be one circle too many.
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
@@ -241,7 +250,7 @@ class SuccessCheck extends StatelessWidget {
         child: Transform.scale(scale: t, child: child),
       ),
       child: Icon(
-        Icons.check_circle_outline,
+        icon,
         size: size,
         color: color ?? Theme.of(context).colorScheme.inversePrimary,
       ),
@@ -339,6 +348,46 @@ class _SkeletonState extends State<Skeleton>
           ),
         );
       },
+    );
+  }
+}
+
+/// A tab icon that answers the finger.
+///
+/// The pill behind it was the only thing that moved, and a pill sliding under
+/// an icon is the tab bar telling you where it went, not that it heard you.
+/// This is the second half of that sentence: the glyph lifts two pixels and
+/// swells a tenth on the way in, and settles rather than bounces.
+///
+/// Both the icon and the selected icon get one, so the movement runs whichever
+/// of the two the bar happens to be cross-fading towards — and it runs once
+/// per tap, because the value it animates to only changes when the tab does.
+class NavIcon extends StatelessWidget {
+  const NavIcon({required this.icon, required this.selected, super.key});
+
+  final IconData icon;
+  final bool selected;
+
+  /// Small enough to be felt rather than watched. At 1.2 the icon collides
+  /// with the pill's edge, which reads as a mistake at the size a tab bar is.
+  static const grownScale = 1.12;
+  static const lift = 2.0;
+  static const duration = Duration(milliseconds: 220);
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: selected ? 1 : 0),
+      duration: duration,
+      // Overshoots by a hair and comes back. The one place in the app a
+      // spring is right: this is a button being pressed, and a press that
+      // arrives dead reads as a screenshot.
+      curve: Curves.easeOutBack,
+      builder: (context, t, child) => Transform.translate(
+        offset: Offset(0, -lift * t),
+        child: Transform.scale(scale: 1 + (grownScale - 1) * t, child: child),
+      ),
+      child: Icon(icon),
     );
   }
 }

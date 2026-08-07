@@ -259,6 +259,19 @@ class _GrowthChart extends StatelessWidget {
                   }).toList(),
                 ),
               ),
+              // The band between −2 and +2 standard deviations, filled.
+              //
+              // As two dashed lines it was two more curves to tell apart from
+              // the child's own; as a shaded corridor it is the one thing the
+              // chart is actually asked — is he inside it — answered without
+              // reading a legend.
+              betweenBarsData: [
+                BetweenBarsData(
+                  fromIndex: 0,
+                  toIndex: 1,
+                  color: _seriesColor(theme).withValues(alpha: 0.07),
+                ),
+              ],
               lineBarsData: [
                 _referenceLine(lower, theme, dashed: true),
                 _referenceLine(upper, theme, dashed: true),
@@ -271,15 +284,17 @@ class _GrowthChart extends StatelessWidget {
                   // 1 — validated, and far from both the violet chrome and
                   // the alert red, so it can never be mistaken for either.
                   color: _seriesColor(theme),
-                  barWidth: 2.5,
+                  barWidth: 3,
                   dotData: FlDotData(
-                    getDotPainter: (spot, _, _, _) => FlDotCirclePainter(
+                    getDotPainter: (spot, _, _, index) => FlDotCirclePainter(
                       // 8px across, with a surface ring so points stay
-                      // readable where they cross a reference curve.
-                      radius: 4,
+                      // readable where they cross a reference curve. The last
+                      // one is larger: it is today's weight, and on a chart
+                      // of eleven identical dots nothing says which.
+                      radius: index == childSpots.length - 1 ? 6 : 4,
                       color: _seriesColor(theme),
-                      strokeWidth: 2,
-                      strokeColor: theme.colorScheme.surface,
+                      strokeWidth: index == childSpots.length - 1 ? 3 : 2,
+                      strokeColor: Warm.card(theme.brightness),
                     ),
                   ),
                 ),
@@ -387,6 +402,18 @@ class _LatestAssessment extends ConsumerWidget {
   final GrowthMetric metric;
   final List<_Point> points;
 
+  /// The difference between the last two measurements, signed and in the
+  /// parent's own units. Growth is nearly always a gain, so the plus is
+  /// printed: without it «0,9 кг» reads as a weight rather than as a change.
+  String _gain(UnitSystem units) {
+    final delta = points.last.value - points[points.length - 2].value;
+    final formatted = switch (metric) {
+      GrowthMetric.weight => Units.formatWeight(delta.abs(), units),
+      GrowthMetric.height => Units.formatHeight(delta.abs(), units),
+    };
+    return '${delta < 0 ? '−' : '+'}$formatted';
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
@@ -443,6 +470,16 @@ class _LatestAssessment extends ConsumerWidget {
                 caption: l.growthPercentileWord,
                 color: color,
               ),
+              // What he put on since the measurement before. The number a
+              // paediatrician asks for out loud, and the one figure on this
+              // screen the app was making a parent work out with a pencil.
+              if (points.length > 1)
+                StatTile(
+                  value: _gain(units),
+                  caption: l.growthChangeSince(
+                    dayMonth.format(points[points.length - 2].date),
+                  ),
+                ),
               StatTile(
                 value: z.toStringAsFixed(2),
                 caption: l.growthZScore,

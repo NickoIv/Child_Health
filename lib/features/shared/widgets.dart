@@ -49,6 +49,43 @@ class PageBody extends StatelessWidget {
   }
 }
 
+/// The name of a block, printed on the page above it.
+///
+/// The heading inside a card cannot mark the card's edge — it is drawn on the
+/// thing it is meant to bound. Small caps outside it can, and that is the only
+/// job this has: on a scrolling page it is where one block stops and the next
+/// begins.
+class SectionLabel extends StatelessWidget {
+  const SectionLabel({required this.text, this.action, super.key});
+
+  final String text;
+
+  /// «Все», usually. Sits on the same line, in the accent, because it is the
+  /// one tappable thing in a row of type.
+  final Widget? action;
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(6, 2, 2, 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              text.toUpperCase(),
+              style: AppTheme.microLabel(brightness),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          ?action,
+        ],
+      ),
+    );
+  }
+}
+
 class SectionCard extends StatelessWidget {
   const SectionCard({
     required this.title,
@@ -154,11 +191,18 @@ class DateTimeField extends StatelessWidget {
     required this.onChanged,
     this.dateLabel,
     this.timeLabel,
+    this.future = false,
     super.key,
   });
 
   final DateTime value;
   final ValueChanged<DateTime> onChanged;
+
+  /// Lets the calendar run forwards instead of stopping at today.
+  ///
+  /// Everything recorded in this app has already happened — except a
+  /// reminder, which is the one thing that has not.
+  final bool future;
 
   /// Default to the plain "Date" and "Time" of the interface language; the
   /// night sheet overrides them with "fell asleep" and "woke up".
@@ -231,9 +275,10 @@ class DateTimeField extends StatelessWidget {
     final picked = await showDatePicker(
       context: context,
       initialDate: value,
-      firstDate: DateTime(now.year - 18),
-      // Nothing recorded here has happened in the future.
-      lastDate: now,
+      firstDate: future ? now : DateTime(now.year - 18),
+      // Nothing recorded here has happened in the future — a reminder aside,
+      // which is the only thing in the app that is set rather than logged.
+      lastDate: future ? DateTime(now.year + 2) : now,
     );
     if (picked == null) return;
     // Only the calendar day moves; the clock time stays as it was.
@@ -255,6 +300,11 @@ class DateTimeField extends StatelessWidget {
 }
 
 /// Big number with a caption, used across the dashboard and the statistics.
+///
+/// The caption moved above the figure and into small caps. A number with a
+/// grey sentence under it reads as a sentence with a number over it — the
+/// order on the page decides which of the two is the thing being looked at,
+/// and on every screen this appears on it is the number.
 class StatTile extends StatelessWidget {
   const StatTile({
     required this.value,
@@ -267,6 +317,10 @@ class StatTile extends StatelessWidget {
   final String caption;
   final Color? color;
 
+  /// Down from headlineSmall, which is now 32 and was never meant to have
+  /// four of them side by side on one card.
+  static const valueSize = 24.0;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -274,18 +328,27 @@ class StatTile extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          value,
-          style: theme.textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: color,
-          ),
-        ),
-        const SizedBox(height: 2),
+        // Left in its own case, unlike the block labels: a caption here can
+        // be «прибавка с 2 августа», and a date shouted in capitals is a
+        // date that has to be read twice.
         Text(
           caption,
           style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w600,
+            color: Warm.onCardSoft(theme.brightness),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            fontFamily: AppTheme.fontFamily,
+            fontSize: valueSize,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.7,
+            height: 1.05,
+            color: color ?? Warm.onCard(theme.brightness),
+            fontFeatures: AppTheme.tabular,
           ),
         ),
       ],

@@ -73,7 +73,7 @@ void main() {
   }
 
   group('the top of the screen', () {
-    testWidgets('the header carries the child and a single subtitle', (
+    testWidgets('the header carries the child and one figure', (
       tester,
     ) async {
       await pump(tester);
@@ -85,50 +85,51 @@ void main() {
         find.descendant(of: header, matching: find.text(child.name)),
         findsOneWidget,
       );
-      // Age on its own line, and one warm line under it — no more.
+      // The name at the header size, and it is the largest thing on the
+      // screen: everything under it is a label or a figure.
+      final name = tester.widget<Text>(
+        find.descendant(of: header, matching: find.text(child.name)),
+      );
+      expect(name.style?.fontSize, AppTheme.headerSize);
+
+      // The question the screen exists to answer, printed as a caps label
+      // with a figure under it rather than as a grey sentence.
       expect(
-        find.descendant(of: header, matching: find.byType(Text)),
-        findsNWidgets(3),
+        find.descendant(
+          of: header,
+          matching: find.text(l.nowLastFeeding.toUpperCase()),
+        ),
+        findsOneWidget,
       );
       expect(
         find.descendant(
           of: header,
-          matching: find.text(warmSubtitle(l, child, DateTime.now(), null)),
+          matching: find.text(greetingFor(l, DateTime.now())),
         ),
         findsOneWidget,
       );
     });
 
-    testWidgets('the age is on a chip, not a third line of grey', (
+    testWidgets('the age shares a line with the date, under the name', (
       tester,
     ) async {
       await pump(tester);
       final l = await AppLocalizations.delegate.load(defaultLocale);
+
+      // It used to sit on a peach chip, which made the one thing in the
+      // header that is not tappable look like the one thing that is.
       final age = find.descendant(
         of: find.byType(WarmHeader),
-        matching: find.text(localizedAge(l, child)),
+        matching: find.textContaining(localizedAge(l, child)),
       );
-
       expect(age, findsOneWidget);
-      // On the peach the feeding card uses, rounded to a chip: it is the one
-      // number here a parent repeats out loud.
-      final chip = tester.widget<Container>(
-        find
-            .ancestor(of: age, matching: find.byType(Container))
-            .first,
-      );
-      // Read from the tree rather than assumed: after 21:00 the app is in
-      // its dark theme, and the tone is a different pair there.
-      final brightness = Theme.of(tester.element(age)).brightness;
-      final decoration = chip.decoration! as BoxDecoration;
-      expect(decoration.color, SoftTone.peach.fill(brightness));
-      expect(
-        decoration.borderRadius,
-        BorderRadius.circular(Warm.chipRadius),
-      );
+
+      final line = tester.widget<Text>(age);
+      expect(line.data, contains('·'));
+      expect(line.style?.fontSize, AppTheme.secondarySize);
     });
 
-    testWidgets('the actions are a two by two square of 104px cards', (
+    testWidgets('the actions are a two by two square of 112px cards', (
       tester,
     ) async {
       await pump(tester);
@@ -142,11 +143,11 @@ void main() {
       for (final box in boxes) {
         expect(box.height, ActionCard.height);
       }
-      expect(ActionCard.height, 104);
-      expect(ActionCard.radius, 24);
-      expect(ActionCard.iconSize, 20);
-      expect(ActionCard.titleSize, 16);
-      expect(ActionCard.captionSize, 11.5);
+      expect(ActionCard.height, 112);
+      expect(ActionCard.radius, Warm.cardRadius);
+      expect(ActionCard.iconSize, 21);
+      expect(ActionCard.titleSize, 17);
+      expect(ActionCard.captionSize, 12);
 
       // Two rows of two: the first two share a top, and the third starts
       // lower than the first.
@@ -219,27 +220,40 @@ void main() {
         ],
       );
 
-      // Three entries, three badges, each a circle with an accent edge — the
-      // rail that used to join them made three facts read as one.
-      final badges = find
+      // Three entries, three dots, each in the colour of its own type. They
+      // used to be three identical orange rings, which said only "this is an
+      // entry" — something the row already said by existing.
+      final dots = find
           .descendant(
             of: find.byType(RecentPreview),
             matching: find.byWidgetPredicate((w) {
               if (w is! Container) return false;
               final d = w.decoration;
-              return d is BoxDecoration &&
-                  d.shape == BoxShape.circle &&
-                  d.border != null;
+              return d is BoxDecoration && d.shape == BoxShape.circle;
             }),
           )
           .evaluate();
 
-      expect(badges, hasLength(3));
-      for (final badge in badges) {
-        final box = (badge.widget as Container);
-        final border = (box.decoration! as BoxDecoration).border!.top;
-        expect(border.color.a, closeTo(0.35, 0.01));
-        expect(tester.getSize(find.byWidget(box)).width, 34);
+      expect(dots, hasLength(3));
+      final brightness = Theme.of(
+        tester.element(find.byType(RecentPreview)),
+      ).brightness;
+      for (final dot in dots) {
+        final box = dot.widget as Container;
+        expect(
+          (box.decoration! as BoxDecoration).color,
+          logColor(
+            DevelopmentLog(
+              id: 'x',
+              childId: child.id,
+              date: DateTime.now(),
+              type: LogType.feeding,
+              title: LogType.feeding.label,
+            ),
+            brightness,
+          ),
+        );
+        expect(tester.getSize(find.byWidget(box)).width, 8);
       }
     });
   });
@@ -626,20 +640,20 @@ void main() {
     });
 
     test('the palette is the one asked for', () {
-      expect(Warm.background, const Color(0xFFFFF8F2));
-      expect(Warm.primaryCard, const Color(0xFFFDEADC));
+      expect(Warm.background, const Color(0xFFFAF7F4));
+      expect(Warm.primaryCard, const Color(0xFFFFFFFF));
       expect(Warm.accent, const Color(0xFFE67E22));
       expect(Warm.lavender, const Color(0xFFF3EAFE));
-      expect(Warm.ink, const Color(0xFF3B2B23));
-      expect(Warm.inkSoft, const Color(0xFF75574A));
+      expect(Warm.ink, const Color(0xFF1E1A18));
+      expect(Warm.inkSoft, const Color(0xFF6E645F));
       // Soft rather than absent: a cream page with a hard shadow reads as
       // dirty, one with none reads as a wireframe, and one with a single
       // wide blur — which is what this was — reads as fog.
       final shadow = Warm.shadow(Brightness.light);
       expect(shadow, hasLength(2));
       expect(shadow.first.blurRadius, lessThan(4), reason: 'the edge');
-      expect(shadow.last.blurRadius, 20, reason: 'the lift');
-      expect(shadow.last.color.a, closeTo(0.10, 0.005));
+      expect(shadow.last.blurRadius, 22, reason: 'the lift');
+      expect(shadow.last.color.a, closeTo(0.07, 0.005));
       expect(Warm.shadow(Brightness.dark), isEmpty);
     });
   });

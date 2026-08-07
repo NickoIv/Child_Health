@@ -118,7 +118,7 @@ void main() {
       expect(find.text(l.homeNothingYet), findsOneWidget);
     });
 
-    testWidgets('every action card is the same 104px card', (tester) async {
+    testWidgets('every action card is the same 112px card', (tester) async {
       // Kazakh has the longest labels of the three, so if the grid is going
       // to go ragged it goes ragged here.
       tester.view.physicalSize = const Size(390, 844);
@@ -150,10 +150,10 @@ void main() {
       expect(sizes, isNotEmpty);
 
       for (final card in find.byType(ActionCard).evaluate()) {
-        expect(tester.getSize(find.byWidget(card.widget)).height, 104);
+        expect(tester.getSize(find.byWidget(card.widget)).height, 112);
       }
-      expect(ActionCard.radius, 24);
-      expect(ActionCard.iconSize, 20);
+      expect(ActionCard.radius, Warm.cardRadius);
+      expect(ActionCard.iconSize, 21);
     });
   });
 
@@ -193,12 +193,14 @@ void main() {
 
   group('the warm palette', () {
     test('is the five colours asked for', () {
-      expect(Warm.background, const Color(0xFFFFF8F2));
-      expect(Warm.primaryCard, const Color(0xFFFDEADC));
+      // The page kept the warmth; the card gave it up. Everything that has
+      // to be read moved as far from the page as the palette allows.
+      expect(Warm.background, const Color(0xFFFAF7F4));
+      expect(Warm.primaryCard, const Color(0xFFFFFFFF));
       expect(Warm.lavender, const Color(0xFFF3EAFE));
       expect(Warm.accent, const Color(0xFFE67E22));
-      expect(Warm.ink, const Color(0xFF3B2B23));
-      expect(Warm.inkSoft, const Color(0xFF75574A));
+      expect(Warm.ink, const Color(0xFF1E1A18));
+      expect(Warm.inkSoft, const Color(0xFF6E645F));
     });
 
     test('paints the page and the greeting warm', () {

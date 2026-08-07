@@ -142,11 +142,17 @@ class _Rail extends StatelessWidget {
       unselectedLabelTextStyle: Theme.of(context).textTheme.labelSmall,
       onDestinationSelected: (i) => context.go(appDestinations[i].path),
       destinations: [
-        for (final d in appDestinations)
+        for (var i = 0; i < appDestinations.length; i++)
           NavigationRailDestination(
-            icon: Icon(d.icon),
-            selectedIcon: Icon(d.selectedIcon),
-            label: Text(d.label(AppLocalizations.of(context))),
+            icon: NavIcon(
+              icon: appDestinations[i].icon,
+              selected: index == i,
+            ),
+            selectedIcon: NavIcon(
+              icon: appDestinations[i].selectedIcon,
+              selected: index == i,
+            ),
+            label: Text(appDestinations[i].label(AppLocalizations.of(context))),
           ),
       ],
     );
@@ -174,14 +180,25 @@ class _BottomBar extends StatelessWidget {
         }
       },
       destinations: [
-        for (final d in appDestinations.take(primary))
+        for (var i = 0; i < primary; i++)
           NavigationDestination(
-            icon: Icon(d.icon),
-            selectedIcon: Icon(d.selectedIcon),
-            label: d.label(AppLocalizations.of(context)),
+            // The same widget on both sides of the cross-fade, so whichever
+            // of the two the bar is drawing is the one that moves.
+            icon: NavIcon(
+              icon: appDestinations[i].icon,
+              selected: selected == i,
+            ),
+            selectedIcon: NavIcon(
+              icon: appDestinations[i].selectedIcon,
+              selected: selected == i,
+            ),
+            label: appDestinations[i].label(AppLocalizations.of(context)),
           ),
         NavigationDestination(
-          icon: const Icon(Icons.more_horiz),
+          icon: NavIcon(
+            icon: Icons.more_horiz,
+            selected: selected == primary,
+          ),
           label: AppLocalizations.of(context).navMore,
         ),
       ],

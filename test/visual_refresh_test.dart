@@ -308,7 +308,7 @@ void main() {
       expect(fills.length, 4, reason: 'four actions, four tones');
     });
 
-    testWidgets('every quick action card is the same 104px card', (
+    testWidgets('every quick action card is the same 112px card', (
       tester,
     ) async {
       // Kazakh has the longest labels of the three, so if the grid is going
@@ -327,7 +327,7 @@ void main() {
       ];
 
       for (final size in sizes) {
-        expect(size.height, 104);
+        expect(size.height, 112);
         expect(size.width, closeTo(sizes.first.width, 0.5));
       }
     });

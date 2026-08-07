@@ -140,7 +140,7 @@ void main() {
     expect(find.byType(ActionCard), findsNWidgets(4));
     // A night is a variant of sleep and lives under it; the assistant is a
     // tab. Neither was lost, and neither is a fifth primary card.
-    expect(find.widgetWithText(TextButton, 'Ночной сон'), findsOneWidget);
+    expect(find.text('Ночной сон'), findsOneWidget);
 
     // The experimental cards and the extra actions are gone for good.
     for (final gone in const [

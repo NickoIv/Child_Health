@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../core/theme/app_snack.dart';
 import '../../core/l10n/labels.dart';
 import '../../core/photos/compression.dart';
 import '../../l10n/app_localizations.dart';
@@ -12,6 +13,7 @@ import '../../models/app_user.dart';
 import '../../models/development_log.dart';
 import '../../models/json.dart';
 import '../../providers.dart';
+import '../dashboard/focus_home.dart';
 import '../dashboard/night_sleep_sheet.dart';
 import '../family/invite_banner.dart';
 import '../shared/photo_widgets.dart';
@@ -75,30 +77,37 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen> {
                 hint: l.diaryEmptyHint,
               ),
             )
-          else
-            SectionCard(
-              title: l.diaryFeed,
-              icon: Icons.auto_stories_outlined,
+          else ...[
+            // The card that used to wrap the whole feed is gone. Its heading
+            // repeated the title already in the app bar, and its edges drew a
+            // box round forty entries that are each a surface of their own —
+            // so the only thing it added was two levels of nesting and the
+            // width they cost.
+            SectionLabel(
+              text: l.diaryFeed,
               action: Text(
                 l.entriesCount(visible.length),
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              child: _Timeline(
-                logs: visible,
-                readOnly: readOnly,
-                onOpen: readOnly
-                    ? null
-                    : (log) => showDiaryEntryForm(
-                        context,
-                        ref,
-                        childId: child.id,
-                        existing: log,
-                      ),
-                onDelete: readOnly
-                    ? null
-                    : (log) => _confirmDelete(context, log),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Warm.onCardSoft(Theme.of(context).brightness),
+                ),
               ),
             ),
+            _Timeline(
+              logs: visible,
+              readOnly: readOnly,
+              onOpen: readOnly
+                  ? null
+                  : (log) => showDiaryEntryForm(
+                      context,
+                      ref,
+                      childId: child.id,
+                      existing: log,
+                    ),
+              onDelete: readOnly
+                  ? null
+                  : (log) => _confirmDelete(context, log),
+            ),
+          ],
         ],
       ),
       // The one control on this screen that writes. A viewer keeps it, sees
@@ -108,7 +117,7 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen> {
         onPressed: readOnly
             ? () => ScaffoldMessenger.of(
                 context,
-              ).showSnackBar(SnackBar(content: Text(l.familyReadOnlyHint)))
+              ).showApp(l.familyReadOnlyHint)
             : () => _openForm(context),
         backgroundColor: readOnly
             ? Theme.of(context).colorScheme.surfaceContainerHighest
@@ -227,13 +236,25 @@ class _Timeline extends StatelessWidget {
               // More air above a new day than between two entries inside it:
               // the gap is what says the morning ended, and eighteen pixels
               // was not enough to say it.
-              padding: EdgeInsets.only(top: i == 0 ? 0 : 28, bottom: 12),
-              child: Text(
-                _dayLabel(logs[i].date, now),
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: Warm.onCardSoft(theme.brightness),
-                  fontWeight: FontWeight.w700,
-                ),
+              padding: EdgeInsets.only(top: i == 0 ? 0 : 20),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: SectionLabel(text: _dayLabel(logs[i].date, now)),
+                  ),
+                  // How many that day came to. The question a diary is opened
+                  // with is nearly always "how many were there yesterday",
+                  // and until now it had to be answered by counting rows.
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Text(
+                      '${_countOn(logs, logs[i].date)}',
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: Warm.onCardSoft(theme.brightness),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           // Keyed by the entry's own id, so the arrival animation runs for a
@@ -262,6 +283,12 @@ class _Timeline extends StatelessWidget {
   /// The current year needs no year on it; anything older does.
   static String _dayLabel(DateTime date, DateTime now) =>
       date.year == now.year ? dayMonth.format(date) : dayMonthYear.format(date);
+
+  /// How many entries fall on the same calendar day as [date].
+  static int _countOn(List<DevelopmentLog> logs, DateTime date) {
+    final day = dateOnly(date);
+    return logs.where((log) => dateOnly(log.date) == day).length;
+  }
 }
 
 class _TimelineEntry extends ConsumerWidget {
@@ -285,7 +312,7 @@ class _TimelineEntry extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final accent = _colorFor(log, theme.brightness);
+    final accent = logColor(log, theme.brightness);
     final detail = _detail(l, ref.watch(unitSystemProvider));
 
     // The event is a surface of its own now rather than a row on the card
@@ -440,20 +467,6 @@ class _TimelineEntry extends ConsumerWidget {
     };
   }
 
-  /// Illness takes the status colour rather than a categorical slot: in a
-  /// feed of mostly happy entries, a sick day should read as a state and not
-  /// as one more category.
-  static Color _colorFor(DevelopmentLog log, Brightness brightness) =>
-      switch (log.type) {
-        LogType.illness => StatusColors.alert,
-        LogType.milestone => VizPalette.slot(4, brightness),
-        LogType.measurement => VizPalette.slot(0, brightness),
-        LogType.feeding => VizPalette.slot(2, brightness),
-        LogType.nappy => VizPalette.slot(3, brightness),
-        LogType.sleep => VizPalette.slot(5, brightness),
-        LogType.question => VizPalette.slot(1, brightness),
-        LogType.note => VizPalette.slot(6, brightness),
-      };
 }
 
 /// The coloured dot and the thread between dots.

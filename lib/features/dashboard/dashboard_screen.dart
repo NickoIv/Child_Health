@@ -51,10 +51,11 @@ class DashboardScreen extends ConsumerWidget {
         // Above everything, and gone the moment it is answered.
         const InviteBanner(),
         WarmHeader(child: child),
-        const SizedBox(height: AppTheme.gap),
+        const SizedBox(height: 20),
+        SectionLabel(text: AppLocalizations.of(context).homeQuickLog),
         PrimaryActions(child: child),
         NightSleepLink(childId: child.id),
-        const SizedBox(height: 4),
+        const SizedBox(height: 20),
         // At most one, picked by priority rather than stacked.
         const SmartCard(),
         const RecentPreview(),

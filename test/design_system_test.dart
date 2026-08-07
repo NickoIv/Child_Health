@@ -14,14 +14,16 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('the palette', () {
     test('is the eleven colours of the system', () {
-      expect(Warm.background, const Color(0xFFFFF8F2));
-      expect(Warm.primaryCard, const Color(0xFFFDEADC));
-      expect(Warm.secondaryCard, const Color(0xFFF9DDCB));
+      expect(Warm.background, const Color(0xFFFAF7F4));
+      // White, and the page warm behind it. Cream on cream was the reason
+      // three passes of visual work were invisible on a phone.
+      expect(Warm.primaryCard, const Color(0xFFFFFFFF));
+      expect(Warm.secondaryCard, const Color(0xFFF3EEE9));
       expect(Warm.lavender, const Color(0xFFF3EAFE));
       expect(Warm.accent, const Color(0xFFE67E22));
       expect(Warm.accentSoft, const Color(0xFFE8B899));
-      expect(Warm.ink, const Color(0xFF3B2B23));
-      expect(Warm.inkSoft, const Color(0xFF75574A));
+      expect(Warm.ink, const Color(0xFF1E1A18));
+      expect(Warm.inkSoft, const Color(0xFF6E645F));
       expect(Warm.success, const Color(0xFF4E8B6B));
       expect(Warm.warning, const Color(0xFFD18B2F));
       expect(Warm.danger, const Color(0xFFC96B5A));
@@ -37,18 +39,22 @@ void main() {
         return (luminance(hi) + 0.05) / (luminance(lo) + 0.05);
       }
 
-      expect(ratio(Warm.ink, Warm.primaryCard), greaterThan(4.5));
-      expect(ratio(Warm.ink, Warm.background), greaterThan(4.5));
+      // The reading pair is held far above the minimum on purpose: this is
+      // read one-eyed, at arm's length, in a room with the curtains shut.
+      expect(ratio(Warm.ink, Warm.primaryCard), greaterThan(12));
+      expect(ratio(Warm.ink, Warm.background), greaterThan(12));
       expect(ratio(Warm.inkSoft, Warm.primaryCard), greaterThan(3.0));
     });
   });
 
   group('the tokens', () {
     test('are four radii, three gaps and one shadow', () {
-      expect(Warm.cardRadius, 24);
-      expect(Warm.buttonRadius, 22);
-      expect(Warm.chipRadius, 16);
-      expect(Warm.dialogRadius, 28);
+      // Each a step down from what it was: rounding that read as soft on a
+      // cream rectangle reads as a bubble on a white one.
+      expect(Warm.cardRadius, 22);
+      expect(Warm.buttonRadius, 18);
+      expect(Warm.chipRadius, 14);
+      expect(Warm.dialogRadius, 26);
 
       expect(Warm.majorGap, 16);
       expect(Warm.cardGap, 14);
@@ -60,16 +66,20 @@ void main() {
       final shadow = Warm.shadow(Brightness.light);
       expect(shadow, hasLength(2));
       expect(shadow.first.blurRadius, lessThan(4));
-      expect(shadow.last.blurRadius, 20);
-      expect(shadow.last.offset, const Offset(0, 6));
-      expect(shadow.last.color.a, closeTo(0.10, 0.005));
+      expect(shadow.last.blurRadius, 22);
+      expect(shadow.last.offset, const Offset(0, 8));
+      // Fainter than it was, because the white card now draws its own edge
+      // and the shadow only has to say which surface is on top.
+      expect(shadow.last.color.a, closeTo(0.07, 0.005));
       // Dark mode gets none: a shadow on a near-black page is a smudge.
       expect(Warm.shadow(Brightness.dark), isEmpty);
     });
 
     test('are five type sizes and nothing between them', () {
-      expect(AppTheme.headerSize, 30);
-      expect(AppTheme.sectionSize, 22);
+      expect(AppTheme.headerSize, 32);
+      expect(AppTheme.sectionSize, 20);
+      // The fifth size, and not part of the reading scale: block labels only.
+      expect(AppTheme.microSize, 11);
       expect(AppTheme.titleSize, 17);
       expect(AppTheme.bodySize, 16);
       expect(AppTheme.secondarySize, 13);
@@ -134,13 +144,15 @@ void main() {
     test('agree with them', () {
       // The action cards and the microphone are the two surfaces that carry
       // their own measurements; both are drawn from the same list.
-      expect(ActionCard.height, 104);
+      expect(ActionCard.height, 112);
       expect(ActionCard.radius, Warm.cardRadius);
-      expect(ActionCard.iconSize, 20);
-      expect(ActionCard.titleSize, 16);
-      expect(ActionCard.captionSize, 11.5);
+      expect(ActionCard.iconSize, 21);
+      expect(ActionCard.titleSize, 17);
+      expect(ActionCard.captionSize, 12);
 
-      expect(WarmHeader.photoSize, 78);
+      // Smaller than it was: the height went to the two figures under it,
+      // which are what the screen is opened forty times a day to read.
+      expect(WarmHeader.photoSize, 64);
       expect(VoiceActionButton.size, 64);
       expect(Warm.accentGradient.colors.last, Warm.accent);
     });

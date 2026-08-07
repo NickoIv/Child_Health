@@ -12,6 +12,7 @@ import '../../models/development_log.dart';
 import '../../providers.dart';
 import '../family/invite_banner.dart';
 import '../shared/photo_widgets.dart';
+import '../reminders/reminder_sheet.dart';
 import '../shared/widgets.dart';
 import 'night_sleep_sheet.dart';
 import 'quick_log_sheet.dart';
@@ -32,9 +33,11 @@ class WarmHeader extends ConsumerWidget {
   /// name. It is the first thing on the screen and the only thing on it that
   /// is nobody else's.
   ///
-  /// Down from 96: the age moved onto a chip of its own, and at 96 the photo
-  /// pushed the name and the chip into a narrower column than either wanted.
-  static const photoSize = 78.0;
+  /// Down from 78: the height it gave back went to the two figures under it,
+  /// which are what the screen is opened to read. A face is recognised at 64
+  /// as well as at 78; «два часа десять минут» is not read at 13pt as well as
+  /// at 24.
+  static const photoSize = 64.0;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -42,53 +45,85 @@ class WarmHeader extends ConsumerWidget {
     final l = AppLocalizations.of(context);
     final moment = now ?? DateTime.now();
     final care = ref.watch(dailyCareProvider);
+    final sinceFeeding = care.minutesSinceFeeding(moment);
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(22, 24, 22, 24),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
       decoration: BoxDecoration(
         color: Warm.card(theme.brightness),
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(Warm.cardRadius),
         boxShadow: Warm.shadow(theme.brightness),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ChildAvatar(child: child, size: photoSize),
-          const SizedBox(width: 18),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  child.name,
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    color: Warm.onCard(theme.brightness),
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.6,
-                    height: 1.05,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+          Row(
+            children: [
+              ChildAvatar(child: child, size: photoSize),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      child.name,
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        color: Warm.onCard(theme.brightness),
+                        fontWeight: FontWeight.w800,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    // Age and date on one line of grey. The age used to sit on
+                    // a peach chip, which made a label look like a button in
+                    // the one place on the screen nothing is tappable.
+                    Text(
+                      '${localizedAge(l, child)} · ${dayMonth.format(moment)}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: Warm.onCardSoft(theme.brightness),
+                        fontWeight: FontWeight.w600,
+                        fontFeatures: AppTheme.tabular,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 7),
-                // On a chip rather than in grey under the name. It is the one
-                // number on this screen a parent says out loud — to a nurse,
-                // to a grandmother — and as a third line of soft grey it read
-                // as filler between the name and the line that matters.
-                _AgeChip(child: child),
-                const SizedBox(height: 7),
-                // One line, and it is the only line. Either the fact nobody
-                // can answer from memory at four in the morning, or — before
-                // there is one — the greeting for the hour.
-                Text(
-                  warmSubtitle(l, child, moment, care.minutesSinceFeeding(moment)),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: Warm.onCardSoft(theme.brightness),
-                    height: 1.35,
-                  ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Divider(color: Warm.hairline(theme.brightness), height: 1),
+          const SizedBox(height: 12),
+          // The two figures. Before this they were a sentence in 13pt grey
+          // under the name — the answer to the only question anyone asks at
+          // four in the morning, set at the size of a footnote.
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: _HeaderFigure(
+                  label: l.nowLastFeeding,
+                  value: sinceFeeding == null
+                      ? greetingFor(l, moment)
+                      : localizedDuration(l, sinceFeeding),
+                  // The greeting is a sentence, the duration is a number.
+                  // Only one of the two is worth 24 points.
+                  large: sinceFeeding != null,
+                ),
+              ),
+              if (care.feedings > 0) ...[
+                const SizedBox(width: 12),
+                _HeaderFigure(
+                  label: l.digestFeedings,
+                  value: '${care.feedings}',
+                  large: true,
+                  alignEnd: true,
                 ),
               ],
-            ),
+            ],
           ),
         ],
       ),
@@ -96,38 +131,54 @@ class WarmHeader extends ConsumerWidget {
   }
 }
 
-/// How old, on a soft chip.
+/// A caps label with a figure under it.
 ///
-/// The colour is the peach the feeding card uses, at a weight that reads as a
-/// label rather than as a button — nothing here is tappable, and a chip that
-/// looks pressable in a header is a small lie told forty times a day.
-class _AgeChip extends StatelessWidget {
-  const _AgeChip({required this.child});
+/// The label is the small thing and the number is the big one, which is the
+/// reverse of how the header read before. What a parent is looking for is the
+/// number; the label only says which number it is.
+class _HeaderFigure extends StatelessWidget {
+  const _HeaderFigure({
+    required this.label,
+    required this.value,
+    this.large = true,
+    this.alignEnd = false,
+  });
 
-  final Child child;
+  final String label;
+  final String value;
+  final bool large;
+  final bool alignEnd;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final l = AppLocalizations.of(context);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 5),
-      decoration: BoxDecoration(
-        color: SoftTone.peach.fill(theme.brightness),
-        borderRadius: BorderRadius.circular(Warm.chipRadius),
-      ),
-      child: Text(
-        localizedAge(l, child),
-        style: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
-          letterSpacing: -0.1,
-          color: SoftTone.peach.ink(theme.brightness),
+    return Column(
+      crossAxisAlignment:
+          alignEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label.toUpperCase(),
+          style: AppTheme.microLabel(theme.brightness),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
+        const SizedBox(height: 5),
+        Text(
+          value,
+          style: TextStyle(
+            fontFamily: AppTheme.fontFamily,
+            fontSize: large ? 24 : 16,
+            fontWeight: large ? FontWeight.w800 : FontWeight.w600,
+            letterSpacing: large ? -0.7 : -0.1,
+            height: 1.05,
+            color: Warm.onCard(theme.brightness),
+            fontFeatures: AppTheme.tabular,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
     );
   }
 }
@@ -167,6 +218,26 @@ IconData logIcon(DevelopmentLog log) {
     LogType.note => Icons.notes,
   };
 }
+
+/// The colour an entry is marked with, so a list of six can be read by its
+/// left edge before any of it is read as words.
+///
+/// One mapping for the whole app: the dot on the home screen is the same
+/// colour as the rail beside the same entry in the diary. The values come from
+/// [VizPalette] in its validated order rather than from the pastels — these
+/// carry meaning, and the ordering there is a colour-blindness safety
+/// mechanism. Illness takes the status colour instead: in a feed of mostly
+/// happy entries a sick day should read as a state, not as one more category.
+Color logColor(DevelopmentLog log, Brightness brightness) => switch (log.type) {
+  LogType.illness => StatusColors.alert,
+  LogType.milestone => VizPalette.slot(4, brightness),
+  LogType.measurement => VizPalette.slot(0, brightness),
+  LogType.feeding => VizPalette.slot(2, brightness),
+  LogType.nappy => VizPalette.slot(3, brightness),
+  LogType.sleep => VizPalette.slot(5, brightness),
+  LogType.question => VizPalette.slot(1, brightness),
+  LogType.note => VizPalette.slot(6, brightness),
+};
 
 /// The four things a parent records without thinking.
 ///
@@ -270,15 +341,15 @@ class ActionCard extends StatelessWidget {
   /// Dimmed and padlocked rather than removed.
   final bool readOnly;
 
-  static const height = 104.0;
-  static const radius = 24.0;
-  static const iconSize = 20.0;
+  static const height = 112.0;
+  static const radius = Warm.cardRadius;
+  static const iconSize = 21.0;
 
-  /// The disc the icon sits on. Sized against the 104 the card is fixed at:
+  /// The disc the icon sits on. Sized against the 112 the card is fixed at:
   /// disc, gap, title and caption have to add up to less than that.
-  static const badgeSize = 34.0;
-  static const titleSize = 16.0;
-  static const captionSize = 11.5;
+  static const badgeSize = 40.0;
+  static const titleSize = 17.0;
+  static const captionSize = 12.0;
 
   @override
   Widget build(BuildContext context) {
@@ -290,7 +361,10 @@ class ActionCard extends StatelessWidget {
       onTap: readOnly ? null : onTap,
       child: Container(
         height: height,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        // Twelve, not fourteen: disc, gap, title and caption come to 85 of
+        // the 112 the card is fixed at, and fourteen left them one pixel
+        // short — which a phone reports as an overflow, not as a squeeze.
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
         decoration: BoxDecoration(
           color: tone.fill(theme.brightness),
           borderRadius: BorderRadius.circular(radius),
@@ -312,7 +386,13 @@ class ActionCard extends StatelessWidget {
                     width: badgeSize,
                     height: badgeSize,
                     decoration: BoxDecoration(
-                      color: ink.withValues(alpha: 0.13),
+                      // White rather than a darker wash of the tone. On a
+                      // pastel a tinted disc is the same colour twice and the
+                      // icon floats in it; a white one is a hole in the card
+                      // with the glyph standing in it.
+                      color: theme.brightness == Brightness.dark
+                          ? ink.withValues(alpha: 0.15)
+                          : Colors.white.withValues(alpha: 0.72),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(icon, size: iconSize, color: ink),
@@ -321,13 +401,14 @@ class ActionCard extends StatelessWidget {
                   if (readOnly) const ReadOnlyLock(size: 15),
                 ],
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 10),
               Text(
                 label,
                 style: TextStyle(
                   fontSize: titleSize,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.2,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.4,
+                  height: 1.1,
                   color: ink,
                 ),
                 maxLines: 1,
@@ -338,8 +419,9 @@ class ActionCard extends StatelessWidget {
                 caption,
                 style: TextStyle(
                   fontSize: captionSize,
-                  fontWeight: FontWeight.w500,
-                  color: ink.withValues(alpha: 0.88),
+                  fontWeight: FontWeight.w600,
+                  height: 1.15,
+                  color: ink.withValues(alpha: 0.75),
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -375,63 +457,62 @@ class RecentPreview extends ConsumerWidget {
     // first query took.
     final loading = async.isLoading && !async.hasValue;
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 18, 16, 18),
-      decoration: BoxDecoration(
-        color: Warm.card(theme.brightness),
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: Warm.shadow(theme.brightness),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // On the page, above the card, rather than printed inside it. A
+        // heading drawn on the surface it names cannot mark that surface's
+        // edge, which is the only thing this heading is for.
+        SectionLabel(
+          text: l.homeRecent,
+          action: TextButton(
+            onPressed: () => context.go('/diary'),
+            child: Text(l.commonAll),
+          ),
+        ),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          decoration: BoxDecoration(
+            color: Warm.card(theme.brightness),
+            borderRadius: BorderRadius.circular(Warm.cardRadius),
+            boxShadow: Warm.shadow(theme.brightness),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text(
-                  l.homeRecent,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    color: Warm.onCard(theme.brightness),
+              if (loading)
+                for (var i = 0; i < limit; i++)
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(16, 12, 16, 12),
+                    child: _RowSkeleton(),
+                  )
+              else if (recent.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                  child: Text(
+                    l.homeNothingYet,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: Warm.onCardSoft(theme.brightness),
+                    ),
                   ),
-                ),
-              ),
-              TextButton(
-                onPressed: () => context.go('/diary'),
-                child: Text(l.commonAll),
-              ),
+                )
+              else
+                for (var i = 0; i < recent.length; i++)
+                  // Keyed by the entry's own id, so this runs once when
+                  // something is written down and never again on the rebuilds
+                  // that follow.
+                  Arrival(
+                    key: ValueKey(recent[i].id),
+                    child: _TimelineRow(
+                      entry: recent[i],
+                      first: i == 0,
+                    ),
+                  ),
             ],
           ),
-          const SizedBox(height: 6),
-          if (loading)
-            for (var i = 0; i < limit; i++)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 8),
-                child: _RowSkeleton(),
-              )
-          else if (recent.isEmpty)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Text(
-                l.homeNothingYet,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: Warm.onCardSoft(theme.brightness),
-                ),
-              ),
-            )
-          else
-            for (var i = 0; i < recent.length; i++)
-              // Keyed by the entry's own id, so this runs once when something
-              // is written down and never again on the rebuilds that follow.
-              Arrival(
-                key: ValueKey(recent[i].id),
-                child: _TimelineRow(
-                  entry: recent[i],
-                  last: i == recent.length - 1,
-                ),
-              ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -446,17 +527,13 @@ class _RowSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      children: [
-        const Skeleton(
-          width: _TimelineRow.badgeSize,
-          height: _TimelineRow.badgeSize,
-          radius: _TimelineRow.badgeSize / 2,
-        ),
-        const SizedBox(width: 12),
+      children: const [
+        Skeleton(width: 38, height: 13, radius: 6),
+        SizedBox(width: 18),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
-          children: const [
+          children: [
             Skeleton(width: 130, height: 13),
             SizedBox(height: 6),
             Skeleton(width: 80, height: 11),
@@ -475,14 +552,17 @@ class _RowSkeleton extends StatelessWidget {
 /// question this list answers is "did I already write *that* one down", and
 /// the answer is easier to find when each entry has an edge of its own.
 class _TimelineRow extends StatelessWidget {
-  const _TimelineRow({required this.entry, required this.last});
+  const _TimelineRow({required this.entry, required this.first});
 
   final DevelopmentLog entry;
-  final bool last;
 
-  /// Big enough for the icon to be recognised without being read, small
-  /// enough that three of them stacked stay a list and not a grid.
-  static const badgeSize = 34.0;
+  /// The hairline goes above every row except the first. Drawn per row rather
+  /// than between them so a list of three and a list of one look the same.
+  final bool first;
+
+  /// The time column. Fixed, because a column of times that starts in a
+  /// different place on every row is not a column.
+  static const timeWidth = 50.0;
 
   @override
   Widget build(BuildContext context) {
@@ -491,40 +571,52 @@ class _TimelineRow extends StatelessWidget {
     final ink = Warm.onCard(theme.brightness);
     final soft = Warm.onCardSoft(theme.brightness);
     final detail = routineSummary(l, entry);
+    final colour = logColor(entry, theme.brightness);
 
-    return Padding(
-      padding: EdgeInsets.only(top: 6, bottom: last ? 2 : 6),
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      decoration: BoxDecoration(
+        border: first
+            ? null
+            : Border(top: BorderSide(color: Warm.hairline(theme.brightness))),
+      ),
       child: Row(
         children: [
-          Container(
-            width: badgeSize,
-            height: badgeSize,
-            decoration: BoxDecoration(
-              color: Warm.accent.withValues(alpha: 0.14),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: Warm.accent.withValues(alpha: 0.35),
-                width: 1.5,
+          // The time, left, in a column of its own. It used to sit inline in
+          // the accent before the title, which made three entries read as
+          // three sentences rather than as a list of three times.
+          SizedBox(
+            width: timeWidth,
+            child: Text(
+              timeOfDay.format(entry.date),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: soft,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.3,
+                fontFeatures: AppTheme.tabular,
               ),
             ),
-            child: Icon(logIcon(entry), size: 17, color: Warm.accent),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 6),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    Text(
-                      timeOfDay.format(entry.date),
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: Warm.accent,
-                        fontWeight: FontWeight.w800,
-                        fontFeatures: const [FontFeature.tabularFigures()],
+                    // A dot in the type's own colour, where the orange ring
+                    // used to be. Every entry had the same ring, so the ring
+                    // said only "this is an entry" — which the row already
+                    // said by existing.
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: colour,
+                        shape: BoxShape.circle,
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 9),
                     Expanded(
                       child: Text(
                         localizedLogTitle(l, entry),
@@ -533,7 +625,7 @@ class _TimelineRow extends StatelessWidget {
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: ink,
                           fontWeight: FontWeight.w700,
-                          letterSpacing: -0.2,
+                          letterSpacing: -0.25,
                         ),
                       ),
                     ),
@@ -541,7 +633,7 @@ class _TimelineRow extends StatelessWidget {
                 ),
                 if (detail.isNotEmpty)
                   Padding(
-                    padding: const EdgeInsets.only(top: 2),
+                    padding: const EdgeInsets.only(top: 2, left: 17),
                     child: Text(
                       detail,
                       maxLines: 1,
@@ -559,7 +651,7 @@ class _TimelineRow extends StatelessWidget {
               padding: const EdgeInsets.only(left: 10),
               child: PhotoThumb(
                 photoId: entry.photos.first,
-                size: 42,
+                size: 44,
                 album: entry.photos,
               ),
             ),
@@ -569,11 +661,13 @@ class _TimelineRow extends StatelessWidget {
   }
 }
 
-/// A shortcut to the night sheet, which used to be a card of its own.
+/// The two things that are done from this screen but are not one of the four.
 ///
-/// It sits under the sleep action rather than beside it: a night is entered
-/// once a day, and a sixth primary card for it was costing the other five
-/// their width.
+/// A night is entered once a day and a reminder is set when a child is ill;
+/// neither earns a card in the square, and both were unreachable from here.
+/// The reminder in particular had no way in at all — the planner could show
+/// the vaccination calendar and nothing else, so «напомни дать лекарство
+/// через четыре часа» was a thing the app could not be told.
 class NightSleepLink extends ConsumerWidget {
   const NightSleepLink({required this.childId, super.key});
 
@@ -584,12 +678,83 @@ class NightSleepLink extends ConsumerWidget {
     if (ref.watch(isReadOnlyProvider)) return const SizedBox.shrink();
     final l = AppLocalizations.of(context);
 
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: TextButton.icon(
-        onPressed: () => showNightSleepSheet(context, childId: childId),
-        icon: const Icon(Icons.nightlight_outlined, size: 18),
-        label: Text(l.quickNightSleep),
+    // Side by side rather than stacked. Two full-width rows read better and
+    // cost 64 px, which is exactly what pushed the recent events under the
+    // fold on a 390-wide phone — and the events are the reason the screen is
+    // opened when nothing is being logged.
+    return Padding(
+      padding: const EdgeInsets.only(top: Warm.cardGap),
+      child: Row(
+        children: [
+          Expanded(
+            child: _LinkRow(
+              icon: Icons.nightlight_outlined,
+              label: l.quickNightSleep,
+              onTap: () => showNightSleepSheet(context, childId: childId),
+            ),
+          ),
+          const SizedBox(width: Warm.cardGap),
+          Expanded(
+            child: _LinkRow(
+              icon: Icons.add_alert_outlined,
+              label: l.reminderAdd,
+              onTap: () => showReminderSheet(context, childId: childId),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A quiet tile: an icon and a name.
+///
+/// A surface of its own rather than a text button hanging under the grid.
+/// Both of these open a sheet that writes something down, and a link in
+/// accent-coloured type does not look like a thing that does that.
+class _LinkRow extends StatelessWidget {
+  const _LinkRow({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Pressable(
+      borderRadius: Warm.cardRadius,
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(14, 14, 12, 14),
+        decoration: BoxDecoration(
+          color: Warm.card(theme.brightness),
+          borderRadius: BorderRadius.circular(Warm.cardRadius),
+          boxShadow: Warm.shadow(theme.brightness),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 20, color: Warm.onCardSoft(theme.brightness)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: Warm.onCard(theme.brightness),
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.2,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
