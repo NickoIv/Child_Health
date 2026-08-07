@@ -25,7 +25,7 @@ $aiProxy = 'https://child-health-ai.nickru777.workers.dev'
 # Firebase console -> Project settings -> Cloud Messaging -> Web Push
 # certificates -> "Key pair". Empty means push stays switched off and the
 # settings screen says so, rather than failing silently.
-$vapidKey = ''
+$vapidKey = 'BNr32NxhIUlx_8iABBx5NmOnn1um1TJtwEUA26ZJd5KOXpySuzTlMeNZrGYv9zqKiaf99SLqlfuT5HVVKZ_44Lg'
 
 Set-Location $PSScriptRoot
 

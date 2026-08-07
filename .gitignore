@@ -60,3 +60,8 @@ node_modules/
 /.firebase/
 firebase-debug.log
 firestore-debug.log
+
+# Firebase service account keys. Real secrets: they bypass the Firestore
+# rules entirely. They live as Cloudflare Worker secrets, never in the repo.
+worker/*service-account*.json
+worker/*firebase-adminsdk*.json
