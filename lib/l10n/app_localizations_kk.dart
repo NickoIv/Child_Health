@@ -42,6 +42,9 @@ class AppLocalizationsKk extends AppLocalizations {
   String get navMore => 'Тағы';
 
   @override
+  String get navAsk => 'ЖИ';
+
+  @override
   String get authSignInSubtitle => 'Жалғастыру үшін кіріңіз';
 
   @override
@@ -1605,6 +1608,13 @@ class AppLocalizationsKk extends AppLocalizations {
 
   @override
   String get chatSend => 'Жіберу';
+
+  @override
+  String get chatVoice => 'Дауыспен айту';
+
+  @override
+  String get chatVoiceHint =>
+      'Дауыспен — пернетақтадағы микрофон, бос орын жанында';
 
   @override
   String get chatDisclaimer =>

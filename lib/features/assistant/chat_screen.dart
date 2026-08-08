@@ -9,7 +9,10 @@ import '../../ai/conversation.dart';
 import '../../ai/suggested_questions.dart';
 import '../../ai/topics.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/motion.dart';
+import '../../core/voice/dictation.dart';
 import '../../knowledge/article.dart';
+import '../../models/child.dart';
 import '../../models/development_log.dart';
 import '../../providers.dart';
 import '../../core/care/conversation_memory.dart';
@@ -46,6 +49,7 @@ class ChatScreen extends ConsumerStatefulWidget {
 
 class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _input = TextEditingController();
+  final _focus = FocusNode();
   final _turns = <_Turn>[];
   bool _busy = false;
 
@@ -53,7 +57,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   void initState() {
     super.initState();
     final carried = widget.initialQuestion?.trim() ?? '';
-    if (carried.isEmpty) return;
+    if (carried.isEmpty) {
+      // Voice first: on the web the recogniser worth using is the one on the
+      // keyboard, and raising the keyboard is what puts its microphone under
+      // a thumb. Nothing is recorded and nothing is sent — the field is
+      // simply ready for whichever way she prefers to fill it.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _focus.requestFocus();
+      });
+      return;
+    }
     // After the first frame: `_send` reads providers and shows a snackbar on
     // failure, neither of which is available while the tree is still building.
     WidgetsBinding.instance.addPostFrameCallback((_) => _send(carried));
@@ -62,6 +75,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   @override
   void dispose() {
     _input.dispose();
+    _focus.dispose();
     super.dispose();
   }
 
@@ -72,17 +86,36 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final child = ref.watch(selectedChildProvider);
     final service = ref.watch(assistantServiceProvider);
 
+    // Its own Scaffold, because it is its own window now: inside the shell it
+    // borrowed one, and without it a TextField has no Material to sit on and
+    // the input row overflows by the width of an unbounded constraint.
+    return Scaffold(
+      body: SafeArea(child: _body(context, l, theme, child, service)),
+    );
+  }
+
+  Widget _body(
+    BuildContext context,
+    AppLocalizations l,
+    ThemeData theme,
+    Child? child,
+    AssistantService service,
+  ) {
     return PageBody(
       children: [
         Row(
           children: [
-            IconButton(
-              onPressed: () => context.go('/assistant'),
-              icon: const Icon(Icons.arrow_back),
-              tooltip: l.commonBack,
-            ),
             Expanded(
               child: Text(l.chatTitle, style: theme.textTheme.titleLarge),
+            ),
+            // A window closes; it does not navigate. Popping puts the parent
+            // back on the screen she asked from, which is the whole reason
+            // the conversation lives above the shell rather than in it.
+            IconButton(
+              onPressed: () =>
+                  context.canPop() ? context.pop() : context.go('/'),
+              icon: const Icon(Icons.close),
+              tooltip: l.commonClose,
             ),
           ],
         ),
@@ -117,29 +150,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         ],
 
         const SizedBox(height: 8),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _input,
-                maxLines: null,
-                textInputAction: TextInputAction.send,
-                onSubmitted: (_) => _send(_input.text),
-                decoration: InputDecoration(
-                  hintText: child == null
-                      ? l.chatEmpty
-                      : l.chatHint(child.name),
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            IconButton.filled(
-              onPressed: _busy ? null : () => _send(_input.text),
-              icon: const Icon(Icons.arrow_upward),
-              tooltip: l.chatSend,
-            ),
-          ],
+        _Ask(
+          controller: _input,
+          focus: _focus,
+          hint: child == null ? l.chatEmpty : l.chatHint(child.name),
+          busy: _busy,
+          onSend: () => _send(_input.text),
         ),
         const SizedBox(height: 12),
         Text(
@@ -210,6 +226,182 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       _turns.add(_Turn.answer(reply));
       _busy = false;
     });
+  }
+}
+
+/// Asking, with the voice first.
+///
+/// «Ввод должен производиться текстом, но сначала голосовой ввод в
+/// приоритете» — so the microphone is a full-sized accent disc at the left of
+/// the row and the field is what it hands its words to. Neither replaces the
+/// other: a question asked at three in the morning is spoken, and the same
+/// question in a waiting room is typed.
+///
+/// What the microphone does depends on where the app is running.
+/// [keyboardDictationProvider] is true in a browser, and there the recogniser
+/// worth using is the keyboard's own — it is the one Apple and Google tuned
+/// for these languages, it survives an iPhone home-screen app where the Web
+/// Speech API is absent entirely, and it is one tap from a focused field. So
+/// on the web the button raises the keyboard and says where its microphone
+/// is. On a phone build it holds the recogniser open directly.
+class _Ask extends ConsumerStatefulWidget {
+  const _Ask({
+    required this.controller,
+    required this.focus,
+    required this.hint,
+    required this.busy,
+    required this.onSend,
+  });
+
+  final TextEditingController controller;
+  final FocusNode focus;
+  final String hint;
+  final bool busy;
+  final VoidCallback onSend;
+
+  /// Big enough to hit without looking, which is the point of speaking.
+  static const micSize = 52.0;
+
+  @override
+  ConsumerState<_Ask> createState() => _AskState();
+}
+
+class _AskState extends ConsumerState<_Ask> {
+  bool _listening = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final keyboard = ref.watch(keyboardDictationProvider);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            _MicButton(
+              live: _listening,
+              onTap: () => keyboard ? _useKeyboard() : _hold(),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: TextField(
+                controller: widget.controller,
+                focusNode: widget.focus,
+                maxLines: null,
+                textInputAction: TextInputAction.send,
+                onSubmitted: (_) => widget.onSend(),
+                decoration: InputDecoration(hintText: widget.hint),
+              ),
+            ),
+            const SizedBox(width: 10),
+            IconButton.filled(
+              onPressed: widget.busy ? null : widget.onSend,
+              icon: const Icon(Icons.arrow_upward),
+              tooltip: l.chatSend,
+            ),
+          ],
+        ),
+        if (keyboard) ...[
+          const SizedBox(height: 6),
+          Padding(
+            padding: const EdgeInsets.only(left: 4),
+            child: Text(
+              l.chatVoiceHint,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: Warm.onCardSoft(theme.brightness),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// The browser path: put the cursor in the field and let the keyboard's own
+  /// microphone do the listening.
+  void _useKeyboard() => widget.focus.requestFocus();
+
+  /// The phone path: open the recogniser and put what it hears in the field.
+  Future<void> _hold() async {
+    final dictation = ref.read(dictationProvider);
+    if (_listening) {
+      await dictation.stop();
+      if (mounted) setState(() => _listening = false);
+      return;
+    }
+
+    if (!dictation.ready && !await dictation.prepare()) return;
+    if (!mounted) return;
+    setState(() => _listening = true);
+
+    await dictation.start(
+      localeId: dictationLocale(
+        Localizations.localeOf(context).languageCode,
+      ),
+      onResult: (text) {
+        if (!mounted) return;
+        setState(() {
+          // Appended, never replacing: she may have typed half of it already.
+          final existing = widget.controller.text.trim();
+          widget.controller.text = existing.isEmpty
+              ? text
+              : '$existing $text';
+          widget.controller.selection = TextSelection.collapsed(
+            offset: widget.controller.text.length,
+          );
+          _listening = false;
+        });
+      },
+      onSilence: () {
+        if (mounted) setState(() => _listening = false);
+      },
+      onFailure: (_) {
+        if (mounted) setState(() => _listening = false);
+      },
+    );
+  }
+}
+
+/// The microphone, as the first thing on the row.
+class _MicButton extends StatelessWidget {
+  const _MicButton({required this.live, required this.onTap});
+
+  final bool live;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    return Tooltip(
+      message: l.chatVoice,
+      child: Pressable(
+        onTap: onTap,
+        borderRadius: _Ask.micSize / 2,
+        child: Container(
+          width: _Ask.micSize,
+          height: _Ask.micSize,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: Warm.accentGradient,
+            boxShadow: [
+              BoxShadow(
+                color: Warm.accent.withValues(alpha: live ? 0.55 : 0.30),
+                blurRadius: live ? 18 : 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Icon(
+            live ? Icons.stop_rounded : Icons.mic,
+            color: Colors.white,
+            size: 24,
+          ),
+        ),
+      ),
+    );
   }
 }
 

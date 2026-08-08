@@ -42,6 +42,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navMore => 'More';
 
   @override
+  String get navAsk => 'AI';
+
+  @override
   String get authSignInSubtitle => 'Sign in to continue';
 
   @override
@@ -1614,6 +1617,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chatSend => 'Send';
+
+  @override
+  String get chatVoice => 'Say it out loud';
+
+  @override
+  String get chatVoiceHint =>
+      'To speak, use the microphone on the keyboard, next to the space bar';
 
   @override
   String get chatDisclaimer =>

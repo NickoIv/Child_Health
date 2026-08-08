@@ -166,6 +166,12 @@ abstract class AppLocalizations {
   /// **'Ещё'**
   String get navMore;
 
+  /// No description provided for @navAsk.
+  ///
+  /// In ru, this message translates to:
+  /// **'ИИ'**
+  String get navAsk;
+
   /// No description provided for @authSignInSubtitle.
   ///
   /// In ru, this message translates to:
@@ -2943,6 +2949,18 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Отправить'**
   String get chatSend;
+
+  /// No description provided for @chatVoice.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сказать голосом'**
+  String get chatVoice;
+
+  /// No description provided for @chatVoiceHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Голосом — микрофон на клавиатуре, рядом с пробелом'**
+  String get chatVoiceHint;
 
   /// No description provided for @chatDisclaimer.
   ///

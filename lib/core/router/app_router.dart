@@ -43,6 +43,15 @@ class AppDestination {
   final Widget Function() builder;
 }
 
+/// The assistant, as a window of its own.
+///
+/// Outside the shell on purpose. «ИИ должен открываться в новом окне, так
+/// диалог удобнее» — and a conversation is the one thing in this app that is
+/// not a tab: it opens over whatever you were doing, keeps the thread, and
+/// closes back onto it. Inside the shell it also had a tab bar under it,
+/// which is a row of ways to lose the conversation.
+const chatPath = '/chat';
+
 final appDestinations = <AppDestination>[
   AppDestination(
     path: '/',
@@ -115,14 +124,15 @@ const settingsPath = '/settings';
 final _assistantRoutes = <RouteBase>[
   GoRoute(
     path: 'chat',
-    // `?q=` carries a question straight in and sends it. The search field on
-    // the tab above is the most prominent input on the screen, and it only
-    // ever looked through the forty-seven articles — «какая погода сегодня?»
-    // typed into it hit «Ничего не нашлось» with a full assistant one tap
-    // away. Now that dead end has a way out, and it keeps the words.
-    pageBuilder: (context, state) => NoTransitionPage(
-      child: ChatScreen(initialQuestion: state.uri.queryParameters['q']),
-    ),
+    // The chat moved out of the shell and into a window of its own — see
+    // [chatPath]. This is the old address, kept working: it is in his browser
+    // history, and it is what the search field used to link to.
+    redirect: (context, state) {
+      final q = state.uri.queryParameters['q'];
+      return q == null
+          ? chatPath
+          : '$chatPath?q=${Uri.encodeQueryComponent(q)}';
+    },
   ),
   GoRoute(
     path: 'triage',
@@ -160,6 +170,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: loginPath,
         pageBuilder: (context, state) =>
             const NoTransitionPage(child: LoginScreen()),
+      ),
+      // Above the shell, not inside it: no tab bar under a conversation.
+      GoRoute(
+        path: chatPath,
+        pageBuilder: (context, state) => MaterialPage(
+          fullscreenDialog: true,
+          child: ChatScreen(initialQuestion: state.uri.queryParameters['q']),
+        ),
       ),
       ShellRoute(
         builder: (context, state, child) =>

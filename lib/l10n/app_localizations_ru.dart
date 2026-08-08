@@ -42,6 +42,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get navMore => 'Ещё';
 
   @override
+  String get navAsk => 'ИИ';
+
+  @override
   String get authSignInSubtitle => 'Войдите, чтобы продолжить';
 
   @override
@@ -1625,6 +1628,13 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get chatSend => 'Отправить';
+
+  @override
+  String get chatVoice => 'Сказать голосом';
+
+  @override
+  String get chatVoiceHint =>
+      'Голосом — микрофон на клавиатуре, рядом с пробелом';
 
   @override
   String get chatDisclaimer =>

@@ -10,7 +10,7 @@ import '../../core/theme/motion.dart';
 import '../../core/theme/theme_mode.dart';
 import '../../models/child.dart';
 import '../../providers.dart';
-import '../assistant/assistant_bubble.dart';
+import '../assistant/assistant_nav_icon.dart';
 import '../dashboard/quick_dictation.dart';
 import '../dashboard/voice_action_button.dart';
 import '../family/invite_banner.dart';
@@ -77,20 +77,12 @@ class AppShell extends ConsumerWidget {
       body: isWide
           ? Row(
               children: [
-                _Rail(index: _index),
+                _Rail(index: _index, location: location),
                 const VerticalDivider(width: 1),
-                Expanded(
-                  child: _WithAssistant(
-                    location: location,
-                    child: TabSwitch(index: _index, child: child),
-                  ),
-                ),
+                Expanded(child: TabSwitch(index: _index, child: child)),
               ],
             )
-          : _WithAssistant(
-              location: location,
-              child: TabSwitch(index: _index, child: child),
-            ),
+          : TabSwitch(index: _index, child: child),
       // The microphone rides above the tab bar on the home screen: pinned, so
       // it is there the moment the app opens rather than after a scroll, and
       // outside the list, so it covers nothing.
@@ -101,51 +93,10 @@ class AppShell extends ConsumerWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (_index == 0) const _PinnedVoice(),
-                  _BottomBar(index: _index),
+                  _BottomBar(index: _index, location: location),
                 ],
               ),
             ),
-    );
-  }
-}
-
-/// Every screen, with the assistant floating over it.
-///
-/// The bubble lives here rather than on each screen for the reason it exists
-/// at all: a question occurs wherever a parent happens to be, and a control
-/// that is only on the tab it belongs to is a control she has to go and find.
-///
-/// Bottom left. Six screens hang an add button off the bottom right and the
-/// home screen's microphone spans the width above the tab bar, so the left
-/// corner is the one spot free everywhere. The lift is read from the media
-/// query rather than hard-coded: with `extendBody` the shell hands the tab
-/// bar's height down as bottom padding, and that height is not the same on
-/// the home screen, where the panel carries the microphone too.
-class _WithAssistant extends StatelessWidget {
-  const _WithAssistant({required this.location, required this.child});
-
-  final String location;
-  final Widget child;
-
-  /// The gap between the bubble and the glass under it.
-  static const _margin = 16.0;
-
-  @override
-  Widget build(BuildContext context) {
-    // Not on the chat itself: a button that opens the screen you are looking
-    // at is furniture.
-    final onChat = location.startsWith('/assistant/chat');
-
-    return Stack(
-      children: [
-        Positioned.fill(child: child),
-        if (!onChat)
-          Positioned(
-            left: _margin,
-            bottom: MediaQuery.paddingOf(context).bottom + _margin,
-            child: AssistantBubble(trigger: location),
-          ),
-      ],
     );
   }
 }
@@ -182,9 +133,10 @@ class _PinnedVoice extends ConsumerWidget {
 }
 
 class _Rail extends StatelessWidget {
-  const _Rail({required this.index});
+  const _Rail({required this.index, required this.location});
 
   final int index;
+  final String location;
 
   @override
   Widget build(BuildContext context) {
@@ -198,6 +150,19 @@ class _Rail extends StatelessWidget {
       groupAlignment: -0.9,
       selectedLabelTextStyle: Theme.of(context).textTheme.labelSmall,
       unselectedLabelTextStyle: Theme.of(context).textTheme.labelSmall,
+      // The assistant is the last entry here too, and it opens rather than
+      // navigates — see [_BottomBar]. Not wrapped in an [Expanded] to push it
+      // to the floor: `trailing` is not laid out in a flex, and doing so
+      // throws a parent-data assertion and then overflows by a hundred
+      // thousand pixels.
+      trailing: Padding(
+        padding: const EdgeInsets.only(top: 12),
+        child: IconButton(
+          tooltip: AppLocalizations.of(context).navAsk,
+          onPressed: () => context.push(chatPath),
+          icon: AssistantNavIcon(trigger: location),
+        ),
+      ),
       onDestinationSelected: (i) => context.go(appDestinations[i].path),
       destinations: [
         for (var i = 0; i < appDestinations.length; i++)
@@ -217,10 +182,18 @@ class _Rail extends StatelessWidget {
   }
 }
 
+/// The tabs, and one thing that is not a tab.
+///
+/// The assistant sits last, which on a phone held in the right hand is where
+/// the thumb already is — «кнопку нужно под правую руку расположить». It is
+/// drawn as an accent disc rather than an outline glyph because it does not
+/// take you to a place: it opens the conversation over whatever is on screen,
+/// and closing it puts you back.
 class _BottomBar extends StatelessWidget {
-  const _BottomBar({required this.index});
+  const _BottomBar({required this.index, required this.location});
 
   final int index;
+  final String location;
 
   @override
   Widget build(BuildContext context) {
@@ -238,8 +211,12 @@ class _BottomBar extends StatelessWidget {
       onDestinationSelected: (i) {
         if (i < primary) {
           context.go(appDestinations[i].path);
-        } else {
+        } else if (i == primary) {
           _showMore(context);
+        } else {
+          // Pushed, not gone to: the conversation opens over this screen and
+          // closing it comes back here rather than to the home tab.
+          context.push(chatPath);
         }
       },
       destinations: [
@@ -263,6 +240,10 @@ class _BottomBar extends StatelessWidget {
             selected: selected == primary,
           ),
           label: AppLocalizations.of(context).navMore,
+        ),
+        NavigationDestination(
+          icon: AssistantNavIcon(trigger: location),
+          label: AppLocalizations.of(context).navAsk,
         ),
       ],
     );
