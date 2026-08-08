@@ -88,6 +88,58 @@ void main() {
     expect(find.text(l.assistantViewInsights), findsNothing);
   });
 
+  group('the search field is not a dead end', () {
+    // He typed «какая погода сегодня?» into it — it is the most prominent
+    // input on the tab — and got «Ничего не нашлось», with a full assistant
+    // one tap away that he had no way of knowing about from that screen.
+    const question = 'какая погода сегодня?';
+
+    testWidgets('a query with no article offers the assistant', (tester) async {
+      final l = await openAssistant(tester);
+
+      await tester.enterText(find.byType(TextField).first, question);
+      await tester.pumpAndSettle();
+
+      expect(find.text(l.assistantNothingFound), findsOneWidget);
+      expect(
+        find.widgetWithText(FilledButton, l.assistantAskAi),
+        findsOneWidget,
+      );
+      // And the empty state says what the field actually searches, instead of
+      // suggesting another word for a question no word will find.
+      expect(find.text(l.assistantSearchIsArticles), findsOneWidget);
+    });
+
+    testWidgets('and carries the words across', (tester) async {
+      final l = await openAssistant(tester);
+
+      await tester.enterText(find.byType(TextField).first, question);
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, l.assistantAskAi));
+      await tester.pumpAndSettle();
+
+      // The chat, with the question already asked — not an empty field and a
+      // request to type it again.
+      expect(find.text(l.chatTitle), findsOneWidget);
+      // `skipOffstage: false`: the shell cross-fades between tabs, so the
+      // outgoing one is still in the tree for a frame and the finder's default
+      // would skip the incoming bubble along with it.
+      expect(find.text(question, skipOffstage: false), findsWidgets);
+    });
+
+    testWidgets('a query that does find articles offers it too', (
+      tester,
+    ) async {
+      final l = await openAssistant(tester);
+
+      await tester.enterText(find.byType(TextField).first, 'температура');
+      await tester.pumpAndSettle();
+
+      expect(find.text(l.assistantFound), findsOneWidget);
+      expect(find.widgetWithText(TextButton, l.assistantAskAi), findsOneWidget);
+    });
+  });
+
   test('there are exactly two halves', () {
     // A third would be a menu, and a menu is what this replaced.
     expect(AssistantView.values.length, 2);

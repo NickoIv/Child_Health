@@ -2821,8 +2821,20 @@ abstract class AppLocalizations {
   /// No description provided for @assistantSearchHint.
   ///
   /// In ru, this message translates to:
-  /// **'Температура, сыпь, не спит, прикорм…'**
+  /// **'Поиск по статьям: температура, сыпь, прикорм…'**
   String get assistantSearchHint;
+
+  /// No description provided for @assistantSearchIsArticles.
+  ///
+  /// In ru, this message translates to:
+  /// **'Это поиск по статьям приложения. На любой вопрос ответит помощник.'**
+  String get assistantSearchIsArticles;
+
+  /// No description provided for @assistantAskAi.
+  ///
+  /// In ru, this message translates to:
+  /// **'Спросить помощника'**
+  String get assistantAskAi;
 
   /// No description provided for @assistantNothingFound.
   ///

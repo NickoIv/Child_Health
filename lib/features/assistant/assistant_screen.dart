@@ -238,10 +238,19 @@ class _SearchResults extends StatelessWidget {
       return SectionCard(
         title: l.assistantNothingFound,
         icon: Icons.search_off,
-        child: EmptyState(
-          icon: Icons.help_outline,
-          message: l.assistantNoArticle(query),
-          hint: l.assistantTryAnother,
+        child: Column(
+          children: [
+            EmptyState(
+              icon: Icons.help_outline,
+              message: l.assistantNoArticle(query),
+              hint: l.assistantSearchIsArticles,
+            ),
+            const SizedBox(height: Warm.innerGap),
+            // The way out of the dead end, and the whole point of this branch:
+            // «какая погода сегодня?» has no article and never will, and the
+            // thing that can answer it is one tap away.
+            _AskAiButton(query: query, prominent: true),
+          ],
         ),
       );
     }
@@ -255,8 +264,49 @@ class _SearchResults extends StatelessWidget {
       child: Column(
         children: [
           for (final a in results) _ArticleTile(article: a),
+          const Divider(height: 20),
+          // Even with articles found: the base answers what it was written
+          // about, and a parent's actual question is usually narrower.
+          _AskAiButton(query: query, prominent: false),
         ],
       ),
+    );
+  }
+}
+
+/// Hands the words already typed to the assistant.
+///
+/// Carries the query rather than opening an empty chat: retyping a question
+/// the app is already holding is exactly the tax this is here to remove.
+class _AskAiButton extends StatelessWidget {
+  const _AskAiButton({required this.query, required this.prominent});
+
+  final String query;
+  final bool prominent;
+
+  void _open(BuildContext context) => context.go(
+    '/assistant/chat?q=${Uri.encodeQueryComponent(query.trim())}',
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final label = Text(l.assistantAskAi);
+    const icon = Icon(Icons.auto_awesome, size: 18);
+
+    return SizedBox(
+      width: double.infinity,
+      child: prominent
+          ? FilledButton.icon(
+              onPressed: () => _open(context),
+              icon: icon,
+              label: label,
+            )
+          : TextButton.icon(
+              onPressed: () => _open(context),
+              icon: icon,
+              label: label,
+            ),
     );
   }
 }

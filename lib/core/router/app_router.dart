@@ -115,8 +115,14 @@ const settingsPath = '/settings';
 final _assistantRoutes = <RouteBase>[
   GoRoute(
     path: 'chat',
-    pageBuilder: (context, state) =>
-        const NoTransitionPage(child: ChatScreen()),
+    // `?q=` carries a question straight in and sends it. The search field on
+    // the tab above is the most prominent input on the screen, and it only
+    // ever looked through the forty-seven articles — «какая погода сегодня?»
+    // typed into it hit «Ничего не нашлось» with a full assistant one tap
+    // away. Now that dead end has a way out, and it keeps the words.
+    pageBuilder: (context, state) => NoTransitionPage(
+      child: ChatScreen(initialQuestion: state.uri.queryParameters['q']),
+    ),
   ),
   GoRoute(
     path: 'triage',

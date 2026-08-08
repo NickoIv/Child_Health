@@ -28,12 +28,17 @@ class _Turn {
   bool get isQuestion => reply == null;
 }
 
-/// Conversational front end over the knowledge base.
+/// The assistant, in conversation.
 ///
-/// The model never sees a question the triage gate flagged, and never answers
-/// from anything but the retrieved articles — see lib/ai/assistant_service.dart.
+/// It answers anything; the knowledge base is preferred where it has something
+/// and named as the source when it does — see lib/ai/assistant_service.dart.
+/// The one thing it never sees is a question the red-flag gate stopped.
 class ChatScreen extends ConsumerStatefulWidget {
-  const ChatScreen({super.key});
+  const ChatScreen({super.key, this.initialQuestion});
+
+  /// A question carried in from somewhere else — the article search, so far.
+  /// It is sent on arrival: whoever typed it has already pressed enter once.
+  final String? initialQuestion;
 
   @override
   ConsumerState<ChatScreen> createState() => _ChatScreenState();
@@ -43,6 +48,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _input = TextEditingController();
   final _turns = <_Turn>[];
   bool _busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final carried = widget.initialQuestion?.trim() ?? '';
+    if (carried.isEmpty) return;
+    // After the first frame: `_send` reads providers and shows a snackbar on
+    // failure, neither of which is available while the tree is still building.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _send(carried));
+  }
 
   @override
   void dispose() {

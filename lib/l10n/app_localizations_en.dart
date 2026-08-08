@@ -1533,7 +1533,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get medicalAttach => 'Attach';
 
   @override
-  String get assistantSearchHint => 'Temperature, rash, not sleeping, solids…';
+  String get assistantSearchHint =>
+      'Search the articles: temperature, rash, solids…';
+
+  @override
+  String get assistantSearchIsArticles =>
+      'This searches the app’s articles. The assistant answers anything.';
+
+  @override
+  String get assistantAskAi => 'Ask the assistant';
 
   @override
   String get assistantNothingFound => 'Nothing found';

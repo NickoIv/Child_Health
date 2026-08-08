@@ -764,7 +764,9 @@
   "medicalTo": "до",
   "medicalRemoveRow": "Убрать строку",
   "medicalAttach": "Прикрепить",
-  "assistantSearchHint": "Температура, сыпь, не спит, прикорм…",
+  "assistantSearchHint": "Поиск по статьям: температура, сыпь, прикорм…",
+  "assistantSearchIsArticles": "Это поиск по статьям приложения. На любой вопрос ответит помощник.",
+  "assistantAskAi": "Спросить помощника",
   "assistantNothingFound": "Ничего не нашлось",
   "assistantNoArticle": "По запросу «{query}» в базе пока нет статьи",
   "@assistantNoArticle": {

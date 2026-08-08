@@ -1541,7 +1541,15 @@ class AppLocalizationsRu extends AppLocalizations {
   String get medicalAttach => 'Прикрепить';
 
   @override
-  String get assistantSearchHint => 'Температура, сыпь, не спит, прикорм…';
+  String get assistantSearchHint =>
+      'Поиск по статьям: температура, сыпь, прикорм…';
+
+  @override
+  String get assistantSearchIsArticles =>
+      'Это поиск по статьям приложения. На любой вопрос ответит помощник.';
+
+  @override
+  String get assistantAskAi => 'Спросить помощника';
 
   @override
   String get assistantNothingFound => 'Ничего не нашлось';

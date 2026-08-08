@@ -1525,7 +1525,14 @@ class AppLocalizationsKk extends AppLocalizations {
 
   @override
   String get assistantSearchHint =>
-      'Дене қызуы, бөртпе, ұйықтамайды, қосымша тамақ…';
+      'Мақалалардан іздеу: дене қызуы, бөртпе, тамақ…';
+
+  @override
+  String get assistantSearchIsArticles =>
+      'Бұл — қосымша мақалаларынан іздеу. Кез келген сұраққа көмекші жауап береді.';
+
+  @override
+  String get assistantAskAi => 'Көмекшіден сұрау';
 
   @override
   String get assistantNothingFound => 'Ештеңе табылмады';
