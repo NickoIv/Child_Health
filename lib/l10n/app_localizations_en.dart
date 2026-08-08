@@ -1619,11 +1619,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chatSend => 'Send';
 
   @override
-  String get chatVoice => 'Say it out loud';
+  String get chatAsk => 'Ask anything';
 
   @override
-  String get chatVoiceHint =>
-      'To speak, use the microphone on the keyboard, next to the space bar';
+  String chatOpening(String name) {
+    return 'Ask anything — about $name or about your own day';
+  }
 
   @override
   String get chatDisclaimer =>

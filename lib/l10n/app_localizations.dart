@@ -2950,17 +2950,17 @@ abstract class AppLocalizations {
   /// **'Отправить'**
   String get chatSend;
 
-  /// No description provided for @chatVoice.
+  /// No description provided for @chatAsk.
   ///
   /// In ru, this message translates to:
-  /// **'Сказать голосом'**
-  String get chatVoice;
+  /// **'Спросите о чём угодно'**
+  String get chatAsk;
 
-  /// No description provided for @chatVoiceHint.
+  /// No description provided for @chatOpening.
   ///
   /// In ru, this message translates to:
-  /// **'Голосом — микрофон на клавиатуре, рядом с пробелом'**
-  String get chatVoiceHint;
+  /// **'Спросите о чём угодно — про {name} или про своё'**
+  String chatOpening(String name);
 
   /// No description provided for @chatDisclaimer.
   ///

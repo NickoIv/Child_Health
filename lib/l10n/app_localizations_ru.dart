@@ -1630,11 +1630,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get chatSend => 'Отправить';
 
   @override
-  String get chatVoice => 'Сказать голосом';
+  String get chatAsk => 'Спросите о чём угодно';
 
   @override
-  String get chatVoiceHint =>
-      'Голосом — микрофон на клавиатуре, рядом с пробелом';
+  String chatOpening(String name) {
+    return 'Спросите о чём угодно — про $name или про своё';
+  }
 
   @override
   String get chatDisclaimer =>

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -6,20 +7,13 @@ import '../../l10n/app_localizations.dart';
 import '../../ai/actions.dart';
 import '../../ai/assistant_service.dart';
 import '../../ai/conversation.dart';
-import '../../ai/suggested_questions.dart';
 import '../../ai/topics.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/motion.dart';
-import '../../core/voice/dictation.dart';
 import '../../knowledge/article.dart';
-import '../../models/child.dart';
-import '../../models/development_log.dart';
 import '../../providers.dart';
 import '../../core/care/conversation_memory.dart';
-import '../shared/widgets.dart';
 import 'action_card.dart';
-import 'context_block.dart';
-import 'continue_block.dart';
 
 class _Turn {
   const _Turn.question(this.text) : reply = null;
@@ -50,6 +44,7 @@ class ChatScreen extends ConsumerStatefulWidget {
 class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _input = TextEditingController();
   final _focus = FocusNode();
+  final _scroll = ScrollController();
   final _turns = <_Turn>[];
   bool _busy = false;
 
@@ -58,13 +53,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     super.initState();
     final carried = widget.initialQuestion?.trim() ?? '';
     if (carried.isEmpty) {
-      // Voice first: on the web the recogniser worth using is the one on the
-      // keyboard, and raising the keyboard is what puts its microphone under
-      // a thumb. Nothing is recorded and nothing is sent — the field is
-      // simply ready for whichever way she prefers to fill it.
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _focus.requestFocus();
-      });
+      _raiseKeyboard();
       return;
     }
     // After the first frame: `_send` reads providers and shows a snackbar on
@@ -72,109 +61,105 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _send(carried));
   }
 
+  /// The keyboard, up with the window.
+  ///
+  /// «Открывается окно, дальше поле ввода снова нажимаем и появляется
+  /// клавиатура — это очень долго.» It was two taps to start typing and the
+  /// second one bought nothing. `requestFocus` alone is not enough in a
+  /// browser: focus and the on-screen keyboard are separate things there, and
+  /// the keyboard only comes up when the engine is told to show it.
+  void _raiseKeyboard() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _focus.requestFocus();
+      SystemChannels.textInput.invokeMethod<void>('TextInput.show');
+    });
+  }
+
+  /// The newest message, in view. A thread that answers below the fold is a
+  /// thread that looks like it did not answer.
+  void _scrollToEnd() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scroll.hasClients) return;
+      _scroll.animateTo(
+        _scroll.position.maxScrollExtent,
+        duration: Motion.normal,
+        curve: Motion.curve,
+      );
+    });
+  }
+
   @override
   void dispose() {
     _input.dispose();
     _focus.dispose();
+    _scroll.dispose();
     super.dispose();
   }
 
+  /// A conversation, and nothing else on the screen.
+  ///
+  /// «В окне ИИ не должно быть никакой лишней информации.» What was here: five
+  /// facts about the child, the previous question, a panel of suggestions, a
+  /// setup card and a paragraph of disclaimer — above and below a thread that
+  /// had to be scrolled past all of it. None of it was the conversation.
+  ///
+  /// The child's context still reaches the model; it is in the prompt, where
+  /// it belongs, rather than printed at the parent who already knows it.
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final child = ref.watch(selectedChildProvider);
-    final service = ref.watch(assistantServiceProvider);
 
     // Its own Scaffold, because it is its own window now: inside the shell it
-    // borrowed one, and without it a TextField has no Material to sit on and
-    // the input row overflows by the width of an unbounded constraint.
+    // borrowed one, and without it a TextField has no Material to sit on.
     return Scaffold(
-      body: SafeArea(child: _body(context, l, theme, child, service)),
-    );
-  }
-
-  Widget _body(
-    BuildContext context,
-    AppLocalizations l,
-    ThemeData theme,
-    Child? child,
-    AssistantService service,
-  ) {
-    return PageBody(
-      children: [
-        Row(
+      appBar: AppBar(
+        title: Text(l.chatTitle),
+        titleTextStyle: theme.textTheme.titleMedium,
+        // A window closes; it does not navigate. Popping puts the parent back
+        // on the screen she asked from.
+        leading: IconButton(
+          onPressed: () => context.canPop() ? context.pop() : context.go('/'),
+          icon: const Icon(Icons.close),
+          tooltip: l.commonClose,
+        ),
+      ),
+      body: SafeArea(
+        top: false,
+        child: Column(
           children: [
             Expanded(
-              child: Text(l.chatTitle, style: theme.textTheme.titleLarge),
+              child: _turns.isEmpty
+                  ? _Empty(childName: child?.name)
+                  : ListView.builder(
+                      controller: _scroll,
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                      itemCount: _turns.length + (_busy ? 1 : 0),
+                      itemBuilder: (context, i) {
+                        if (i == _turns.length) return const _Thinking();
+                        final turn = _turns[i];
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: turn.isQuestion
+                              ? _QuestionBubble(text: turn.text)
+                              : _ReplyView(reply: turn.reply!),
+                        );
+                      },
+                    ),
             ),
-            // A window closes; it does not navigate. Popping puts the parent
-            // back on the screen she asked from, which is the whole reason
-            // the conversation lives above the shell rather than in it.
-            IconButton(
-              onPressed: () =>
-                  context.canPop() ? context.pop() : context.go('/'),
-              icon: const Icon(Icons.close),
-              tooltip: l.commonClose,
+            _Ask(
+              controller: _input,
+              focus: _focus,
+              hint: l.chatAsk,
+              busy: _busy,
+              onSend: () => _send(_input.text),
             ),
           ],
         ),
-        const SizedBox(height: 12),
-
-        // The same five facts the assistant screen opens with, then the
-        // thread she was in the middle of. Both sit above the conversation
-        // and disappear entirely when there is nothing to say.
-        const ChildContextBlock(),
-        const SizedBox(height: 12),
-        ContinueBlock(onResume: _resume),
-
-        if (!service.isConfigured) ...[
-          const _SetupCard(),
-          const SizedBox(height: 16),
-        ],
-
-        if (_turns.isEmpty) _Suggestions(onPick: _send),
-
-        for (final turn in _turns) ...[
-          if (turn.isQuestion)
-            _QuestionBubble(text: turn.text)
-          else
-            _ReplyView(reply: turn.reply!),
-          const SizedBox(height: 12),
-        ],
-
-        if (_busy) ...[
-          const SizedBox(height: 8),
-          const Center(child: CircularProgressIndicator()),
-          const SizedBox(height: 8),
-        ],
-
-        const SizedBox(height: 8),
-        _Ask(
-          controller: _input,
-          focus: _focus,
-          hint: child == null ? l.chatEmpty : l.chatHint(child.name),
-          busy: _busy,
-          onSend: () => _send(_input.text),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          l.chatDisclaimer,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ],
+      ),
     );
-  }
-
-  /// Puts the question back in the field rather than sending it: she may
-  /// want to change a word now that she has a moment.
-  void _resume(String question) {
-    setState(() {
-      _input.text = question;
-      _input.selection = TextSelection.collapsed(offset: question.length);
-    });
   }
 
   /// The thread so far, minus the question being sent.
@@ -208,6 +193,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       _input.clear();
       _busy = true;
     });
+    _scrollToEnd();
 
     final child = ref.read(selectedChildProvider);
     final reply = await ref
@@ -226,24 +212,78 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       _turns.add(_Turn.answer(reply));
       _busy = false;
     });
+    _scrollToEnd();
   }
 }
 
-/// Asking, with the voice first.
+/// Before the first question.
 ///
-/// «Ввод должен производиться текстом, но сначала голосовой ввод в
-/// приоритете» — so the microphone is a full-sized accent disc at the left of
-/// the row and the field is what it hands its words to. Neither replaces the
-/// other: a question asked at three in the morning is spoken, and the same
-/// question in a waiting room is typed.
+/// One line and a glyph. Every other chat in the world opens like this, and
+/// the panel of suggested questions that used to be here was both clutter and
+/// the thing that made the assistant look like a menu of canned answers.
+class _Empty extends StatelessWidget {
+  const _Empty({this.childName});
+
+  final String? childName;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 40),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.auto_awesome,
+              size: 40,
+              color: Warm.accent.withValues(alpha: 0.55),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              childName == null ? l.chatEmpty : l.chatOpening(childName!),
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: Warm.onCardSoft(theme.brightness),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The gap between asking and being answered, said out loud.
+class _Thinking extends StatelessWidget {
+  const _Thinking();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 12),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: SizedBox(
+          width: 22,
+          height: 22,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      ),
+    );
+  }
+}
+
+/// The field, and the button that sends it. Nothing else.
 ///
-/// What the microphone does depends on where the app is running.
-/// [keyboardDictationProvider] is true in a browser, and there the recogniser
-/// worth using is the keyboard's own — it is the one Apple and Google tuned
-/// for these languages, it survives an iPhone home-screen app where the Web
-/// Speech API is absent entirely, and it is one tap from a focused field. So
-/// on the web the button raises the keyboard and says where its microphone
-/// is. On a phone build it holds the recogniser open directly.
+/// There was a microphone here for one deploy, sitting next to the keyboard's
+/// own: «возле клавиатуры значок микрофона, он не нужен там». It was not —
+/// the keyboard already carries the recogniser worth using, it is the one
+/// Apple and Google tuned for these languages, and it is where a thumb already
+/// goes. The app's job is to open the keyboard, which it now does on arrival.
 class _Ask extends ConsumerStatefulWidget {
   const _Ask({
     required this.controller,
@@ -259,147 +299,51 @@ class _Ask extends ConsumerStatefulWidget {
   final bool busy;
   final VoidCallback onSend;
 
-  /// Big enough to hit without looking, which is the point of speaking.
-  static const micSize = 52.0;
-
   @override
   ConsumerState<_Ask> createState() => _AskState();
 }
 
 class _AskState extends ConsumerState<_Ask> {
-  bool _listening = false;
-
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final keyboard = ref.watch(keyboardDictationProvider);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            _MicButton(
-              live: _listening,
-              onTap: () => keyboard ? _useKeyboard() : _hold(),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: TextField(
-                controller: widget.controller,
-                focusNode: widget.focus,
-                maxLines: null,
-                textInputAction: TextInputAction.send,
-                onSubmitted: (_) => widget.onSend(),
-                decoration: InputDecoration(hintText: widget.hint),
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+      decoration: BoxDecoration(
+        color: Warm.card(theme.brightness),
+        border: Border(top: BorderSide(color: Warm.hairline(theme.brightness))),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Expanded(
+            child: TextField(
+              controller: widget.controller,
+              focusNode: widget.focus,
+              autofocus: true,
+              maxLines: 5,
+              minLines: 1,
+              textInputAction: TextInputAction.send,
+              onSubmitted: (_) => widget.onSend(),
+              decoration: InputDecoration(
+                hintText: widget.hint,
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
               ),
             ),
-            const SizedBox(width: 10),
-            IconButton.filled(
-              onPressed: widget.busy ? null : widget.onSend,
-              icon: const Icon(Icons.arrow_upward),
-              tooltip: l.chatSend,
-            ),
-          ],
-        ),
-        if (keyboard) ...[
-          const SizedBox(height: 6),
-          Padding(
-            padding: const EdgeInsets.only(left: 4),
-            child: Text(
-              l.chatVoiceHint,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: Warm.onCardSoft(theme.brightness),
-              ),
-            ),
+          ),
+          const SizedBox(width: 8),
+          IconButton.filled(
+            onPressed: widget.busy ? null : widget.onSend,
+            icon: const Icon(Icons.arrow_upward),
+            tooltip: l.chatSend,
           ),
         ],
-      ],
-    );
-  }
-
-  /// The browser path: put the cursor in the field and let the keyboard's own
-  /// microphone do the listening.
-  void _useKeyboard() => widget.focus.requestFocus();
-
-  /// The phone path: open the recogniser and put what it hears in the field.
-  Future<void> _hold() async {
-    final dictation = ref.read(dictationProvider);
-    if (_listening) {
-      await dictation.stop();
-      if (mounted) setState(() => _listening = false);
-      return;
-    }
-
-    if (!dictation.ready && !await dictation.prepare()) return;
-    if (!mounted) return;
-    setState(() => _listening = true);
-
-    await dictation.start(
-      localeId: dictationLocale(
-        Localizations.localeOf(context).languageCode,
-      ),
-      onResult: (text) {
-        if (!mounted) return;
-        setState(() {
-          // Appended, never replacing: she may have typed half of it already.
-          final existing = widget.controller.text.trim();
-          widget.controller.text = existing.isEmpty
-              ? text
-              : '$existing $text';
-          widget.controller.selection = TextSelection.collapsed(
-            offset: widget.controller.text.length,
-          );
-          _listening = false;
-        });
-      },
-      onSilence: () {
-        if (mounted) setState(() => _listening = false);
-      },
-      onFailure: (_) {
-        if (mounted) setState(() => _listening = false);
-      },
-    );
-  }
-}
-
-/// The microphone, as the first thing on the row.
-class _MicButton extends StatelessWidget {
-  const _MicButton({required this.live, required this.onTap});
-
-  final bool live;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context);
-    return Tooltip(
-      message: l.chatVoice,
-      child: Pressable(
-        onTap: onTap,
-        borderRadius: _Ask.micSize / 2,
-        child: Container(
-          width: _Ask.micSize,
-          height: _Ask.micSize,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: Warm.accentGradient,
-            boxShadow: [
-              BoxShadow(
-                color: Warm.accent.withValues(alpha: live ? 0.55 : 0.30),
-                blurRadius: live ? 18 : 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Icon(
-            live ? Icons.stop_rounded : Icons.mic,
-            color: Colors.white,
-            size: 24,
-          ),
-        ),
       ),
     );
   }
@@ -661,153 +605,6 @@ class _UnavailableCard extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SetupCard extends StatelessWidget {
-  const _SetupCard();
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    return SectionCard(
-      title: l.chatAiOff,
-      icon: Icons.smart_toy_outlined,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            l.chatAiOffBody,
-            style: theme.textTheme.bodyMedium,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            l.chatAiOffHow,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// What to ask, worked out from what is already written down.
-///
-/// Five chips of the same five sentences, wrapping onto four lines on a phone,
-/// was both the chip-wall and the reason the assistant looked like a canned
-/// list — see [suggestedQuestions]. These are three rows, each carrying the
-/// entry it came from, so the app's reading of the day is on the screen before
-/// a single word has been sent anywhere.
-class _Suggestions extends ConsumerWidget {
-  const _Suggestions({required this.onPick});
-
-  final ValueChanged<String> onPick;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    final child = ref.watch(selectedChildProvider);
-    final picks = suggestedQuestions(
-      logs: ref.watch(logsProvider).value ?? const <DevelopmentLog>[],
-      now: DateTime.now(),
-      ageMonths: child?.ageInMonths,
-    );
-
-    return SectionCard(
-      title: l.chatSuggestionsTitle,
-      icon: Icons.auto_awesome_outlined,
-      action: Text(
-        l.chatSuggestionsHint,
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: Warm.onCardSoft(theme.brightness),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          for (final pick in picks)
-            _SuggestionRow(
-              question: pick.question(l),
-              reason: pick.reason(l),
-              onTap: () => onPick(pick.question(l)),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SuggestionRow extends StatelessWidget {
-  const _SuggestionRow({
-    required this.question,
-    required this.reason,
-    required this.onTap,
-  });
-
-  final String question;
-
-  /// Where the app got it from, or null when it came from nowhere in
-  /// particular. Said out loud rather than implied: a suggestion that claims
-  /// to know something has to show what it knows.
-  final String? reason;
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Material(
-        color: Warm.soft(theme.brightness),
-        borderRadius: BorderRadius.circular(Warm.chipRadius),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(Warm.chipRadius),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        question,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      if (reason case final why?) ...[
-                        const SizedBox(height: 3),
-                        Text(
-                          why,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: Warm.accent,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Icon(
-                  Icons.north_east,
-                  size: 16,
-                  color: Warm.onCardSoft(theme.brightness),
-                ),
-              ],
-            ),
-          ),
         ),
       ),
     );

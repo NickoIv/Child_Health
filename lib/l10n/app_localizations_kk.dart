@@ -1610,11 +1610,12 @@ class AppLocalizationsKk extends AppLocalizations {
   String get chatSend => 'Жіберу';
 
   @override
-  String get chatVoice => 'Дауыспен айту';
+  String get chatAsk => 'Кез келген нәрсені сұраңыз';
 
   @override
-  String get chatVoiceHint =>
-      'Дауыспен — пернетақтадағы микрофон, бос орын жанында';
+  String chatOpening(String name) {
+    return 'Кез келген нәрсені сұраңыз — $name туралы да, өзіңіз туралы да';
+  }
 
   @override
   String get chatDisclaimer =>

@@ -1,10 +1,7 @@
 import 'package:child_health_tracker/app.dart';
+import 'package:child_health_tracker/features/assistant/assistant_nav_icon.dart';
 import 'package:child_health_tracker/core/care/conversation_memory.dart';
-import 'package:child_health_tracker/core/l10n/app_locale.dart';
-import 'package:child_health_tracker/features/assistant/continue_block.dart';
-import 'package:child_health_tracker/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -100,128 +97,6 @@ void main() {
     });
   });
 
-  group('the block', () {
-    setUp(() => SharedPreferences.setMockInitialValues({}));
-
-    /// Collects whatever the block hands back, so the test can read it after
-    /// the tap rather than before it.
-    Future<List<String>> pump(
-      WidgetTester tester, {
-      DateTime? at,
-      Locale locale = defaultLocale,
-    }) async {
-      final resumed = <String>[];
-
-      tester.view.physicalSize = const Size(390, 844);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.reset);
-
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            locale: locale,
-            localizationsDelegates: const [
-              AppLocalizations.delegate,
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-            ],
-            supportedLocales: supportedLocales,
-            home: Scaffold(
-              body: Consumer(
-                builder: (context, ref, _) => Column(
-                  children: [
-                    TextButton(
-                      onPressed: () => ref
-                          .read(conversationMemoryProvider.notifier)
-                          .remember(question, now: asked),
-                      child: const Text('seed'),
-                    ),
-                    ContinueBlock(
-                      now: at ?? asked.add(const Duration(minutes: 30)),
-                      onResume: resumed.add,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('seed'));
-      await tester.pumpAndSettle();
-      return resumed;
-    }
-
-    testWidgets('shows the question back, in her own words', (tester) async {
-      await pump(tester);
-      final l = await AppLocalizations.delegate.load(defaultLocale);
-
-      expect(find.text(l.chatContinueTitle), findsOneWidget);
-      expect(find.text(l.chatContinueLast(question)), findsOneWidget);
-      expect(find.text(l.chatContinueResume), findsOneWidget);
-      expect(find.text(l.chatContinueNew), findsOneWidget);
-    });
-
-    testWidgets('«Продолжить» hands the question back, unsent', (
-      tester,
-    ) async {
-      final resumed = await pump(tester);
-      final l = await AppLocalizations.delegate.load(defaultLocale);
-
-      await tester.tap(find.text(l.chatContinueResume));
-      await tester.pumpAndSettle();
-
-      // Handed to the caller to put in the field — the block never sends,
-      // and it does not clear the memory either.
-      expect(resumed, [question]);
-      expect(find.text(l.chatContinueTitle), findsOneWidget);
-    });
-
-    testWidgets('«Новый» clears it', (tester) async {
-      await pump(tester);
-      final l = await AppLocalizations.delegate.load(defaultLocale);
-
-      await tester.tap(find.text(l.chatContinueNew));
-      await tester.pumpAndSettle();
-
-      expect(find.text(l.chatContinueTitle), findsNothing);
-    });
-
-    testWidgets('a day later it is gone on its own', (tester) async {
-      await pump(tester, at: asked.add(const Duration(hours: 25)));
-      final l = await AppLocalizations.delegate.load(defaultLocale);
-
-      expect(find.text(l.chatContinueTitle), findsNothing);
-    });
-
-    testWidgets('a long question is cut to two lines', (tester) async {
-      await pump(tester);
-
-      final text = tester.widget<Text>(
-        find.byWidgetPredicate(
-          (w) => w is Text && (w.data?.contains(question) ?? false),
-        ),
-      );
-      expect(text.maxLines, 2);
-      expect(text.overflow, TextOverflow.ellipsis);
-    });
-
-    testWidgets('it speaks whichever language the app is in', (tester) async {
-      for (final locale in supportedLocales) {
-        await pump(tester, locale: locale);
-        final l = await AppLocalizations.delegate.load(locale);
-
-        expect(
-          find.text(l.chatContinueTitle),
-          findsOneWidget,
-          reason: locale.languageCode,
-        );
-      }
-    });
-  });
 
   testWidgets('asking on the chat screen is what fills the memory', (
     tester,
@@ -244,11 +119,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Into the assistant, then into the chat.
-    await tester.tap(find.byIcon(Icons.lightbulb_outline).first);
-    await tester.pumpAndSettle();
-    final l = await AppLocalizations.delegate.load(defaultLocale);
-    await tester.tap(find.text(l.assistantChat));
+    // Straight into the chat: it is one tap from anywhere now.
+    await tester.tap(find.byType(AssistantNavIcon));
     await tester.pumpAndSettle();
 
     await tester.enterText(find.byType(TextField).first, question);

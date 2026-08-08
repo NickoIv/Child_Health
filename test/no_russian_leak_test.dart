@@ -1,4 +1,5 @@
 import 'package:child_health_tracker/app.dart';
+import 'package:child_health_tracker/features/assistant/assistant_nav_icon.dart';
 import 'package:child_health_tracker/core/l10n/app_locale.dart';
 import 'package:child_health_tracker/models/child.dart';
 import 'package:child_health_tracker/models/development_log.dart';
@@ -215,35 +216,16 @@ void main() {
       expectNoLeaks(tester, locale, 'the reminders screen');
     });
 
-    testWidgets('$code — the child context block is clean', (tester) async {
+    testWidgets('$code — the chat window is clean', (tester) async {
       await pump(tester, locale);
-      await openScreen(tester, (l) => l.navAssistant);
-      // The block lives on the chat screen now, and only there — it used to be
-      // printed on the hub as well, which is the duplication he asked to stop.
-      await openScreen(tester, (l) => l.assistantChat);
+      await tester.tap(find.byType(AssistantNavIcon));
+      await tester.pumpAndSettle();
 
-      // Only the block the app builds itself. The knowledge-base articles
-      // below it are Russian medical content, and translating those is a
-      // clinical review rather than a localization pass.
-      final l = await AppLocalizations.delegate.load(locale);
-      final block = find.ancestor(
-        of: find.text(l.contextTitle),
-        matching: find.byType(Column),
-      );
-      final shown = [
-        for (final w in tester.widgetList(
-          find.descendant(of: block.first, matching: find.byType(Text)),
-        ))
-          (w as Text).data ?? '',
-      ];
-
-      for (final word in russianLeaks) {
-        expect(
-          shown.where((t) => t.contains(word)),
-          isEmpty,
-          reason: '«$word» leaked into the context block in $code',
-        );
-      }
+      // Nothing but the conversation is on this screen now — the five facts
+      // about the child that used to be printed above it reach the model in
+      // the prompt instead. So this is the frame: title, placeholder, the
+      // opening line.
+      expectNoLeaks(tester, locale, 'the chat window');
     });
   }
 
