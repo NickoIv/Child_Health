@@ -1677,6 +1677,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get chatAsk => 'Спросите о чём угодно';
 
   @override
+  String get chatOrRecord =>
+      'Или продиктуйте запись — «покормила левой 15 минут», «спал 2 часа», «температура 37.2». Запишу в дневник.';
+
+  @override
+  String get chatRecordUndone => 'Запись удалена';
+
+  @override
   String chatOpening(String name) {
     return 'Спросите о чём угодно — про $name или про своё';
   }

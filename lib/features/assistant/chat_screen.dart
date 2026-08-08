@@ -8,21 +8,40 @@ import '../../ai/actions.dart';
 import '../../ai/assistant_service.dart';
 import '../../ai/conversation.dart';
 import '../../ai/topics.dart';
+import '../../core/theme/app_snack.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/motion.dart';
+import '../../core/voice/voice_commands.dart';
 import '../../knowledge/article.dart';
+import '../../models/development_log.dart';
 import '../../providers.dart';
 import '../../core/care/conversation_memory.dart';
+import '../shared/voice_summary.dart';
+import '../shared/widgets.dart';
 import 'action_card.dart';
+import 'chat_record.dart';
 
+/// One line of the thread: a question, an answer, or an entry that was written.
 class _Turn {
-  const _Turn.question(this.text) : reply = null;
-  const _Turn.answer(this.reply) : text = '';
+  const _Turn.question(this.text) : reply = null, written = null;
+  const _Turn.answer(this.reply) : text = '', written = null;
+  const _Turn.written(this.written) : text = '', reply = null;
 
   final String text;
   final AssistantReply? reply;
 
-  bool get isQuestion => reply == null;
+  /// What the diary now holds, for a message that turned out to be a record.
+  final _Written? written;
+
+  bool get isQuestion => reply == null && written == null;
+}
+
+/// An entry written from the thread, and the words it was read from.
+class _Written {
+  const _Written({required this.entry, required this.command});
+
+  final DevelopmentLog entry;
+  final VoiceCommand command;
 }
 
 /// The assistant, in conversation.
@@ -142,9 +161,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         final turn = _turns[i];
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 12),
-                          child: turn.isQuestion
-                              ? _QuestionBubble(text: turn.text)
-                              : _ReplyView(reply: turn.reply!),
+                          child: switch (turn) {
+                            _Turn(written: final written?) => _RecordCard(
+                              written: written,
+                            ),
+                            _Turn(reply: final reply?) => _ReplyView(
+                              reply: reply,
+                            ),
+                            _ => _QuestionBubble(text: turn.text),
+                          },
                         );
                       },
                     ),
@@ -185,6 +210,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final question = raw.trim();
     if (question.isEmpty || _busy) return;
 
+    // A sentence that is a record is written here and now, without the model
+    // being called at all — see [recordIn]. This is where the home screen's
+    // microphone went.
+    if (await _write(question)) return;
+
     // Only ever the latest one, and only on this phone.
     ref.read(conversationMemoryProvider.notifier).remember(question);
 
@@ -213,6 +243,56 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       _busy = false;
     });
     _scrollToEnd();
+  }
+
+  /// Writes the message down if it was a record, and says whether it did.
+  ///
+  /// False sends the same words on to the assistant, which is the ordinary
+  /// case: only a sentence the on-device parser recognises, or one that begins
+  /// «запиши…», is filed rather than answered.
+  ///
+  /// It writes without asking, and offers the entry back. A confirmation
+  /// button in front of a reading that is right hundreds of times is a tap
+  /// paid every time to catch the rare miss; an undo catches the same miss and
+  /// costs nothing when the reading was right — the arrangement the dictation
+  /// card settled on, kept.
+  Future<bool> _write(String message) async {
+    final child = ref.read(selectedChildProvider);
+    // A viewer's repository refuses writes anyway, and his questions are still
+    // worth answering.
+    if (child == null || ref.read(isReadOnlyProvider)) return false;
+
+    final command = recordIn(message, now: DateTime.now());
+    if (command == null) return false;
+
+    final l = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final entry = voiceLog(command, childId: child.id, at: DateTime.now());
+
+    setState(() {
+      _turns.add(_Turn.question(message));
+      _input.clear();
+      _busy = true;
+    });
+    _scrollToEnd();
+
+    try {
+      final saved = await ref.read(logRepositoryProvider).add(entry);
+      if (!mounted) return true;
+      setState(() {
+        _turns.add(
+          _Turn.written(_Written(entry: saved, command: command)),
+        );
+        _busy = false;
+      });
+    } on Exception catch (e) {
+      if (!mounted) return true;
+      setState(() => _busy = false);
+      messenger.showApp(friendlyError(l, e), kind: SnackKind.problem);
+    }
+
+    _scrollToEnd();
+    return true;
   }
 }
 
@@ -250,10 +330,107 @@ class _Empty extends StatelessWidget {
                 color: Warm.onCardSoft(theme.brightness),
               ),
             ),
+            const SizedBox(height: 10),
+            // The one thing about this field nobody would guess: it also
+            // writes the diary. The microphone that used to say so was on the
+            // home screen, and it is gone — so the sentence it was captioned
+            // with is here, where the field is.
+            Text(
+              l.chatOrRecord,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: Warm.onCardSoft(theme.brightness),
+              ),
+            ),
           ],
         ),
       ),
     );
+  }
+}
+
+/// What was written down, and the way back out of it.
+///
+/// The undo lives in the thread rather than in a snackbar. A snackbar has four
+/// seconds and then the record is somebody's problem in the diary; this stays
+/// for as long as the conversation is open, which is how long a parent might
+/// take to look up from the child and read what she just said.
+class _RecordCard extends ConsumerStatefulWidget {
+  const _RecordCard({required this.written});
+
+  final _Written written;
+
+  @override
+  ConsumerState<_RecordCard> createState() => _RecordCardState();
+}
+
+class _RecordCardState extends ConsumerState<_RecordCard> {
+  bool _undone = false;
+  bool _busy = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final written = widget.written;
+
+    return Card(
+      color: Warm.soft(theme.brightness),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(18, 14, 12, 14),
+        child: Row(
+          children: [
+            Icon(
+              _undone ? Icons.undo : Icons.check_circle_outline,
+              size: 20,
+              color: _undone
+                  ? theme.colorScheme.onSurfaceVariant
+                  : StatusColors.normal,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                _undone
+                    ? l.chatRecordUndone
+                    // The same sentence the diary will show, built from the
+                    // same reading — so what she is told was written and what
+                    // she finds when she goes to look cannot drift apart.
+                    : l.quickSaved(voiceSummary(l, written.command)),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            if (!_undone) ...[
+              const SizedBox(width: 6),
+              TextButton(
+                onPressed: _busy ? null : _undo,
+                child: Text(l.commonUndo),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _undo() async {
+    final l = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _busy = true);
+
+    try {
+      await ref.read(logRepositoryProvider).delete(widget.written.entry.id);
+      if (!mounted) return;
+      setState(() {
+        _undone = true;
+        _busy = false;
+      });
+    } on Exception catch (e) {
+      if (!mounted) return;
+      setState(() => _busy = false);
+      messenger.showApp(friendlyError(l, e), kind: SnackKind.problem);
+    }
   }
 }
 

@@ -1,6 +1,5 @@
 import 'package:child_health_tracker/core/theme/app_theme.dart';
 import 'package:child_health_tracker/features/dashboard/focus_home.dart';
-import 'package:child_health_tracker/features/dashboard/voice_action_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -142,8 +141,9 @@ void main() {
 
   group('the pieces built on the tokens', () {
     test('agree with them', () {
-      // The action cards and the microphone are the two surfaces that carry
-      // their own measurements; both are drawn from the same list.
+      // The action cards carry their own measurements, drawn from this list.
+      // The microphone card used to be the other one; dictation is the
+      // assistant's now and it has no card of its own to measure.
       expect(ActionCard.height, 112);
       expect(ActionCard.radius, Warm.cardRadius);
       expect(ActionCard.iconSize, 21);
@@ -153,14 +153,7 @@ void main() {
       // Smaller than it was: the height went to the two figures under it,
       // which are what the screen is opened forty times a day to read.
       expect(WarmHeader.photoSize, 64);
-      expect(VoiceActionButton.size, 64);
       expect(Warm.accentGradient.colors.last, Warm.accent);
-    });
-
-    test('the timer is mm:ss', () {
-      expect(voiceTimer(Duration.zero), '00:00');
-      expect(voiceTimer(const Duration(seconds: 7)), '00:07');
-      expect(voiceTimer(const Duration(seconds: 65)), '01:05');
     });
   });
 }

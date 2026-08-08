@@ -3,11 +3,7 @@ import 'package:child_health_tracker/core/l10n/app_locale.dart';
 import 'package:child_health_tracker/core/l10n/labels.dart';
 import 'package:child_health_tracker/core/theme/app_theme.dart';
 import 'package:child_health_tracker/core/theme/motion.dart';
-import 'package:child_health_tracker/core/voice/dictation.dart';
-import 'package:child_health_tracker/core/voice/voice_commands.dart';
 import 'package:child_health_tracker/features/dashboard/focus_home.dart';
-import 'package:child_health_tracker/features/dashboard/quick_dictation.dart';
-import 'package:child_health_tracker/features/dashboard/voice_action_button.dart';
 import 'package:child_health_tracker/features/family/family_screen.dart';
 import 'package:child_health_tracker/features/shared/photo_widgets.dart';
 import 'package:child_health_tracker/l10n/app_localizations.dart';
@@ -20,7 +16,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
-/// Home 3.0: the shape of the screen, and the microphone you have to hold.
+/// Home 3.0: the shape of the screen, and what is no longer on it.
 void main() {
   setUpAll(initializeDateFormatting);
 
@@ -35,10 +31,6 @@ void main() {
     gender: Gender.female,
   );
 
-  late _FakeDictation dictation;
-
-  setUp(() => dictation = _FakeDictation());
-
   Future<void> pump(
     WidgetTester tester, {
     List<DevelopmentLog>? logs,
@@ -52,7 +44,6 @@ void main() {
       ProviderScope(
         overrides: [
           childrenProvider.overrideWith((ref) => Stream.value([child])),
-          dictationProvider.overrideWithValue(dictation),
           photoProvider.overrideWith(
             (ref, id) async => Photo(
               id: id,
@@ -258,329 +249,42 @@ void main() {
     });
   });
 
-  group('the microphone', () {
-    testWidgets('is a card under the events, not a circle over them', (
-      tester,
-    ) async {
+  group('where the microphone was', () {
+    testWidgets('there is nothing above the tab bar', (tester) async {
+      // «На странице Обзор убери микрофон и отдай эти функции ИИ.» A card with
+      // a field, a microphone and two lines of instructions used to sit here,
+      // on top of whatever screen was being read.
       await pump(tester);
-      final l = await AppLocalizations.delegate.load(defaultLocale);
-      final card = find.byType(VoiceActionButton);
 
-      // Floating, it covered whichever entry was being read. Pinned above
-      // the tabs it covers nothing, and there is room to print what to say
-      // to it.
+      expect(find.byIcon(Icons.mic), findsNothing);
+      expect(find.byType(TextField), findsNothing);
       expect(find.byType(FloatingActionButton), findsNothing);
+
+      // And the events reach the tab bar, which is the space the card was
+      // taking on a screen opened forty times a day.
+      final bar = tester.getRect(find.byType(NavigationBar));
       expect(
-        tester.getRect(card).top,
-        greaterThan(tester.getRect(find.byType(RecentPreview)).bottom - 1),
-      );
-      // Full width, like every other card on this screen.
-      expect(
-        tester.getSize(card).width,
-        tester.getSize(find.byType(RecentPreview)).width,
-      );
-      // The instruction and an example of a sentence it understands.
-      expect(
-        find.descendant(of: card, matching: find.text(l.voiceTapHint)),
-        findsOneWidget,
-      );
-      expect(
-        find.descendant(of: card, matching: find.text(l.voiceExample)),
-        findsOneWidget,
-      );
-      expect(
-        find.descendant(of: card, matching: find.text(voiceTimer(Duration.zero))),
-        findsOneWidget,
+        tester.getRect(find.byType(RecentPreview)).bottom,
+        lessThan(bar.bottom),
       );
     });
 
-    testWidgets('stays put while the page scrolls under it', (tester) async {
-      // A short phone with a long day on it: the kind of screen where the
-      // card used to be below the fold on the one page it exists to be used
-      // from.
-      await pump(
-        tester,
-        size: const Size(390, 780),
-        logs: [
-          for (var i = 0; i < 12; i++)
-            DevelopmentLog(
-              id: 'f$i',
-              childId: child.id,
-              date: DateTime.now().subtract(Duration(minutes: 20 * i + 5)),
-              type: LogType.feeding,
-              title: LogType.feeding.label,
-            ),
-        ],
-      );
-
-      final card = find.byType(VoiceActionButton);
-      expect(card, findsOneWidget);
-      final before = tester.getRect(card);
-
-      // Above the tabs, and on the screen without anyone going to look.
-      expect(before.bottom, lessThanOrEqualTo(780));
-      expect(
-        before.bottom,
-        lessThanOrEqualTo(tester.getRect(find.byType(NavigationBar)).top + 1),
-      );
-
-      // Read from the scroll position rather than from the header's box: a
-      // sliver list drops the children it has scrolled past, so the widget
-      // this moved is gone by the time it could be measured.
-      final scroll = tester.state<ScrollableState>(find.byType(Scrollable));
-      expect(scroll.position.pixels, 0);
-
-      await tester.drag(find.byType(WarmHeader), const Offset(0, -400));
-      await tester.pumpAndSettle();
-
-      // The page moved; the microphone did not.
-      expect(scroll.position.pixels, greaterThan(0));
-      expect(tester.getRect(card), before);
-    });
-
-    testWidgets('the button itself is on the right, under a thumb', (
+    testWidgets('the way in is the assistant, last under a right thumb', (
       tester,
     ) async {
-      await pump(tester, size: const Size(390, 1400));
-
-      final card = tester.getRect(find.byType(VoiceActionButton));
-      final button = tester.getRect(find.byIcon(Icons.mic));
-
-      // Right-hand end of the card, tight to its edge. Everything left of it
-      // is text: read once, never touched.
-      expect(button.center.dx, greaterThan(card.center.dx));
-      expect(card.right - button.right, lessThan(20));
-      expect(button.width, VoiceActionButton.size);
-    });
-
-    testWidgets('is 64 across and one tap opens it', (tester) async {
-      await pump(tester);
-
-      expect(find.byType(VoiceActionButton), findsOneWidget);
-      expect(VoiceActionButton.size, 64);
-
-      // Held was the better idea and a browser cannot do it: Safari takes a
-      // second or two to open the microphone, so a hold ends before the
-      // recording starts. A tap has no end to run out of.
-      await tester.tap(find.byIcon(Icons.mic));
-      await tester.pump(const Duration(milliseconds: 300));
-      expect(dictation.listening, isTrue);
-    });
-
-    testWidgets('a second tap closes it', (tester) async {
-      await pump(tester);
-
-      await tester.tap(find.byIcon(Icons.mic));
-      await tester.pump(const Duration(milliseconds: 300));
-      expect(dictation.prepared, 1);
-      expect(dictation.listening, isTrue);
-      // The waveform and the timer are only up while it is open.
-      expect(find.byType(CustomPaint), findsWidgets);
-      expect(find.text(voiceTimer(Duration.zero)), findsOneWidget);
-      expect(voiceTimer(const Duration(seconds: 65)), '01:05');
-
-      await tester.tap(find.byIcon(Icons.graphic_eq));
-      await tester.pump(const Duration(milliseconds: 300));
-      expect(dictation.listening, isFalse);
-      expect(dictation.stopped, 1);
-    });
-
-    testWidgets('the waveform follows the room and stops with it', (
-      tester,
-    ) async {
-      await pump(tester);
+      await pump(tester, size: const Size(390, 900));
       final l = await AppLocalizations.delegate.load(defaultLocale);
 
-      await tester.tap(find.byIcon(Icons.mic));
-      await tester.pump(const Duration(milliseconds: 300));
-
-      dictation.speakAt(0.8);
-      await tester.pump(const Duration(milliseconds: 120));
-      // Open: the example gives way to the waveform and to the way out.
-      expect(find.text(l.voiceListening), findsOneWidget);
-      expect(find.text(l.voiceTapToStop), findsOneWidget);
-      expect(find.text(l.voiceExample), findsNothing);
-      expect(find.text(voiceTimer(Duration.zero)), findsOneWidget);
-
-      await tester.tap(find.byIcon(Icons.graphic_eq));
-      await tester.pump(const Duration(milliseconds: 300));
-      // Closed: nothing left animating, which is what "no idle animation"
-      // has to mean in practice.
-      await tester.pumpAndSettle();
-      expect(find.text(l.voiceListening), findsNothing);
-      expect(find.text(l.voiceExample), findsOneWidget);
-    });
-
-    testWidgets('a second tap waits rather than blaming the room', (
-      tester,
-    ) async {
-      await pump(tester);
-      final l = await AppLocalizations.delegate.load(defaultLocale);
-
-      // The browser keeps one recogniser and refuses to start it again while
-      // the last run is still closing. That refusal used to arrive as "could
-      // not recognise speech", which reads as "you were not heard".
-      dictation.busy = true;
-
-      await tester.tap(find.byIcon(Icons.mic));
-      await tester.pump(const Duration(milliseconds: 300));
-
-      expect(dictation.listening, isFalse);
-      expect(find.text(l.voiceBusy), findsOneWidget);
-      expect(find.text(l.voiceFailed), findsNothing);
-      await tester.pumpAndSettle();
-    });
-
-    testWidgets('a heard sentence is shown back before anything is written', (
-      tester,
-    ) async {
-      await pump(tester);
-      final l = await AppLocalizations.delegate.load(defaultLocale);
-
-      await tester.tap(find.byIcon(Icons.mic));
-      await tester.pump(const Duration(milliseconds: 300));
-      dictation.say('покормила левой 15 минут');
-      await tester.pumpAndSettle();
-
-      expect(find.text(l.voiceHeard), findsOneWidget);
-      expect(find.text('покормила левой 15 минут'), findsOneWidget);
-      // Her words and the reading of them, and a button she has to press.
-      expect(find.widgetWithText(FilledButton, l.commonSave), findsOneWidget);
-    });
-  });
-
-  group('the keyboard microphone', () {
-    Future<void> pumpWeb(WidgetTester tester) async {
-      tester.view.physicalSize = const Size(390, 1400);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.reset);
-
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            childrenProvider.overrideWith((ref) => Stream.value([child])),
-            dictationProvider.overrideWithValue(dictation),
-            // What a browser gets. The app runs in one.
-            keyboardDictationProvider.overrideWithValue(true),
-          ],
-          child: const ChildHealthApp(),
-        ),
+      final ask = find.descendant(
+        of: find.byType(NavigationBar),
+        matching: find.text(l.navAsk),
       );
-      await tester.pumpAndSettle();
-    }
+      expect(ask, findsOneWidget);
 
-    testWidgets('the field is the card, with nothing in front of it', (
-      tester,
-    ) async {
-      await pumpWeb(tester);
-      final l = await AppLocalizations.delegate.load(defaultLocale);
-
-      // One tap lands on the input itself, which is the only kind of tap
-      // Safari raises a keyboard for. A button of ours in front of it made
-      // three taps out of two.
-      final field = find.byType(TextField);
-      expect(field, findsOneWidget);
-      expect(find.text(l.voiceFieldHint), findsOneWidget);
-      expect(find.byType(VoiceActionButton), findsNothing);
-
-      // Pinned above the tabs, like the card it replaces.
-      expect(
-        tester.getRect(field).bottom,
-        lessThanOrEqualTo(tester.getRect(find.byType(NavigationBar)).top + 1),
-      );
-      // Nothing of ours touches a microphone.
-      expect(dictation.listening, isFalse);
-      expect(dictation.prepared, 0);
-    });
-
-    testWidgets('what is dictated is read back before it is written', (
-      tester,
-    ) async {
-      await pumpWeb(tester);
-      final l = await AppLocalizations.delegate.load(defaultLocale);
-
-      // What the keyboard's dictation drops into the field.
-      await tester.enterText(
-        find.byType(TextField),
-        'покормила левой 15 минут',
-      );
-      await tester.pump();
-
-      final command = parseVoiceCommand('покормила левой 15 минут');
-      expect(
-        find.text('${l.voiceWillSave}: ${voiceSummary(l, command)}'),
-        findsOneWidget,
-      );
-    });
-
-    testWidgets('it writes itself once the words stop arriving', (
-      tester,
-    ) async {
-      await pumpWeb(tester);
-      final l = await AppLocalizations.delegate.load(defaultLocale);
-
-      await tester.enterText(
-        find.byType(TextField),
-        'покормила левой 15 минут',
-      );
-      await tester.pump();
-
-      // A pause mid-sentence is not the end of one.
-      await tester.pump(const Duration(milliseconds: 900));
-      expect(find.textContaining(l.voiceWillSave), findsOneWidget);
-
-      await tester.pump(const Duration(seconds: 2));
-      await tester.pumpAndSettle();
-
-      // Written without a third tap, cleared for the next one, and offered
-      // back: an undo protects a misheard sentence as well as a button did.
-      expect(tester.widget<TextField>(find.byType(TextField)).controller!.text,
-          isEmpty);
-      expect(find.widgetWithText(SnackBarAction, l.commonUndo), findsOneWidget);
-    });
-
-    testWidgets('two entries in a row leave one confirmation, not two', (
-      tester,
-    ) async {
-      await pumpWeb(tester);
-      final l = await AppLocalizations.delegate.load(defaultLocale);
-
-      Future<void> write(String words) async {
-        await tester.enterText(find.byType(TextField), words);
-        await tester.pump();
-        await tester.pump(QuickDictationField.settle);
-        // Settled, so the snackbar has finished arriving — its dismissal
-        // timer is set when the entrance animation ends, not when it is
-        // asked for.
-        await tester.pumpAndSettle();
-      }
-
-      await write('покормила левой 15 минут');
-      await write('подгузник мокрый');
-
-      // Snackbars queue: three entries written in a row used to queue three
-      // confirmations that played one after another over the diary.
-      expect(find.byType(SnackBar), findsOneWidget);
-      expect(find.widgetWithText(SnackBarAction, l.commonUndo), findsOneWidget);
-
-      // And it goes on its own, without anyone dismissing it.
-      await tester.pump(const Duration(seconds: 5));
-      await tester.pumpAndSettle();
-      expect(find.byType(SnackBar), findsNothing);
-    });
-
-    testWidgets('a sentence it cannot parse is still worth keeping', (
-      tester,
-    ) async {
-      await pumpWeb(tester);
-      final l = await AppLocalizations.delegate.load(defaultLocale);
-
-      await tester.enterText(find.byType(TextField), 'улыбнулся бабушке');
-      await tester.pump();
-
-      // A note in her own words costs nothing; a wrong guess costs a
-      // correction in a medical record.
-      expect(find.textContaining(l.voiceAsNote), findsOneWidget);
+      // Rightmost of the destinations: the same sentence is written down or
+      // answered there, and it is one tap from every screen.
+      final bar = tester.getRect(find.byType(NavigationBar));
+      expect(tester.getRect(ask).center.dx, greaterThan(bar.center.dx));
     });
   });
 
@@ -657,67 +361,4 @@ void main() {
       expect(Warm.shadow(Brightness.dark), isEmpty);
     });
   });
-}
-
-/// A recogniser that never touches a microphone.
-class _FakeDictation implements Dictation {
-  bool allowed = true;
-  bool listening = false;
-  int prepared = 0;
-  int stopped = 0;
-
-  ValueChanged<String>? _onResult;
-  ValueChanged<double>? _onLevel;
-
-  void say(String text) => _onResult?.call(text);
-  void speakAt(double level) => _onLevel?.call(level);
-
-  /// True once [prepare] has succeeded, exactly like the real one — the
-  /// widget uses this to reach the microphone without an await in the way.
-  @override
-  bool get ready => _ready;
-  bool _ready = false;
-
-  /// What a refusal would say. Set by a test that wants the message checked.
-  @override
-  String? unavailableReason;
-
-  /// Still winding down. Set by a test that wants a second hold refused the
-  /// way the real recogniser refuses one.
-  @override
-  bool busy = false;
-
-  @override
-  List<String> get trace => const ['fake'];
-
-  /// The fake opens instantly. A browser does not, which is the whole point
-  /// of the flag — see the test that holds the opening state on screen.
-  @override
-  bool get live => listening;
-
-  @override
-  Future<bool> prepare() async {
-    prepared++;
-    _ready = allowed;
-    return allowed;
-  }
-
-  @override
-  Future<void> start({
-    required String localeId,
-    required ValueChanged<String> onResult,
-    required VoidCallback onSilence,
-    ValueChanged<double>? onLevel,
-    ValueChanged<String>? onFailure,
-  }) async {
-    listening = true;
-    _onResult = onResult;
-    _onLevel = onLevel;
-  }
-
-  @override
-  Future<void> stop() async {
-    if (listening) stopped++;
-    listening = false;
-  }
 }

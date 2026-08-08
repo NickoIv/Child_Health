@@ -3022,6 +3022,18 @@ abstract class AppLocalizations {
   /// **'Спросите о чём угодно'**
   String get chatAsk;
 
+  /// No description provided for @chatOrRecord.
+  ///
+  /// In ru, this message translates to:
+  /// **'Или продиктуйте запись — «покормила левой 15 минут», «спал 2 часа», «температура 37.2». Запишу в дневник.'**
+  String get chatOrRecord;
+
+  /// No description provided for @chatRecordUndone.
+  ///
+  /// In ru, this message translates to:
+  /// **'Запись удалена'**
+  String get chatRecordUndone;
+
   /// No description provided for @chatOpening.
   ///
   /// In ru, this message translates to:

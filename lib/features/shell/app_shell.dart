@@ -11,8 +11,6 @@ import '../../core/theme/theme_mode.dart';
 import '../../models/child.dart';
 import '../../providers.dart';
 import '../assistant/assistant_nav_icon.dart';
-import '../dashboard/quick_dictation.dart';
-import '../dashboard/voice_action_button.dart';
 import '../family/invite_banner.dart';
 import '../shared/photo_widgets.dart';
 
@@ -83,51 +81,18 @@ class AppShell extends ConsumerWidget {
               ],
             )
           : TabSwitch(index: _index, child: child),
-      // The microphone rides above the tab bar on the home screen: pinned, so
-      // it is there the moment the app opens rather than after a scroll, and
-      // outside the list, so it covers nothing.
+      // The tab bar, and nothing above it.
+      //
+      // A dictation card used to be pinned here on the home screen: a field,
+      // a microphone and a line of instructions, on top of every other screen
+      // the parent might be reading. «Убери микрофон и отдай эти функции ИИ» —
+      // it is one field now, and it is the assistant's, which is the input
+      // that can both write «покормила левой 15 минут» down and answer
+      // «сколько он должен есть». Two inputs meant deciding which one you
+      // wanted before you started talking.
       bottomNavigationBar: isWide
           ? null
-          : GlassPanel(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (_index == 0) const _PinnedVoice(),
-                  _BottomBar(index: _index, location: location),
-                ],
-              ),
-            ),
-    );
-  }
-}
-
-/// The microphone, held in place above the tab bar.
-///
-/// It sat in the scrolling column and a parent had to go looking for it — on
-/// a phone it was below the fold on the screen it exists to be used from.
-/// Here it is on top of the page rather than in it, which is what "always in
-/// view" has to mean.
-///
-/// It used to paint the page's own colour behind itself to stop the list
-/// showing through. It no longer has to: it shares the frosted panel with the
-/// tab bar, and what shows through there is the point.
-class _PinnedVoice extends ConsumerWidget {
-  const _PinnedVoice();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final child = ref.watch(selectedChildProvider);
-    if (child == null) return const SizedBox.shrink();
-
-    // In a browser the recogniser worth using is the one on the keyboard,
-    // and the shortest way to it is a field a thumb can land on directly.
-    final keyboard = ref.watch(keyboardDictationProvider);
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
-      child: keyboard
-          ? QuickDictationField(childId: child.id)
-          : VoiceActionButton(childId: child.id),
+          : GlassPanel(child: _BottomBar(index: _index, location: location)),
     );
   }
 }

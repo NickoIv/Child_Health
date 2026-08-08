@@ -361,6 +361,14 @@ void main() {
       await tester.pumpAndSettle();
     }
 
+    /// Phrased so that the sentence actually reaches the model.
+    ///
+    /// The chat writes a record it recognises itself, on the device, without
+    /// calling anybody — see chat_record_test.dart. So «запиши что он поспал
+    /// полтора часа» is written down before the model hears of it, and the
+    /// proposals below have to be provoked by a sentence the parser cannot
+    /// place. That is the ordinary case for a proposal anyway: the model is
+    /// what handles what the regular expressions could not.
     Future<void> ask(WidgetTester tester, String question) async {
       await tester.enterText(find.byType(TextField), question);
       await tester.testTextInput.receiveAction(TextInputAction.send);
@@ -375,7 +383,7 @@ void main() {
         'Записываю сон.\n$actionMarker'
         '{"tool":"log_sleep","args":{"minutes":90}}',
       );
-      await ask(tester, 'запиши что он поспал полтора часа');
+      await ask(tester, 'он отдыхал полтора часа после прогулки');
 
       final l = await AppLocalizations.delegate.load(defaultLocale);
       expect(find.text(l.actionSuggested), findsOneWidget);
@@ -391,7 +399,7 @@ void main() {
         'Записываю.\n$actionMarker'
         '{"tool":"log_nappy","args":{"kind":"wet"}}',
       );
-      await ask(tester, 'запиши подгузник');
+      await ask(tester, 'он опять испачкался');
 
       final l = await AppLocalizations.delegate.load(defaultLocale);
       final container = ProviderScope.containerOf(
@@ -422,7 +430,7 @@ void main() {
         'Записываю.\n$actionMarker'
         '{"tool":"log_nappy","args":{"kind":"wet"}}',
       );
-      await ask(tester, 'запиши подгузник');
+      await ask(tester, 'он опять испачкался');
 
       final l = await AppLocalizations.delegate.load(defaultLocale);
       final container = ProviderScope.containerOf(
@@ -450,7 +458,7 @@ void main() {
           accessRoleProvider.overrideWithValue(FamilyRole.viewer),
         ],
       );
-      await ask(tester, 'запиши подгузник');
+      await ask(tester, 'он опять испачкался');
 
       final l = await AppLocalizations.delegate.load(defaultLocale);
       expect(find.text(l.actionSuggested), findsOneWidget);

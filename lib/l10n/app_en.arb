@@ -487,6 +487,8 @@
   "chatHint": "Ask anything — about {name} or about your own day",
   "chatSend": "Send",
   "chatAsk": "Ask anything",
+  "chatOrRecord": "Or dictate an entry — “fed left 15 minutes”, “slept 2 hours”, “temperature 37.2”. I will write it in the diary.",
+  "chatRecordUndone": "Entry deleted",
   "chatOpening": "Ask anything — about {name} or about your own day",
   "chatDisclaimer": "The assistant answers any question. On your child’s health it leans on the app’s vetted base where there is one, and it does not diagnose — the decision is always your doctor’s.",
   "chatGeneralAnswer": "This answer comes from the AI’s own knowledge, not from the app’s vetted base. If it is about health, check with a doctor.",

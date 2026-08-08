@@ -1654,6 +1654,13 @@ class AppLocalizationsKk extends AppLocalizations {
   String get chatAsk => 'Кез келген нәрсені сұраңыз';
 
   @override
+  String get chatOrRecord =>
+      'Немесе жазбаны айтыңыз — «сол жағымен 15 минут емізді», «2 сағат ұйықтады», «дене қызуы 37.2». Күнделікке жазып қоямын.';
+
+  @override
+  String get chatRecordUndone => 'Жазба жойылды';
+
+  @override
   String chatOpening(String name) {
     return 'Кез келген нәрсені сұраңыз — $name туралы да, өзіңіз туралы да';
   }

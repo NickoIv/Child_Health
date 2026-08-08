@@ -1665,6 +1665,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chatAsk => 'Ask anything';
 
   @override
+  String get chatOrRecord =>
+      'Or dictate an entry — “fed left 15 minutes”, “slept 2 hours”, “temperature 37.2”. I will write it in the diary.';
+
+  @override
+  String get chatRecordUndone => 'Entry deleted';
+
+  @override
   String chatOpening(String name) {
     return 'Ask anything — about $name or about your own day';
   }

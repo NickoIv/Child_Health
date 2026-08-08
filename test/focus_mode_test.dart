@@ -9,7 +9,6 @@ import 'package:child_health_tracker/features/dashboard/now_card.dart';
 import 'package:child_health_tracker/features/dashboard/pattern_card.dart';
 import 'package:child_health_tracker/features/dashboard/reflection_card.dart';
 import 'package:child_health_tracker/features/dashboard/smart_card.dart';
-import 'package:child_health_tracker/features/dashboard/voice_action_button.dart';
 import 'package:child_health_tracker/features/family/weekly_story_card.dart';
 import 'package:child_health_tracker/l10n/app_localizations.dart';
 import 'package:child_health_tracker/models/child.dart';
@@ -222,29 +221,13 @@ void main() {
   });
 
   group('the microanimations', () {
-    test('are the four that were asked for and no others', () {
+    test('are the ones that were asked for and no others', () {
       expect(Pressable.pressedScale, 0.97);
       expect(Pressable.duration, const Duration(milliseconds: 110));
       expect(Arrival.rise, 8.0);
       expect(Arrival.duration, const Duration(milliseconds: 260));
       expect(SuccessCheck.duration, const Duration(milliseconds: 800));
-      expect(MicPulse.duration, const Duration(milliseconds: 900));
-    });
-
-    testWidgets('the pulse runs only while the microphone is open', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            body: MicPulse(listening: false, child: Icon(Icons.mic)),
-          ),
-        ),
-      );
-      // Nothing scheduled: a still frame settles, which an app with a
-      // continuous animation on it never does.
-      await tester.pumpAndSettle();
-      expect(find.byIcon(Icons.mic), findsOneWidget);
+      // The listening halo left with the microphone card it was drawn around.
     });
   });
 
@@ -339,16 +322,26 @@ void main() {
       expect(mild.severity, isNull);
     });
 
-    testWidgets('nothing is written until a parent taps save', (tester) async {
-      // The microphone is unavailable in a test, which is the point: the
-      // button is the only way in, and it opens nothing on its own.
+    testWidgets('and the home screen no longer asks to be spoken to', (
+      tester,
+    ) async {
+      // «На странице Обзор убери микрофон и отдай эти функции ИИ.» The card
+      // that sat above the tab bar is gone, and with it the second input a
+      // parent had to choose between before she started talking.
       await pump(tester);
-      expect(find.byType(VoiceActionButton), findsOneWidget);
-      expect(find.byIcon(Icons.mic), findsOneWidget);
-      // A tap is not how it works, so a tap opens nothing.
-      await tester.tap(find.byIcon(Icons.mic));
-      await tester.pump(const Duration(milliseconds: 200));
-      expect(find.byType(BottomSheet), findsNothing);
+
+      expect(find.byIcon(Icons.mic), findsNothing);
+      expect(find.byType(TextField), findsNothing);
+      // The way in is the assistant, which is on every screen and is where
+      // the same sentence is now both written down and answered.
+      final l = await AppLocalizations.delegate.load(defaultLocale);
+      expect(
+        find.descendant(
+          of: find.byType(NavigationBar),
+          matching: find.text(l.navAsk),
+        ),
+        findsOneWidget,
+      );
     });
   });
 }

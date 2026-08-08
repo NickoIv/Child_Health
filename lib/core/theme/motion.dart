@@ -119,100 +119,10 @@ class Arrival extends StatelessWidget {
   }
 }
 
-/// The microphone, breathing, while it is listening and only then.
-///
-/// A halo that grows and fades rather than a spinner: a spinner says "wait",
-/// and what this has to say is "go on, I can hear you". It stops the moment
-/// [listening] goes false, which is also the moment the controller closes the
-/// recogniser — there is no state in which this animates over a dead mic.
-class MicPulse extends StatefulWidget {
-  const MicPulse({
-    required this.child,
-    required this.listening,
-    this.color,
-    super.key,
-  });
-
-  static const duration = Duration(milliseconds: 900);
-
-  final Widget child;
-  final bool listening;
-  final Color? color;
-
-  @override
-  State<MicPulse> createState() => _MicPulseState();
-}
-
-class _MicPulseState extends State<MicPulse>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: MicPulse.duration,
-  );
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.listening) _controller.repeat();
-  }
-
-  @override
-  void didUpdateWidget(MicPulse old) {
-    super.didUpdateWidget(old);
-    if (widget.listening == old.listening) return;
-    if (widget.listening) {
-      _controller.repeat();
-    } else {
-      _controller.stop();
-      _controller.value = 0;
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final color = widget.color ?? Theme.of(context).colorScheme.primary;
-
-    return AnimatedBuilder(
-      animation: _controller,
-      child: widget.child,
-      builder: (context, child) {
-        final t = _controller.value;
-        return Stack(
-          alignment: Alignment.center,
-          children: [
-            if (widget.listening)
-              // Painted behind, and never large enough to move anything: the
-              // halo grows outside the button's own box rather than pushing
-              // the layout around it.
-              IgnorePointer(
-                child: Transform.scale(
-                  scale: 1 + t * 0.5,
-                  child: Opacity(
-                    opacity: (1 - t) * 0.35,
-                    child: Container(
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        color: color,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            child!,
-          ],
-        );
-      },
-    );
-  }
-}
+// The pulsing halo that used to be here went with the microphone it was
+// drawn around: dictation belongs to the assistant now, and the assistant's
+// own button has [AssistantNavIcon]. The one remaining microphone — the
+// button beside a note field in the quick sheets — carries its own.
 
 /// The tick that says it was written down.
 ///
