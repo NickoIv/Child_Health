@@ -12,6 +12,24 @@
   "navFamily": "Семья",
   "navMore": "Ещё",
   "navAsk": "ИИ",
+  "navPhotos": "Фотографии",
+  "photosAdd": "Добавить фото",
+  "photosEdit": "Изменить фото",
+  "photosWhen": "Когда снято",
+  "photosAbout": "Что здесь",
+  "photosAboutHint": "Например, «первый раз сел сам»",
+  "photosSaved": "Фото сохранено",
+  "photosDeleted": "Фото удалено",
+  "photosEmpty": "Здесь будут фотографии малыша",
+  "photosEmptyHint": "Снимки из записей дневника попадут сюда сами, а отдельные можно добавить кнопкой ниже",
+  "photosCount": "{n, plural, one{{n} фото} few{{n} фото} many{{n} фото} other{{n} фото}}",
+  "@photosCount": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "authSignInSubtitle": "Войдите, чтобы продолжить",
   "authRegisterSubtitle": "Создайте учётную запись родителя",
   "authEmail": "Email",

@@ -16,6 +16,7 @@ import '../../features/family/family_screen.dart';
 import '../../features/growth/growth_screen.dart';
 import '../../features/illness/illness_screen.dart';
 import '../../features/medical/medical_screen.dart';
+import '../../features/photos/photos_screen.dart';
 import '../../features/reminders/reminders_screen.dart';
 import '../../features/settings/settings_screen.dart';
 import '../../features/shell/app_shell.dart';
@@ -108,6 +109,13 @@ final appDestinations = <AppDestination>[
     icon: Icons.notifications_outlined,
     selectedIcon: Icons.notifications,
     builder: RemindersScreen.new,
+  ),
+  AppDestination(
+    path: '/photos',
+    label: (l) => l.navPhotos,
+    icon: Icons.photo_library_outlined,
+    selectedIcon: Icons.photo_library,
+    builder: PhotosScreen.new,
   ),
   AppDestination(
     path: '/children',

@@ -45,6 +45,50 @@ class AppLocalizationsRu extends AppLocalizations {
   String get navAsk => 'ИИ';
 
   @override
+  String get navPhotos => 'Фотографии';
+
+  @override
+  String get photosAdd => 'Добавить фото';
+
+  @override
+  String get photosEdit => 'Изменить фото';
+
+  @override
+  String get photosWhen => 'Когда снято';
+
+  @override
+  String get photosAbout => 'Что здесь';
+
+  @override
+  String get photosAboutHint => 'Например, «первый раз сел сам»';
+
+  @override
+  String get photosSaved => 'Фото сохранено';
+
+  @override
+  String get photosDeleted => 'Фото удалено';
+
+  @override
+  String get photosEmpty => 'Здесь будут фотографии малыша';
+
+  @override
+  String get photosEmptyHint =>
+      'Снимки из записей дневника попадут сюда сами, а отдельные можно добавить кнопкой ниже';
+
+  @override
+  String photosCount(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n фото',
+      many: '$n фото',
+      few: '$n фото',
+      one: '$n фото',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get authSignInSubtitle => 'Войдите, чтобы продолжить';
 
   @override

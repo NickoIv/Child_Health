@@ -172,6 +172,72 @@ abstract class AppLocalizations {
   /// **'ИИ'**
   String get navAsk;
 
+  /// No description provided for @navPhotos.
+  ///
+  /// In ru, this message translates to:
+  /// **'Фотографии'**
+  String get navPhotos;
+
+  /// No description provided for @photosAdd.
+  ///
+  /// In ru, this message translates to:
+  /// **'Добавить фото'**
+  String get photosAdd;
+
+  /// No description provided for @photosEdit.
+  ///
+  /// In ru, this message translates to:
+  /// **'Изменить фото'**
+  String get photosEdit;
+
+  /// No description provided for @photosWhen.
+  ///
+  /// In ru, this message translates to:
+  /// **'Когда снято'**
+  String get photosWhen;
+
+  /// No description provided for @photosAbout.
+  ///
+  /// In ru, this message translates to:
+  /// **'Что здесь'**
+  String get photosAbout;
+
+  /// No description provided for @photosAboutHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Например, «первый раз сел сам»'**
+  String get photosAboutHint;
+
+  /// No description provided for @photosSaved.
+  ///
+  /// In ru, this message translates to:
+  /// **'Фото сохранено'**
+  String get photosSaved;
+
+  /// No description provided for @photosDeleted.
+  ///
+  /// In ru, this message translates to:
+  /// **'Фото удалено'**
+  String get photosDeleted;
+
+  /// No description provided for @photosEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'Здесь будут фотографии малыша'**
+  String get photosEmpty;
+
+  /// No description provided for @photosEmptyHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Снимки из записей дневника попадут сюда сами, а отдельные можно добавить кнопкой ниже'**
+  String get photosEmptyHint;
+
+  /// No description provided for @photosCount.
+  ///
+  /// In ru, this message translates to:
+  /// **'{n, plural, one{{n} фото} few{{n} фото} many{{n} фото} other{{n} фото}}'**
+  String photosCount(int n);
+
   /// No description provided for @authSignInSubtitle.
   ///
   /// In ru, this message translates to:

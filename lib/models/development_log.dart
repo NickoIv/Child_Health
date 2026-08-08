@@ -43,6 +43,12 @@ abstract final class LogTitles {
   static const medicine = 'Лекарство';
   static const alarm = 'Тревога';
   static const temperature = 'Температура';
+
+  /// A photograph added for its own sake rather than attached to something
+  /// that happened. It is still an ordinary entry on the timeline — a picture
+  /// of a child on a Tuesday *is* what happened that Tuesday — so it carries
+  /// the date and the words she wrote and nothing else.
+  static const photo = 'Фото';
 }
 
 /// Which breast, or a bottle.

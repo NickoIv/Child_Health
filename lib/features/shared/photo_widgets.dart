@@ -81,6 +81,57 @@ class PhotoThumb extends ConsumerWidget {
   }
 }
 
+/// A photograph filling whatever box it is given.
+///
+/// [PhotoThumb] is square, tappable and small; the album's carousel wants the
+/// opposite of all three — the whole card, cropped to it, with the tap handled
+/// by the slide around it.
+class PhotoFill extends ConsumerWidget {
+  const PhotoFill({required this.photoId, super.key});
+
+  final String photoId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final photo = ref.watch(photoProvider(photoId));
+
+    return photo.when(
+      loading: () => ColoredBox(
+        color: Warm.soft(theme.brightness),
+        child: const Center(
+          child: SizedBox(
+            width: 22,
+            height: 22,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      ),
+      error: (_, _) => ColoredBox(
+        color: Warm.soft(theme.brightness),
+        child: Icon(
+          Icons.broken_image_outlined,
+          color: theme.colorScheme.outline,
+        ),
+      ),
+      data: (p) => p == null
+          ? ColoredBox(
+              color: Warm.soft(theme.brightness),
+              child: Icon(
+                Icons.image_not_supported_outlined,
+                color: theme.colorScheme.outline,
+              ),
+            )
+          : Image.memory(
+              p.bytes,
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: double.infinity,
+            ),
+    );
+  }
+}
+
 /// Opens the full-screen viewer.
 ///
 /// A route rather than a dialog: a photo filling the screen wants the back

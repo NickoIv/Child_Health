@@ -45,6 +45,49 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navAsk => 'AI';
 
   @override
+  String get navPhotos => 'Photos';
+
+  @override
+  String get photosAdd => 'Add a photo';
+
+  @override
+  String get photosEdit => 'Edit photo';
+
+  @override
+  String get photosWhen => 'When it was taken';
+
+  @override
+  String get photosAbout => 'What is here';
+
+  @override
+  String get photosAboutHint =>
+      '“Sat up on his own for the first time”, for example';
+
+  @override
+  String get photosSaved => 'Photo saved';
+
+  @override
+  String get photosDeleted => 'Photo deleted';
+
+  @override
+  String get photosEmpty => 'Your baby\'s photos will live here';
+
+  @override
+  String get photosEmptyHint =>
+      'Pictures from diary entries arrive here on their own; add any others with the button below';
+
+  @override
+  String photosCount(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n photos',
+      one: '$n photo',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get authSignInSubtitle => 'Sign in to continue';
 
   @override

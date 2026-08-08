@@ -45,6 +45,47 @@ class AppLocalizationsKk extends AppLocalizations {
   String get navAsk => 'ЖИ';
 
   @override
+  String get navPhotos => 'Фотосуреттер';
+
+  @override
+  String get photosAdd => 'Фото қосу';
+
+  @override
+  String get photosEdit => 'Фотоны өзгерту';
+
+  @override
+  String get photosWhen => 'Қашан түсірілген';
+
+  @override
+  String get photosAbout => 'Мұнда не бар';
+
+  @override
+  String get photosAboutHint => 'Мысалы, «алғаш рет өзі отырды»';
+
+  @override
+  String get photosSaved => 'Фото сақталды';
+
+  @override
+  String get photosDeleted => 'Фото жойылды';
+
+  @override
+  String get photosEmpty => 'Мұнда бөбектің фотосуреттері болады';
+
+  @override
+  String get photosEmptyHint =>
+      'Күнделік жазбаларындағы суреттер өздігінен түседі, ал бөлек суреттерді төмендегі түймемен қосуға болады';
+
+  @override
+  String photosCount(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n фото',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get authSignInSubtitle => 'Жалғастыру үшін кіріңіз';
 
   @override
