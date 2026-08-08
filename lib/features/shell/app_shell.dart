@@ -10,6 +10,7 @@ import '../../core/theme/motion.dart';
 import '../../core/theme/theme_mode.dart';
 import '../../models/child.dart';
 import '../../providers.dart';
+import '../assistant/assistant_bubble.dart';
 import '../dashboard/quick_dictation.dart';
 import '../dashboard/voice_action_button.dart';
 import '../family/invite_banner.dart';
@@ -78,10 +79,18 @@ class AppShell extends ConsumerWidget {
               children: [
                 _Rail(index: _index),
                 const VerticalDivider(width: 1),
-                Expanded(child: TabSwitch(index: _index, child: child)),
+                Expanded(
+                  child: _WithAssistant(
+                    location: location,
+                    child: TabSwitch(index: _index, child: child),
+                  ),
+                ),
               ],
             )
-          : TabSwitch(index: _index, child: child),
+          : _WithAssistant(
+              location: location,
+              child: TabSwitch(index: _index, child: child),
+            ),
       // The microphone rides above the tab bar on the home screen: pinned, so
       // it is there the moment the app opens rather than after a scroll, and
       // outside the list, so it covers nothing.
@@ -96,6 +105,47 @@ class AppShell extends ConsumerWidget {
                 ],
               ),
             ),
+    );
+  }
+}
+
+/// Every screen, with the assistant floating over it.
+///
+/// The bubble lives here rather than on each screen for the reason it exists
+/// at all: a question occurs wherever a parent happens to be, and a control
+/// that is only on the tab it belongs to is a control she has to go and find.
+///
+/// Bottom left. Six screens hang an add button off the bottom right and the
+/// home screen's microphone spans the width above the tab bar, so the left
+/// corner is the one spot free everywhere. The lift is read from the media
+/// query rather than hard-coded: with `extendBody` the shell hands the tab
+/// bar's height down as bottom padding, and that height is not the same on
+/// the home screen, where the panel carries the microphone too.
+class _WithAssistant extends StatelessWidget {
+  const _WithAssistant({required this.location, required this.child});
+
+  final String location;
+  final Widget child;
+
+  /// The gap between the bubble and the glass under it.
+  static const _margin = 16.0;
+
+  @override
+  Widget build(BuildContext context) {
+    // Not on the chat itself: a button that opens the screen you are looking
+    // at is furniture.
+    final onChat = location.startsWith('/assistant/chat');
+
+    return Stack(
+      children: [
+        Positioned.fill(child: child),
+        if (!onChat)
+          Positioned(
+            left: _margin,
+            bottom: MediaQuery.paddingOf(context).bottom + _margin,
+            child: AssistantBubble(trigger: location),
+          ),
+      ],
     );
   }
 }
