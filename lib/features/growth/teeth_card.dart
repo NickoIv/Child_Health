@@ -66,23 +66,40 @@ class TeethCard extends ConsumerWidget {
           _Arch(
             jaw: Jaw.upper,
             erupted: erupted,
+            birthDate: child.birthDate,
             onTap: (slot) => _mark(context, ref, slot, erupted[slot.code]),
           ),
           const SizedBox(height: 10),
           _Arch(
             jaw: Jaw.lower,
             erupted: erupted,
+            birthDate: child.birthDate,
             onTap: (slot) => _mark(context, ref, slot, erupted[slot.code]),
           ),
-          const SizedBox(height: 14),
-          Text(
-            next.isEmpty
-                ? l.teethHint
-                : l.teethNext(toothName(l, next.first).toLowerCase()),
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+          const SizedBox(height: 12),
+          const _Legend(),
+          const SizedBox(height: 12),
+          // Both lines, not one or the other. The instruction used to appear
+          // only once every tooth was marked — which is to say, only to
+          // someone who had already worked out what to do. It is the person
+          // looking at an empty mouth who needs it.
+          if (next.isNotEmpty)
+            Text(
+              l.teethNext(toothName(l, next.first).toLowerCase()),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
-          ),
+          if (erupted.length < primaryTeeth.length) ...[
+            const SizedBox(height: 2),
+            Text(
+              l.teethHint,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: Warm.accentOn(theme.brightness),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
           const SizedBox(height: 10),
           // The same line every other screen carrying a figure has. The one
           // on this screen belongs to the WHO percentiles above and says
@@ -123,8 +140,36 @@ class TeethCard extends ConsumerWidget {
     for (final log in ref.read(logsProvider).value ?? const <DevelopmentLog>[]) {
       if (toothOf(log)?.code == slot.code) await repository.delete(log.id);
     }
+
+    /// Puts the slot back the way it was found. Both directions need it: a
+    /// tooth marked by a mis-tap and a mark taken off by one are the same
+    /// mistake, and undoing either by hand means finding the right square
+    /// among twenty and remembering the date that was on it.
+    Future<void> restore() async {
+      for (final log
+          in ref.read(logsProvider).value ?? const <DevelopmentLog>[]) {
+        if (toothOf(log)?.code == slot.code) await repository.delete(log.id);
+      }
+      if (already == null) return;
+      await repository.add(
+        DevelopmentLog(
+          id: '',
+          childId: child.id,
+          date: already,
+          type: LogType.milestone,
+          title: LogTitles.tooth,
+          tags: [toothTag(slot)],
+        ),
+      );
+    }
+
     if (result.date == null) {
-      messenger.showSnackBar(appSnack(l.teethRemove));
+      messenger.showSnackBar(
+        appSnack(
+          l.teethUnmarked,
+          action: SnackBarAction(label: l.commonUndo, onPressed: restore),
+        ),
+      );
       return;
     }
 
@@ -141,7 +186,11 @@ class TeethCard extends ConsumerWidget {
       ),
     );
     messenger.showSnackBar(
-      appSnack(l.teethMarked(toothName(l, slot)), kind: SnackKind.done),
+      appSnack(
+        l.teethMarked(toothName(l, slot)),
+        kind: SnackKind.done,
+        action: SnackBarAction(label: l.commonUndo, onPressed: restore),
+      ),
     );
   }
 }
@@ -151,11 +200,13 @@ class _Arch extends StatelessWidget {
   const _Arch({
     required this.jaw,
     required this.erupted,
+    required this.birthDate,
     required this.onTap,
   });
 
   final Jaw jaw;
   final Map<String, DateTime> erupted;
+  final DateTime birthDate;
   final void Function(ToothSlot) onTap;
 
   @override
@@ -191,6 +242,7 @@ class _Arch extends StatelessWidget {
                   child: _Tooth(
                     slot: slot,
                     at: erupted[slot.code],
+                    birthDate: birthDate,
                     onTap: () => onTap(slot),
                   ),
                 ),
@@ -204,10 +256,16 @@ class _Arch extends StatelessWidget {
 
 /// One tooth: filled once it is through, an outline until then.
 class _Tooth extends StatelessWidget {
-  const _Tooth({required this.slot, required this.at, required this.onTap});
+  const _Tooth({
+    required this.slot,
+    required this.at,
+    required this.birthDate,
+    required this.onTap,
+  });
 
   final ToothSlot slot;
   final DateTime? at;
+  final DateTime birthDate;
   final VoidCallback onTap;
 
   @override
@@ -228,6 +286,7 @@ class _Tooth extends StatelessWidget {
         borderRadius: 7,
         child: Container(
           height: tall ? 32 : 28,
+          alignment: Alignment.center,
           decoration: BoxDecoration(
             color: through
                 ? Warm.accent.withValues(alpha: 0.9)
@@ -240,8 +299,104 @@ class _Tooth extends StatelessWidget {
               width: 1,
             ),
           ),
+          // The age it arrived at, inside the tooth. Two characters at most,
+          // and it turns the picture from a tally into the story a parent
+          // actually tells — «нижние в шесть, верхние в восемь» — without
+          // tapping anything to find out.
+          child: through
+              ? Text(
+                  '${monthsAt(birthDate, at!)}',
+                  maxLines: 1,
+                  style: const TextStyle(
+                    fontFamily: AppTheme.fontFamily,
+                    fontSize: 12,
+                    height: 1,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    fontFeatures: AppTheme.tabular,
+                  ),
+                )
+              : null,
         ),
       ),
+    );
+  }
+}
+
+/// What the two kinds of square mean, and what the number in one is.
+///
+/// A picture that has to be worked out is a picture that gets skipped. Three
+/// short phrases under the arches cost one line and remove the guessing —
+/// «не все сразу разберутся» was exactly right.
+class _Legend extends StatelessWidget {
+  const _Legend();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l = AppLocalizations.of(context);
+    final style = theme.textTheme.bodySmall?.copyWith(
+      color: theme.colorScheme.onSurfaceVariant,
+    );
+
+    // Wrap rather than Row: three phrases and two swatches do not fit one
+    // line at 390 px, and this card is read on a phone.
+    return Wrap(
+      spacing: 14,
+      runSpacing: 6,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        _Swatch(
+          filled: true,
+          label: l.teethLegendThrough,
+          style: style,
+        ),
+        _Swatch(
+          filled: false,
+          label: l.teethLegendNotYet,
+          style: style,
+        ),
+        Text(l.teethLegendAge, style: style),
+      ],
+    );
+  }
+}
+
+/// One square, drawn exactly as the teeth above are.
+class _Swatch extends StatelessWidget {
+  const _Swatch({
+    required this.filled,
+    required this.label,
+    required this.style,
+  });
+
+  final bool filled;
+  final String label;
+  final TextStyle? style;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 14,
+          height: 14,
+          decoration: BoxDecoration(
+            color: filled
+                ? Warm.accent.withValues(alpha: 0.9)
+                : theme.colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(
+              color: filled ? Warm.accent : Warm.hairline(theme.brightness),
+              width: 1,
+            ),
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(label, style: style),
+      ],
     );
   }
 }

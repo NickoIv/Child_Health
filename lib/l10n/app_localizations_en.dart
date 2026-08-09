@@ -2588,6 +2588,15 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get teethLegendThrough => 'through';
+
+  @override
+  String get teethLegendNotYet => 'not yet';
+
+  @override
+  String get teethLegendAge => 'the figure is the age in months';
+
+  @override
   String get teethHint => 'Tap a tooth when it comes through';
 
   @override
@@ -2601,6 +2610,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get teethPickDate => 'Another date';
+
+  @override
+  String get teethUnmarked => 'Mark removed';
 
   @override
   String get teethRemove => 'Remove the mark';

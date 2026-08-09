@@ -2607,6 +2607,15 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get teethLegendThrough => 'прорезался';
+
+  @override
+  String get teethLegendNotYet => 'ещё нет';
+
+  @override
+  String get teethLegendAge => 'цифра — возраст в месяцах';
+
+  @override
   String get teethHint => 'Нажмите на зуб, когда он прорежется';
 
   @override
@@ -2620,6 +2629,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get teethPickDate => 'Другая дата';
+
+  @override
+  String get teethUnmarked => 'Отметка убрана';
 
   @override
   String get teethRemove => 'Убрать отметку';

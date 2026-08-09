@@ -2,6 +2,7 @@ import 'package:child_health_tracker/app.dart';
 import 'package:child_health_tracker/core/care/teeth.dart';
 import 'package:child_health_tracker/core/l10n/app_locale.dart';
 import 'package:child_health_tracker/core/l10n/labels.dart';
+import 'package:child_health_tracker/core/theme/motion.dart';
 import 'package:child_health_tracker/features/growth/teeth_card.dart';
 import 'package:child_health_tracker/l10n/app_localizations.dart';
 import 'package:child_health_tracker/models/child.dart';
@@ -293,6 +294,105 @@ void main() {
       expect(marked.single.type, LogType.milestone);
       expect(marked.single.title, LogTitles.tooth);
       expect(teethIn(logs), hasLength(1));
+    });
+
+    testWidgets('explains itself to someone seeing it for the first time', (
+      tester,
+    ) async {
+      await pump(tester);
+      final l = await AppLocalizations.delegate.load(defaultLocale);
+
+      await tester.dragUntilVisible(
+        find.byType(TeethCard),
+        find.byType(Scrollable).first,
+        const Offset(0, -200),
+      );
+      await tester.pumpAndSettle();
+
+      final card = find.byType(TeethCard);
+      // The instruction used to appear only once all twenty were marked —
+      // to the one person who no longer needed it.
+      expect(
+        find.descendant(of: card, matching: find.text(l.teethHint)),
+        findsOneWidget,
+      );
+      // And the picture says what its two kinds of square mean.
+      for (final legend in [
+        l.teethLegendThrough,
+        l.teethLegendNotYet,
+        l.teethLegendAge,
+      ]) {
+        expect(
+          find.descendant(of: card, matching: find.text(legend)),
+          findsOneWidget,
+          reason: legend,
+        );
+      }
+    });
+
+    testWidgets('a marked tooth carries the age it arrived at', (
+      tester,
+    ) async {
+      // Born 10 August 2025; this one came through at seven months.
+      await pump(tester, logs: [toothLog('lc-l', DateTime(2026, 3, 12))]);
+
+      await tester.dragUntilVisible(
+        find.byType(TeethCard),
+        find.byType(Scrollable).first,
+        const Offset(0, -200),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.descendant(of: find.byType(TeethCard), matching: find.text('7')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('a tooth marked by mistake is one tap from being unmarked', (
+      tester,
+    ) async {
+      // The live store, because what is being tested is that the undo puts
+      // the diary back the way it was.
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(const ProviderScope(child: ChildHealthApp()));
+      await tester.pumpAndSettle();
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(ChildHealthApp)),
+      );
+      final l = await AppLocalizations.delegate.load(defaultLocale);
+
+      await tester.tap(find.byIcon(Icons.more_horiz));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l.navGrowth));
+      await tester.pumpAndSettle();
+      await tester.dragUntilVisible(
+        find.byType(TeethCard),
+        find.byType(Scrollable).first,
+        const Offset(0, -200),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.descendant(
+          of: find.byType(TeethCard),
+          matching: find.byType(Pressable),
+        ).first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l.teethToday));
+      await tester.pumpAndSettle();
+
+      expect(teethIn(container.read(logsProvider).value!), hasLength(1));
+
+      // The strip that says it happened is also the way back.
+      await tester.tap(find.text(l.commonUndo));
+      await tester.pumpAndSettle();
+
+      expect(teethIn(container.read(logsProvider).value!), isEmpty);
     });
 
     testWidgets('counts what is down and never grades the child', (

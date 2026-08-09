@@ -4588,6 +4588,24 @@ abstract class AppLocalizations {
   /// **'Дальше обычно — {tooth}'**
   String teethNext(String tooth);
 
+  /// No description provided for @teethLegendThrough.
+  ///
+  /// In ru, this message translates to:
+  /// **'прорезался'**
+  String get teethLegendThrough;
+
+  /// No description provided for @teethLegendNotYet.
+  ///
+  /// In ru, this message translates to:
+  /// **'ещё нет'**
+  String get teethLegendNotYet;
+
+  /// No description provided for @teethLegendAge.
+  ///
+  /// In ru, this message translates to:
+  /// **'цифра — возраст в месяцах'**
+  String get teethLegendAge;
+
   /// No description provided for @teethHint.
   ///
   /// In ru, this message translates to:
@@ -4617,6 +4635,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Другая дата'**
   String get teethPickDate;
+
+  /// No description provided for @teethUnmarked.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отметка убрана'**
+  String get teethUnmarked;
 
   /// No description provided for @teethRemove.
   ///

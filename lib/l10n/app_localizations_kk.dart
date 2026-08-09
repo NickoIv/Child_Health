@@ -2571,6 +2571,15 @@ class AppLocalizationsKk extends AppLocalizations {
   }
 
   @override
+  String get teethLegendThrough => 'шықты';
+
+  @override
+  String get teethLegendNotYet => 'әзірге жоқ';
+
+  @override
+  String get teethLegendAge => 'сандар — айдағы жасы';
+
+  @override
   String get teethHint => 'Тіс шыққанда оны басыңыз';
 
   @override
@@ -2584,6 +2593,9 @@ class AppLocalizationsKk extends AppLocalizations {
 
   @override
   String get teethPickDate => 'Басқа күн';
+
+  @override
+  String get teethUnmarked => 'Белгі алынды';
 
   @override
   String get teethRemove => 'Белгіні алу';
