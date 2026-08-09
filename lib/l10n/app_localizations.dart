@@ -1048,6 +1048,102 @@ abstract class AppLocalizations {
   /// **'Три часа'**
   String get quickSleep180;
 
+  /// No description provided for @feedingSolid.
+  ///
+  /// In ru, this message translates to:
+  /// **'Прикорм'**
+  String get feedingSolid;
+
+  /// No description provided for @solidsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Прикорм и реакции'**
+  String get solidsTitle;
+
+  /// No description provided for @logReaction.
+  ///
+  /// In ru, this message translates to:
+  /// **'Реакция'**
+  String get logReaction;
+
+  /// No description provided for @solidsEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'Прикорма пока нет'**
+  String get solidsEmpty;
+
+  /// No description provided for @solidsEmptyHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Первая ложка отмечается в «Покормила» → «Прикорм»'**
+  String get solidsEmptyHint;
+
+  /// No description provided for @solidWhat.
+  ///
+  /// In ru, this message translates to:
+  /// **'Что ели'**
+  String get solidWhat;
+
+  /// No description provided for @solidWhatHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Например, кабачок'**
+  String get solidWhatHint;
+
+  /// No description provided for @solidTimesCount.
+  ///
+  /// In ru, this message translates to:
+  /// **'{n, plural, one{{n} раз} few{{n} раза} many{{n} раз} other{{n} раза}}'**
+  String solidTimesCount(int n);
+
+  /// No description provided for @solidFirstAt.
+  ///
+  /// In ru, this message translates to:
+  /// **'Впервые {date}'**
+  String solidFirstAt(String date);
+
+  /// No description provided for @solidWatch.
+  ///
+  /// In ru, this message translates to:
+  /// **'Новое — наблюдаем до {date}'**
+  String solidWatch(String date);
+
+  /// No description provided for @solidWatchHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Три дня без нового продукта — так понятно, на что реакция'**
+  String get solidWatchHint;
+
+  /// No description provided for @solidReactionAdd.
+  ///
+  /// In ru, this message translates to:
+  /// **'Была реакция'**
+  String get solidReactionAdd;
+
+  /// No description provided for @solidReactionTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Реакция на «{food}»'**
+  String solidReactionTitle(String food);
+
+  /// No description provided for @solidReactionWhat.
+  ///
+  /// In ru, this message translates to:
+  /// **'Что вы заметили'**
+  String get solidReactionWhat;
+
+  /// No description provided for @solidReactionHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Например, сыпь на щеках к вечеру'**
+  String get solidReactionHint;
+
+  /// No description provided for @solidReactionNone.
+  ///
+  /// In ru, this message translates to:
+  /// **'Реакций не было'**
+  String get solidReactionNone;
+
   /// No description provided for @sleepForecastTitle.
   ///
   /// In ru, this message translates to:

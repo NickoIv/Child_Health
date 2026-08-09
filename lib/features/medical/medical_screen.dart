@@ -11,6 +11,7 @@ import '../reports/export_sheet.dart';
 import '../shared/photo_widgets.dart';
 import '../shared/widgets.dart';
 import 'record_form.dart';
+import 'solids_card.dart';
 
 /// Medical card: diagnoses, prescriptions, lab results and the PDF summary
 /// for the doctor, per 2.5.
@@ -53,6 +54,11 @@ class _MedicalScreenState extends ConsumerState<MedicalScreen> {
           _QuestionsCard(onAdd: _addQuestion),
           const SizedBox(height: 16),
           _ReportCard(onExport: _openExport),
+          const SizedBox(height: 16),
+          // Above the records rather than below them: what has been eaten is
+          // asked about at every appointment in the first year, and a folder
+          // of scans is asked about at almost none of them.
+          SolidsCard(childId: child.id),
           const SizedBox(height: 16),
           if (records.isEmpty)
             SectionCard(

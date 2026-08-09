@@ -224,6 +224,50 @@
   "quickSleep90": "Полтора часа",
   "quickSleep120": "Два часа",
   "quickSleep180": "Три часа",
+  "feedingSolid": "Прикорм",
+  "solidsTitle": "Прикорм и реакции",
+  "logReaction": "Реакция",
+  "solidsEmpty": "Прикорма пока нет",
+  "solidsEmptyHint": "Первая ложка отмечается в «Покормила» → «Прикорм»",
+  "solidWhat": "Что ели",
+  "solidWhatHint": "Например, кабачок",
+  "solidTimesCount": "{n, plural, one{{n} раз} few{{n} раза} many{{n} раз} other{{n} раза}}",
+  "@solidTimesCount": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "solidFirstAt": "Впервые {date}",
+  "@solidFirstAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "solidWatch": "Новое — наблюдаем до {date}",
+  "@solidWatch": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "solidWatchHint": "Три дня без нового продукта — так понятно, на что реакция",
+  "solidReactionAdd": "Была реакция",
+  "solidReactionTitle": "Реакция на «{food}»",
+  "@solidReactionTitle": {
+    "placeholders": {
+      "food": {
+        "type": "String"
+      }
+    }
+  },
+  "solidReactionWhat": "Что вы заметили",
+  "solidReactionHint": "Например, сыпь на щеках к вечеру",
+  "solidReactionNone": "Реакций не было",
   "sleepForecastTitle": "Скоро сон",
   "sleepForecastOverdue": "Не спит дольше обычного",
   "sleepForecastAt": "Обычно засыпает около {time}",

@@ -39,7 +39,16 @@ void main() {
     'Тяжёлая',
     'Средняя',
     'Лёгкая',
+    // The fourth way food arrives, and the note a reaction is filed as. Both
+    // are stored in Russian like every other enum code and title.
+    'Прикорм',
+    'Реакция',
   ];
+
+  /// The one Russian word on these screens that is allowed to stay: «Кабачок»
+  /// is what the mother typed, and translating a mother's word for her child's
+  /// first food would be rewriting her diary rather than localizing the app.
+  const herOwnWords = 'Кабачок';
 
   /// And the Kazakh ones an English screen must not borrow.
   const kazakhLeaks = ['Сол жақ', 'Оң жақ', 'Жаялық', 'Ұйқы'];
@@ -56,6 +65,7 @@ void main() {
     NappyKind? nappy,
     double? temperature,
     Severity? severity,
+    String? food,
   }) => DevelopmentLog(
     id: '$title$ago',
     childId: 'demo',
@@ -67,6 +77,7 @@ void main() {
     feedingSide: side,
     nappyKind: nappy,
     severity: severity,
+    food: food,
     metrics: Metrics(temperatureC: temperature),
   );
 
@@ -88,6 +99,10 @@ void main() {
         severity: Severity.moderate, ago: const Duration(hours: 6)),
     log(LogType.note, title: LogTitles.medicine,
         ago: const Duration(hours: 7)),
+    log(LogType.feeding, title: 'Кормление', side: FeedingSide.solid,
+        food: herOwnWords, ago: const Duration(hours: 2)),
+    log(LogType.note, title: LogTitles.reaction, food: herOwnWords,
+        ago: const Duration(hours: 1, minutes: 30)),
   ];
 
   final child = Child(

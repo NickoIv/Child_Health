@@ -527,6 +527,71 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quickSleep180 => 'Three hours';
 
   @override
+  String get feedingSolid => 'Solids';
+
+  @override
+  String get solidsTitle => 'Solids and reactions';
+
+  @override
+  String get logReaction => 'Reaction';
+
+  @override
+  String get solidsEmpty => 'No solids recorded yet';
+
+  @override
+  String get solidsEmptyHint =>
+      'The first spoon is recorded under «Fed» → «Solids»';
+
+  @override
+  String get solidWhat => 'What was eaten';
+
+  @override
+  String get solidWhatHint => 'Courgette, for example';
+
+  @override
+  String solidTimesCount(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n times',
+      one: '$n time',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String solidFirstAt(String date) {
+    return 'First given $date';
+  }
+
+  @override
+  String solidWatch(String date) {
+    return 'New — watching until $date';
+  }
+
+  @override
+  String get solidWatchHint =>
+      'Three days before the next new food, so a reaction has one cause';
+
+  @override
+  String get solidReactionAdd => 'There was a reaction';
+
+  @override
+  String solidReactionTitle(String food) {
+    return 'Reaction to «$food»';
+  }
+
+  @override
+  String get solidReactionWhat => 'What did you notice';
+
+  @override
+  String get solidReactionHint =>
+      'A rash on the cheeks by evening, for example';
+
+  @override
+  String get solidReactionNone => 'No reactions';
+
+  @override
   String get sleepForecastTitle => 'Sleep is due soon';
 
   @override

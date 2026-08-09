@@ -139,7 +139,10 @@ PeriodReport buildPeriodReport(
         feedings++;
         if (log.feedingSide == FeedingSide.bottle) {
           bottle++;
-        } else if (log.feedingSide != null) {
+        } else if (log.feedingSide?.isMilk ?? false) {
+          // A spoon is a feed but it is not a breast: without this test every
+          // courgette was counted as one, and the split a doctor reads —
+          // «грудь 6, бутылочка 2» — quietly stopped being true.
           breast++;
         }
       case LogType.nappy:

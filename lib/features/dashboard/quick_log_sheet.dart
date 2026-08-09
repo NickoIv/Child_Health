@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/analytics/daily_care.dart';
 import '../../core/care/active_timer.dart';
+import '../../core/care/solids.dart';
 import '../../core/theme/app_sheet.dart';
 import '../../core/theme/app_snack.dart';
 import '../../core/l10n/labels.dart';
@@ -115,6 +116,10 @@ class _QuickLogSheetState extends ConsumerState<_QuickLogSheet> {
   /// buttons, and what they do is start a clock instead of filing an entry.
   bool _timing = false;
 
+  /// She chose the spoon, and a spoon has a name.
+  bool _solid = false;
+  final _food = TextEditingController();
+
   DateTime _at = DateTime.now();
   final _note = TextEditingController();
   double _temperature = 37.0;
@@ -123,6 +128,7 @@ class _QuickLogSheetState extends ConsumerState<_QuickLogSheet> {
   @override
   void dispose() {
     _note.dispose();
+    _food.dispose();
     super.dispose();
   }
 
@@ -276,9 +282,82 @@ class _QuickLogSheetState extends ConsumerState<_QuickLogSheet> {
     ],
     if (widget.action == QuickLogAction.temperature)
       ..._temperatureStep(l, theme)
+    else if (_solid)
+      ..._solidStep(l, theme)
     else
       ..._options(l),
   ];
+
+  /// The spoon's own step: what it was, and nothing else.
+  ///
+  /// The names she has used before are chips above the field, because after
+  /// the first fortnight almost every spoon is a repeat and typing «кабачок»
+  /// for the ninth time is the app asking her to do its filing.
+  List<Widget> _solidStep(AppLocalizations l, ThemeData theme) {
+    final logs = ref.watch(logsProvider).value ?? const <DevelopmentLog>[];
+    final recent = recentFoods(logs);
+    final food = _food.text.trim();
+
+    return [
+      if (recent.isNotEmpty) ...[
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final name in recent)
+              ChoicePill(
+                label: name,
+                selected: foodKey(name) == foodKey(food),
+                onTap: () => setState(() {
+                  _food.text = name;
+                  _food.selection = TextSelection.collapsed(
+                    offset: name.length,
+                  );
+                }),
+              ),
+          ],
+        ),
+        const SizedBox(height: 14),
+      ],
+      TextField(
+        controller: _food,
+        autofocus: recent.isEmpty,
+        textCapitalization: TextCapitalization.sentences,
+        onChanged: (_) => setState(() {}),
+        onSubmitted: (_) => food.isEmpty ? null : _saveSolid(l),
+        decoration: InputDecoration(
+          labelText: l.solidWhat,
+          hintText: l.solidWhatHint,
+          prefixIcon: const Icon(Icons.restaurant_outlined),
+        ),
+      ),
+      const SizedBox(height: 14),
+      FilledButton(
+        onPressed: _saving || food.isEmpty ? null : () => _saveSolid(l),
+        style: FilledButton.styleFrom(
+          minimumSize: const Size.fromHeight(_BigButton.height),
+        ),
+        child: _saving
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : Text(l.quickSaveButton),
+      ),
+      const SizedBox(height: 10),
+      // Said once, where it is acted on: one new food at a time, three days
+      // apart, is the whole method — and it is the reason the medical card can
+      // later say which food a rash belonged to.
+      Text(
+        l.solidWatchHint,
+        textAlign: TextAlign.center,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: Warm.onCardSoft(theme.brightness),
+        ),
+      ),
+    ];
+  }
 
   List<Widget> _options(AppLocalizations l) {
     final entries = switch (widget.action) {
@@ -289,9 +368,17 @@ class _QuickLogSheetState extends ConsumerState<_QuickLogSheet> {
               FeedingSide.left => Icons.chevron_left,
               FeedingSide.right => Icons.chevron_right,
               FeedingSide.bottle => Icons.local_drink_outlined,
+              FeedingSide.solid => Icons.restaurant_outlined,
             },
             label: s.localizedLabel(l),
-            onTap: () => _timing ? _startTimer(l, s) : _saveFeeding(l, s),
+            // A spoon has a name, so it gets a second step. Milk does not, and
+            // putting a field in front of a night feed to keep the four
+            // buttons symmetrical would cost the fastest path in the app.
+            onTap: () => s == FeedingSide.solid
+                ? setState(() => _solid = true)
+                : _timing
+                ? _startTimer(l, s)
+                : _saveFeeding(l, s),
           ),
       ],
       QuickLogAction.nappy => [
@@ -418,6 +505,29 @@ class _QuickLogSheetState extends ConsumerState<_QuickLogSheet> {
         '${l.quickSheetFeeding.toLowerCase()}, '
         '${side.localizedLabel(l).toLowerCase()}',
       ),
+    );
+  }
+
+  /// A spoon, written as a feed with a name on it.
+  ///
+  /// Not a type of its own: it is still food, still on the day's timeline,
+  /// still in the count of how often the child ate. The only thing added is
+  /// the word for what it was — which is the thing a doctor asks for and the
+  /// thing this app could not previously answer.
+  Future<void> _saveSolid(AppLocalizations l) {
+    final food = _food.text.trim();
+    return _commit(
+      DevelopmentLog(
+        id: '',
+        childId: widget.childId,
+        date: _when,
+        type: LogType.feeding,
+        title: LogType.feeding.label,
+        description: _note.text.trim(),
+        feedingSide: FeedingSide.solid,
+        food: food,
+      ),
+      l.quickSaved('${l.feedingSolid.toLowerCase()}, ${food.toLowerCase()}'),
     );
   }
 

@@ -49,18 +49,41 @@ abstract final class LogTitles {
   /// of a child on a Tuesday *is* what happened that Tuesday — so it carries
   /// the date and the words she wrote and nothing else.
   static const photo = 'Фото';
+
+  /// Something the parent saw after a food — a rash, a stomach, a refusal.
+  ///
+  /// A note rather than an illness: an illness day colours the heat map and
+  /// belongs to a fever, while this is an observation attached to a name in
+  /// [DevelopmentLog.food]. What it is for is the sentence a doctor asks for
+  /// — «на что была реакция и какая» — and that sentence is exactly a date, a
+  /// food and what she saw.
+  static const reaction = 'Реакция';
 }
 
-/// Which breast, or a bottle.
+/// Which breast, or a bottle, or a spoon.
+///
+/// [solid] is the fourth way food arrives rather than a type of its own: it is
+/// still a feed, on the same timeline, in the same daily count. What makes it
+/// different is that it has a name — see [DevelopmentLog.food] — and that the
+/// name is the thing a doctor asks about when a rash appears.
+///
+/// A client written before this existed reads an unknown code as null, which
+/// is what [fromCode] already did for a missing field: an old build shows the
+/// entry as a feed with no side rather than crashing on it.
 enum FeedingSide {
   left('left', 'Левая'),
   right('right', 'Правая'),
-  bottle('bottle', 'Бутылочка');
+  bottle('bottle', 'Бутылочка'),
+  solid('solid', 'Прикорм');
 
   const FeedingSide(this.code, this.label);
 
   final String code;
   final String label;
+
+  /// Milk, from whichever source. The reports count these together and the
+  /// spoon separately, because they answer different questions.
+  bool get isMilk => this != solid;
 
   static FeedingSide? fromCode(String? code) {
     if (code == null) return null;
@@ -189,6 +212,7 @@ class DevelopmentLog {
     this.durationMinutes,
     this.nightWakings,
     this.nightFeeds,
+    this.food,
   });
 
   final String id;
@@ -221,7 +245,22 @@ class DevelopmentLog {
   final int? nightWakings;
   final int? nightFeeds;
 
+  /// What was eaten, on a [FeedingSide.solid] feed — «кабачок», «гречка».
+  ///
+  /// A free-typed name rather than a list to choose from: first foods differ
+  /// by family and by country, and a picker of thirty vegetables would be
+  /// wrong for anyone whose first spoon was something else. Grouping happens
+  /// on the trimmed lower-cased name, so «Кабачок» and «кабачок » are one
+  /// food.
+  ///
+  /// Also set on a reaction note, where it names the food suspected rather
+  /// than the food given.
+  final String? food;
+
   bool get isNightSleep => type == LogType.sleep && nightWakings != null;
+
+  /// A spoon rather than a feed of milk.
+  bool get isSolid => type == LogType.feeding && feedingSide == FeedingSide.solid;
 
   /// Local copy of the duration wording, so the model stays free of imports
   /// from the analytics layer.
@@ -236,6 +275,7 @@ class DevelopmentLog {
   /// One-line summary for the feed, e.g. "Левая · 15 мин".
   String get routineSummary => [
     if (feedingSide != null) feedingSide!.label,
+    if (food != null && food!.trim().isNotEmpty) food!.trim(),
     if (nappyKind != null) nappyKind!.label,
     if (durationMinutes != null) _duration(durationMinutes!),
     if ((nightWakings ?? 0) > 0)
@@ -257,6 +297,7 @@ class DevelopmentLog {
     int? durationMinutes,
     int? nightWakings,
     int? nightFeeds,
+    String? food,
   }) {
     return DevelopmentLog(
       id: id,
@@ -274,6 +315,7 @@ class DevelopmentLog {
       durationMinutes: durationMinutes ?? this.durationMinutes,
       nightWakings: nightWakings ?? this.nightWakings,
       nightFeeds: nightFeeds ?? this.nightFeeds,
+      food: food ?? this.food,
     );
   }
 
@@ -295,6 +337,7 @@ class DevelopmentLog {
     durationMinutes: durationMinutes,
     nightWakings: nightWakings,
     nightFeeds: nightFeeds,
+    food: food,
   );
 
   Map<String, dynamic> toMap() => {
@@ -312,6 +355,7 @@ class DevelopmentLog {
     if (durationMinutes != null) 'duration_minutes': durationMinutes,
     if (nightWakings != null) 'night_wakings': nightWakings,
     if (nightFeeds != null) 'night_feeds': nightFeeds,
+    if (food != null) 'food': food,
   };
 
   factory DevelopmentLog.fromMap(String id, Map<String, dynamic> map) {
@@ -331,6 +375,7 @@ class DevelopmentLog {
       durationMinutes: (map['duration_minutes'] as num?)?.toInt(),
       nightWakings: (map['night_wakings'] as num?)?.toInt(),
       nightFeeds: (map['night_feeds'] as num?)?.toInt(),
+      food: (map['food'] as String?)?.trim(),
     );
   }
 }

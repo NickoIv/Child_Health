@@ -525,6 +525,70 @@ class AppLocalizationsKk extends AppLocalizations {
   String get quickSleep180 => 'Үш сағат';
 
   @override
+  String get feedingSolid => 'Қосымша тамақ';
+
+  @override
+  String get solidsTitle => 'Қосымша тамақ және реакциялар';
+
+  @override
+  String get logReaction => 'Дене реакциясы';
+
+  @override
+  String get solidsEmpty => 'Қосымша тамақ әзірге жоқ';
+
+  @override
+  String get solidsEmptyHint =>
+      'Алғашқы қасық «Тамақтандырдым» → «Қосымша тамақ» арқылы белгіленеді';
+
+  @override
+  String get solidWhat => 'Не жеді';
+
+  @override
+  String get solidWhatHint => 'Мысалы, асқабақ';
+
+  @override
+  String solidTimesCount(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n рет',
+      one: '$n рет',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String solidFirstAt(String date) {
+    return 'Алғаш рет $date';
+  }
+
+  @override
+  String solidWatch(String date) {
+    return 'Жаңа — $date дейін бақылаймыз';
+  }
+
+  @override
+  String get solidWatchHint =>
+      'Жаңа өнімге дейін үш күн — сонда реакция неден екені түсінікті';
+
+  @override
+  String get solidReactionAdd => 'Реакция болды';
+
+  @override
+  String solidReactionTitle(String food) {
+    return '«$food» реакциясы';
+  }
+
+  @override
+  String get solidReactionWhat => 'Не байқадыңыз';
+
+  @override
+  String get solidReactionHint => 'Мысалы, кешке қарай беттегі бөртпе';
+
+  @override
+  String get solidReactionNone => 'Реакция болған жоқ';
+
+  @override
   String get sleepForecastTitle => 'Жақында ұйқы';
 
   @override
