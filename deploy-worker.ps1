@@ -24,7 +24,7 @@ Write-Host '--- secrets ---' -ForegroundColor Cyan
 # GEMINI_API_KEY the assistant answers with an explanation instead of an
 # answer, and without FIREBASE_SERVICE_ACCOUNT the hourly sweep logs "not
 # configured" and sends nothing at all. Neither is visible from the app.
-$secrets = npx wrangler secret list 2>&1 | Out-String
+$secrets = npx.cmd wrangler secret list 2>&1 | Out-String
 
 # Required: without either of these something the app promises silently does
 # not happen. Without GEMINI_API_KEY the assistant answers with an explanation
@@ -38,7 +38,7 @@ foreach ($name in @('GEMINI_API_KEY', 'FIREBASE_SERVICE_ACCOUNT')) {
       Write-Host '  Firebase Console -> Project settings -> Service accounts'
       Write-Host '  -> Generate new private key. Paste the whole JSON file.'
     }
-    Write-Host "  npx wrangler secret put $name"
+    Write-Host "  npx.cmd wrangler secret put $name"
     Write-Host ''
     throw "$name is not set on the Worker"
   }
@@ -72,14 +72,14 @@ foreach ($name in @('FIREBASE_API_KEY', 'GREEN_API_ID', 'GREEN_API_TOKEN', 'BREV
       Write-Host '      no domain needed. Verify your address, then check that'
       Write-Host '      MAIL_FROM in wrangler.toml is that address.'
     }
-    Write-Host "      npx wrangler secret put $name"
+    Write-Host "      npx.cmd wrangler secret put $name"
   } else {
     Write-Host "    $name is set"
   }
 }
 
 Write-Host '--- deploy ---' -ForegroundColor Cyan
-npx wrangler deploy
+npx.cmd wrangler deploy
 if ($LASTEXITCODE -ne 0) { throw 'wrangler deploy failed' }
 
 # The cron is what turns a proxy into a scheduler. It lives in wrangler.toml,
