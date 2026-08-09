@@ -2460,6 +2460,83 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportAnswer => 'Doctor\'s answer';
 
   @override
+  String get importTitle => 'Bring data from another app';
+
+  @override
+  String get importPickTitle => 'The file with the entries';
+
+  @override
+  String get importHint =>
+      'Export the entries from your old app and choose the file here. Nothing is written until you confirm — first I show what I found.';
+
+  @override
+  String get importFormats =>
+      'A CSV or text file with columns for date, time, kind of entry, duration and a comment';
+
+  @override
+  String get importPickButton => 'Choose a file';
+
+  @override
+  String get importFoundTitle => 'What was found';
+
+  @override
+  String get importColumns => 'How the columns were read';
+
+  @override
+  String importSkipped(int n) {
+    return 'Rows skipped: $n';
+  }
+
+  @override
+  String get importNothingFound =>
+      'No entry with a date was found in that file';
+
+  @override
+  String get importWriteTitle => 'Add to the diary';
+
+  @override
+  String importWriteHint(int n) {
+    return '$n entries will be added, each on its own date.';
+  }
+
+  @override
+  String importWriteButton(int n) {
+    return 'Bring $n over';
+  }
+
+  @override
+  String importDone(int n) {
+    return 'Entries brought over: $n';
+  }
+
+  @override
+  String get importRoleDate => 'date';
+
+  @override
+  String get importRoleTime => 'time';
+
+  @override
+  String get importRoleKind => 'kind of entry';
+
+  @override
+  String get importRoleDuration => 'duration';
+
+  @override
+  String get importRoleAmount => 'amount';
+
+  @override
+  String get importRoleNote => 'comment';
+
+  @override
+  String get importRoleIgnored => 'not used';
+
+  @override
+  String get settingsImport => 'Bring data over';
+
+  @override
+  String get settingsImportHint => 'From another diary, using its export file';
+
+  @override
   String get teethTitle => 'Teeth';
 
   @override

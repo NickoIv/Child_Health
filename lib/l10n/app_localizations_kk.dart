@@ -2444,6 +2444,82 @@ class AppLocalizationsKk extends AppLocalizations {
   String get reportAnswer => 'Дәрігердің жауабы';
 
   @override
+  String get importTitle => 'Басқа қолданбадан көшіру';
+
+  @override
+  String get importPickTitle => 'Жазбалары бар файл';
+
+  @override
+  String get importHint =>
+      'Бұрынғы қолданбадан жазбаларды шығарып, файлды осында таңдаңыз. Сіз растағанша ештеңе жазылмайды — алдымен не табылғанын көрсетемін.';
+
+  @override
+  String get importFormats =>
+      'CSV немесе мәтіндік файл: күні, уақыты, жазба түрі, ұзақтығы, түсініктеме';
+
+  @override
+  String get importPickButton => 'Файл таңдау';
+
+  @override
+  String get importFoundTitle => 'Не табылды';
+
+  @override
+  String get importColumns => 'Бағандар қалай оқылды';
+
+  @override
+  String importSkipped(int n) {
+    return 'Өткізілген жолдар: $n';
+  }
+
+  @override
+  String get importNothingFound => 'Файлда күні бар бірде-бір жазба табылмады';
+
+  @override
+  String get importWriteTitle => 'Күнделікке көшіру';
+
+  @override
+  String importWriteHint(int n) {
+    return '$n жазба қосылады, әрқайсысы өз күнімен.';
+  }
+
+  @override
+  String importWriteButton(int n) {
+    return '$n көшіру';
+  }
+
+  @override
+  String importDone(int n) {
+    return 'Көшірілген жазбалар: $n';
+  }
+
+  @override
+  String get importRoleDate => 'күні';
+
+  @override
+  String get importRoleTime => 'уақыты';
+
+  @override
+  String get importRoleKind => 'жазба түрі';
+
+  @override
+  String get importRoleDuration => 'ұзақтығы';
+
+  @override
+  String get importRoleAmount => 'көлемі';
+
+  @override
+  String get importRoleNote => 'түсініктеме';
+
+  @override
+  String get importRoleIgnored => 'пайдаланылмайды';
+
+  @override
+  String get settingsImport => 'Деректерді көшіру';
+
+  @override
+  String get settingsImportHint => 'Басқа күнделіктен — шығару файлы арқылы';
+
+  @override
   String get teethTitle => 'Тістер';
 
   @override

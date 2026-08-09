@@ -2480,6 +2480,82 @@ class AppLocalizationsRu extends AppLocalizations {
   String get reportAnswer => 'Ответ врача';
 
   @override
+  String get importTitle => 'Перенос из другого приложения';
+
+  @override
+  String get importPickTitle => 'Файл с записями';
+
+  @override
+  String get importHint =>
+      'Выгрузите записи из прежнего приложения и выберите файл здесь. Ничего не запишется, пока вы не подтвердите — сначала покажу, что нашлось.';
+
+  @override
+  String get importFormats =>
+      'Подойдёт CSV или текстовый файл с колонками: дата, время, тип записи, длительность, комментарий';
+
+  @override
+  String get importPickButton => 'Выбрать файл';
+
+  @override
+  String get importFoundTitle => 'Что нашлось';
+
+  @override
+  String get importColumns => 'Как поняты колонки';
+
+  @override
+  String importSkipped(int n) {
+    return 'Строк пропущено: $n';
+  }
+
+  @override
+  String get importNothingFound => 'В файле не нашлось ни одной записи с датой';
+
+  @override
+  String get importWriteTitle => 'Перенести в дневник';
+
+  @override
+  String importWriteHint(int n) {
+    return 'Будет добавлено записей: $n. Они появятся в дневнике своими датами.';
+  }
+
+  @override
+  String importWriteButton(int n) {
+    return 'Перенести $n';
+  }
+
+  @override
+  String importDone(int n) {
+    return 'Перенесено записей: $n';
+  }
+
+  @override
+  String get importRoleDate => 'дата';
+
+  @override
+  String get importRoleTime => 'время';
+
+  @override
+  String get importRoleKind => 'тип записи';
+
+  @override
+  String get importRoleDuration => 'длительность';
+
+  @override
+  String get importRoleAmount => 'объём';
+
+  @override
+  String get importRoleNote => 'комментарий';
+
+  @override
+  String get importRoleIgnored => 'не используется';
+
+  @override
+  String get settingsImport => 'Перенести данные';
+
+  @override
+  String get settingsImportHint => 'Из другого дневника — по файлу выгрузки';
+
+  @override
   String get teethTitle => 'Зубы';
 
   @override

@@ -4372,6 +4372,138 @@ abstract class AppLocalizations {
   /// **'Ответ врача'**
   String get reportAnswer;
 
+  /// No description provided for @importTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Перенос из другого приложения'**
+  String get importTitle;
+
+  /// No description provided for @importPickTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Файл с записями'**
+  String get importPickTitle;
+
+  /// No description provided for @importHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выгрузите записи из прежнего приложения и выберите файл здесь. Ничего не запишется, пока вы не подтвердите — сначала покажу, что нашлось.'**
+  String get importHint;
+
+  /// No description provided for @importFormats.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подойдёт CSV или текстовый файл с колонками: дата, время, тип записи, длительность, комментарий'**
+  String get importFormats;
+
+  /// No description provided for @importPickButton.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выбрать файл'**
+  String get importPickButton;
+
+  /// No description provided for @importFoundTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Что нашлось'**
+  String get importFoundTitle;
+
+  /// No description provided for @importColumns.
+  ///
+  /// In ru, this message translates to:
+  /// **'Как поняты колонки'**
+  String get importColumns;
+
+  /// No description provided for @importSkipped.
+  ///
+  /// In ru, this message translates to:
+  /// **'Строк пропущено: {n}'**
+  String importSkipped(int n);
+
+  /// No description provided for @importNothingFound.
+  ///
+  /// In ru, this message translates to:
+  /// **'В файле не нашлось ни одной записи с датой'**
+  String get importNothingFound;
+
+  /// No description provided for @importWriteTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Перенести в дневник'**
+  String get importWriteTitle;
+
+  /// No description provided for @importWriteHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Будет добавлено записей: {n}. Они появятся в дневнике своими датами.'**
+  String importWriteHint(int n);
+
+  /// No description provided for @importWriteButton.
+  ///
+  /// In ru, this message translates to:
+  /// **'Перенести {n}'**
+  String importWriteButton(int n);
+
+  /// No description provided for @importDone.
+  ///
+  /// In ru, this message translates to:
+  /// **'Перенесено записей: {n}'**
+  String importDone(int n);
+
+  /// No description provided for @importRoleDate.
+  ///
+  /// In ru, this message translates to:
+  /// **'дата'**
+  String get importRoleDate;
+
+  /// No description provided for @importRoleTime.
+  ///
+  /// In ru, this message translates to:
+  /// **'время'**
+  String get importRoleTime;
+
+  /// No description provided for @importRoleKind.
+  ///
+  /// In ru, this message translates to:
+  /// **'тип записи'**
+  String get importRoleKind;
+
+  /// No description provided for @importRoleDuration.
+  ///
+  /// In ru, this message translates to:
+  /// **'длительность'**
+  String get importRoleDuration;
+
+  /// No description provided for @importRoleAmount.
+  ///
+  /// In ru, this message translates to:
+  /// **'объём'**
+  String get importRoleAmount;
+
+  /// No description provided for @importRoleNote.
+  ///
+  /// In ru, this message translates to:
+  /// **'комментарий'**
+  String get importRoleNote;
+
+  /// No description provided for @importRoleIgnored.
+  ///
+  /// In ru, this message translates to:
+  /// **'не используется'**
+  String get importRoleIgnored;
+
+  /// No description provided for @settingsImport.
+  ///
+  /// In ru, this message translates to:
+  /// **'Перенести данные'**
+  String get settingsImport;
+
+  /// No description provided for @settingsImportHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Из другого дневника — по файлу выгрузки'**
+  String get settingsImportHint;
+
   /// No description provided for @teethTitle.
   ///
   /// In ru, this message translates to:

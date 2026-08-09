@@ -1282,6 +1282,40 @@
   "reportSectionQuestions": "Вопросы врачу",
   "reportQuestion": "Вопрос",
   "reportAnswer": "Ответ врача",
+  "importTitle": "Перенос из другого приложения",
+  "importPickTitle": "Файл с записями",
+  "importHint": "Выгрузите записи из прежнего приложения и выберите файл здесь. Ничего не запишется, пока вы не подтвердите — сначала покажу, что нашлось.",
+  "importFormats": "Подойдёт CSV или текстовый файл с колонками: дата, время, тип записи, длительность, комментарий",
+  "importPickButton": "Выбрать файл",
+  "importFoundTitle": "Что нашлось",
+  "importColumns": "Как поняты колонки",
+  "importSkipped": "Строк пропущено: {n}",
+  "@importSkipped": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "importNothingFound": "В файле не нашлось ни одной записи с датой",
+  "importWriteTitle": "Перенести в дневник",
+  "importWriteHint": "Будет добавлено записей: {n}. Они появятся в дневнике своими датами.",
+  "@importWriteHint": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "importWriteButton": "Перенести {n}",
+  "@importWriteButton": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "importDone": "Перенесено записей: {n}",
+  "@importDone": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "importRoleDate": "дата",
+  "importRoleTime": "время",
+  "importRoleKind": "тип записи",
+  "importRoleDuration": "длительность",
+  "importRoleAmount": "объём",
+  "importRoleNote": "комментарий",
+  "importRoleIgnored": "не используется",
+  "settingsImport": "Перенести данные",
+  "settingsImportHint": "Из другого дневника — по файлу выгрузки",
   "teethTitle": "Зубы",
   "teethCount": "Прорезалось {n} из 20",
   "@teethCount": {

@@ -17,6 +17,7 @@ import '../../firebase/push_messaging.dart';
 import '../../models/app_user.dart';
 import '../../providers.dart';
 import '../shared/widgets.dart';
+import 'import_screen.dart';
 
 /// Parent profile and preferences, per requirement 2.1.
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -282,6 +283,40 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 l.settingsNotificationsHint,
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Above the account card, and only here: bringing a diary over is
+        // something a parent does once, in the first week, and a permanent
+        // place in the navigation for a one-time job would cost more than it
+        // gives.
+        SectionCard(
+          title: l.settingsImport,
+          icon: Icons.upload_file_outlined,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l.settingsImportHint,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: FilledButton.tonalIcon(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const ImportScreen(),
+                    ),
+                  ),
+                  icon: const Icon(Icons.folder_open_outlined),
+                  label: Text(l.importPickButton),
                 ),
               ),
             ],
