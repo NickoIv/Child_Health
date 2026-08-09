@@ -2602,6 +2602,30 @@ abstract class AppLocalizations {
   /// **'Адрес, которым он входит в приложение'**
   String get familyInviteHint;
 
+  /// No description provided for @familyInvitePhone.
+  ///
+  /// In ru, this message translates to:
+  /// **'Телефон в WhatsApp'**
+  String get familyInvitePhone;
+
+  /// No description provided for @familyInvitePhoneHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Необязательно. Если указать — приглашение придёт в WhatsApp, туда его точно увидят'**
+  String get familyInvitePhoneHint;
+
+  /// No description provided for @familyPhoneInvalid.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проверьте номер'**
+  String get familyPhoneInvalid;
+
+  /// No description provided for @familyInviteWhatsApp.
+  ///
+  /// In ru, this message translates to:
+  /// **'Приглашение отправлено в WhatsApp'**
+  String get familyInviteWhatsApp;
+
   /// No description provided for @familyInviteMailed.
   ///
   /// In ru, this message translates to:

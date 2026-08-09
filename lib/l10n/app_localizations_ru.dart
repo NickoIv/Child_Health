@@ -1422,6 +1422,19 @@ class AppLocalizationsRu extends AppLocalizations {
   String get familyInviteHint => 'Адрес, которым он входит в приложение';
 
   @override
+  String get familyInvitePhone => 'Телефон в WhatsApp';
+
+  @override
+  String get familyInvitePhoneHint =>
+      'Необязательно. Если указать — приглашение придёт в WhatsApp, туда его точно увидят';
+
+  @override
+  String get familyPhoneInvalid => 'Проверьте номер';
+
+  @override
+  String get familyInviteWhatsApp => 'Приглашение отправлено в WhatsApp';
+
+  @override
   String familyInviteMailed(String email) {
     return 'Приглашение отправлено на $email';
   }

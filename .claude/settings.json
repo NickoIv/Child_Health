@@ -33,7 +33,10 @@
       "Bash(node --check worker/worker.js)",
       "Bash(node --input-type=module -e \"import\\('./worker/invites.js'\\).then\\(\\(\\)=>console.log\\('invites.js parses'\\)\\).catch\\(e=>console.log\\('ERR',e.message\\)\\)\")",
       "Bash(python -c ' *)",
-      "PowerShell(cd h:\\\\MyProjects\\\\TZ_Child_Health_App; powershell -ExecutionPolicy Bypass -File .\\\\deploy-worker.ps1 2>&1 | Select-String -Pattern \"is set|NOT set|schedule|Deployed|Total Upload|Error|error\" | Select-Object -First 15)"
+      "PowerShell(cd h:\\\\MyProjects\\\\TZ_Child_Health_App; powershell -ExecutionPolicy Bypass -File .\\\\deploy-worker.ps1 2>&1 | Select-String -Pattern \"is set|NOT set|schedule|Deployed|Total Upload|Error|error\" | Select-Object -First 15)",
+      "WebFetch(domain:green-api.com)",
+      "Bash(node --input-type=module -e \"import\\('./worker/invites.js'\\).then\\(\\(\\)=>console.log\\('parses'\\)\\).catch\\(e=>console.log\\('ERR',e.message\\)\\)\")",
+      "PowerShell(cd h:\\\\MyProjects\\\\TZ_Child_Health_App; .\\\\deploy.ps1 2>&1 | Select-String -Pattern \"^---|Done:|All tests passed|failed\" | Select-Object -First 8; powershell -ExecutionPolicy Bypass -File .\\\\deploy-worker.ps1 2>&1 | Select-String -Pattern \"is set|NOT set|Deployed|schedule\" | Select-Object -First 12)"
     ]
   }
 }

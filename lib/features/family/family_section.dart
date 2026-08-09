@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/family/invite_mail.dart';
+import '../../core/family/phone.dart';
 import '../../core/theme/app_snack.dart';
 import '../../core/theme/app_theme.dart';
 import '../../l10n/app_localizations.dart';
@@ -26,12 +27,15 @@ class FamilySection extends ConsumerStatefulWidget {
 
 class _FamilySectionState extends ConsumerState<FamilySection> {
   final _email = TextEditingController();
+  final _phone = TextEditingController();
   String? _error;
+  String? _phoneError;
   bool _sending = false;
 
   @override
   void dispose() {
     _email.dispose();
+    _phone.dispose();
     super.dispose();
   }
 
@@ -140,6 +144,22 @@ class _FamilySectionState extends ConsumerState<FamilySection> {
               onSubmitted: (_) => _invite(child.id, child.name),
             ),
             const SizedBox(height: 12),
+            // Optional, and the one that actually works here: a link sent to
+            // WhatsApp arrives on the phone he is already holding, while an
+            // email lands in a tab he opens on Tuesdays.
+            TextField(
+              controller: _phone,
+              keyboardType: TextInputType.phone,
+              decoration: InputDecoration(
+                labelText: l.familyInvitePhone,
+                helperText: l.familyInvitePhoneHint,
+                helperMaxLines: 3,
+                errorText: _phoneError,
+                prefixIcon: const Icon(Icons.chat_outlined),
+              ),
+              onSubmitted: (_) => _invite(child.id, child.name),
+            ),
+            const SizedBox(height: 12),
             Align(
               alignment: Alignment.centerLeft,
               child: FilledButton.tonalIcon(
@@ -187,6 +207,12 @@ class _FamilySectionState extends ConsumerState<FamilySection> {
       setState(() => _error = l.familyEmailInvalid);
       return;
     }
+    // Typed but unusable is worth saying; left alone is not.
+    final phone = normalizePhone(_phone.text);
+    if (_phone.text.trim().isNotEmpty && !looksLikePhone(_phone.text)) {
+      setState(() => _phoneError = l.familyPhoneInvalid);
+      return;
+    }
     // Inviting yourself would create a viewer membership for the owner and
     // lock her out of her own record on the next launch.
     if (email == ref.read(currentEmailProvider)) {
@@ -203,6 +229,7 @@ class _FamilySectionState extends ConsumerState<FamilySection> {
     setState(() {
       _sending = true;
       _error = null;
+      _phoneError = null;
     });
 
     try {
@@ -213,6 +240,7 @@ class _FamilySectionState extends ConsumerState<FamilySection> {
       );
       if (!mounted) return;
       _email.clear();
+      _phone.clear();
 
       // The access exists the moment the document does. The letter is only
       // how he finds out, so it is attempted after — and its failure never
@@ -224,6 +252,7 @@ class _FamilySectionState extends ConsumerState<FamilySection> {
         email: email,
         link: appLink(),
         fromName: ref.read(userProfileProvider).value?.displayName ?? '',
+        phone: phone,
       );
       if (!mounted) return;
 
@@ -233,19 +262,22 @@ class _FamilySectionState extends ConsumerState<FamilySection> {
       messenger.showAppSnack(
         appSnack(
           switch (mailed) {
+            InviteMailResult.sentWhatsApp => l.familyInviteWhatsApp,
             InviteMailResult.sent => l.familyInviteMailed(email),
             InviteMailResult.notConfigured => l.familyInviteCreated,
             InviteMailResult.failed => l.familyInviteMailFailed,
           },
-          kind: mailed == InviteMailResult.sent
-              ? SnackKind.done
-              : SnackKind.info,
-          action: mailed == InviteMailResult.sent
-              ? null
-              : SnackBarAction(
+          kind: mailed == InviteMailResult.failed ||
+                  mailed == InviteMailResult.notConfigured
+              ? SnackKind.info
+              : SnackKind.done,
+          action: mailed == InviteMailResult.failed ||
+                  mailed == InviteMailResult.notConfigured
+              ? SnackBarAction(
                   label: l.familyCopyInvite,
                   onPressed: () => _copyInvite(childName, email),
-                ),
+                )
+              : null,
         ),
       );
     } catch (e) {

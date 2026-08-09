@@ -21,6 +21,11 @@ const LOOKUP_URL =
 /// configure, which is the whole difference between this shipping and not.
 const BREVO_URL = 'https://api.brevo.com/v3/smtp/email';
 
+/// GREEN-API's default host. Each instance is also given one of its own
+/// (`https://7103.api.greenapi.com`), so this is overridable — the default is
+/// only what works when nobody has been told otherwise.
+const GREEN_API_URL = 'https://api.green-api.com';
+
 /// Who the token belongs to, or null.
 ///
 /// Verified by asking Google rather than by checking the signature here: the
@@ -113,6 +118,35 @@ function letter({ childName, email, link, fromName }) {
   };
 }
 
+/// The same invitation as a WhatsApp message.
+///
+/// Which is the one that actually gets read here: in Kazakhstan a link sent
+/// to WhatsApp arrives on the phone the person is already holding, and an
+/// email lands in a tab they open on Tuesdays.
+async function sendWhatsApp(env, phone, text) {
+  const base = env.GREEN_API_URL || GREEN_API_URL;
+  const url =
+    `${base}/waInstance${env.GREEN_API_ID}` +
+    `/sendMessage/${env.GREEN_API_TOKEN}`;
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    // Digits only, country code first — the client normalises «+7 700…» and
+    // «8 700…» to this before it ever gets here.
+    body: JSON.stringify({ chatId: `${phone}@c.us`, message: text }),
+  });
+
+  if (!response.ok) {
+    console.error('whatsapp failed', response.status, await response.text());
+    return false;
+  }
+  // A 200 with no idMessage is GREEN-API refusing quietly — an instance that
+  // is not authorised answers exactly like that.
+  const body = await response.json().catch(() => ({}));
+  return Boolean(body.idMessage);
+}
+
 /// Handles POST /invite.
 ///
 /// Returns 501 rather than 500 when there is no mail key: that is the Worker
@@ -122,8 +156,10 @@ export async function handleInvite(request, env, cors, json) {
   if (!env.FIREBASE_SERVICE_ACCOUNT) {
     return json({ error: 'FIREBASE_SERVICE_ACCOUNT is not configured' }, 501, cors);
   }
-  if (!env.BREVO_API_KEY || !env.MAIL_FROM) {
-    return json({ error: 'mail is not configured' }, 501, cors);
+  const canMail = Boolean(env.BREVO_API_KEY && env.MAIL_FROM);
+  const canWhatsApp = Boolean(env.GREEN_API_ID && env.GREEN_API_TOKEN);
+  if (!canMail && !canWhatsApp) {
+    return json({ error: 'no channel is configured' }, 501, cors);
   }
 
   const auth = request.headers.get('Authorization') || '';
@@ -142,6 +178,8 @@ export async function handleInvite(request, env, cors, json) {
   const childName = String(body.child_name || '').slice(0, 80);
   const link = String(body.link || '');
   const fromName = String(body.from_name || '').slice(0, 80);
+  // Optional, and already digits by the time it arrives.
+  const phone = String(body.phone || '').replace(/\D/g, '');
 
   if (!childId || !email || !link.startsWith('https://')) {
     return json({ error: 'bad request' }, 400, cors);
@@ -172,26 +210,39 @@ export async function handleInvite(request, env, cors, json) {
   }
 
   const mail = letter({ childName, email, link, fromName });
-  const response = await fetch(BREVO_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'api-key': env.BREVO_API_KEY,
-    },
-    body: JSON.stringify({
-      sender: { email: env.MAIL_FROM, name: env.MAIL_FROM_NAME || 'Дневник ребёнка' },
-      to: [{ email }],
-      subject: mail.subject,
-      htmlContent: mail.html,
-      textContent: mail.text,
-    }),
-  });
+  const channels = [];
 
-  if (!response.ok) {
-    const detail = await response.text();
-    console.error('invite mail failed', response.status, detail);
-    return json({ error: 'send failed' }, 502, cors);
+  // WhatsApp first: it is the one that gets read, and if it lands there is
+  // no reason to make anyone check an inbox as well.
+  if (canWhatsApp && phone) {
+    if (await sendWhatsApp(env, phone, mail.text)) channels.push('whatsapp');
   }
 
-  return json({ sent: true }, 200, cors);
+  if (canMail && channels.length === 0) {
+    const response = await fetch(BREVO_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'api-key': env.BREVO_API_KEY,
+      },
+      body: JSON.stringify({
+        sender: {
+          email: env.MAIL_FROM,
+          name: env.MAIL_FROM_NAME || 'Дневник ребёнка',
+        },
+        to: [{ email }],
+        subject: mail.subject,
+        htmlContent: mail.html,
+        textContent: mail.text,
+      }),
+    });
+    if (response.ok) {
+      channels.push('email');
+    } else {
+      console.error('invite mail failed', response.status, await response.text());
+    }
+  }
+
+  if (channels.length === 0) return json({ error: 'send failed' }, 502, cors);
+  return json({ sent: true, channels }, 200, cors);
 }

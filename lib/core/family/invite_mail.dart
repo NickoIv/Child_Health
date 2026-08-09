@@ -32,6 +32,9 @@ String appLink() {
 
 /// What happened, in terms the screen can say out loud.
 enum InviteMailResult {
+  /// It went out over WhatsApp — the one that gets read here.
+  sentWhatsApp,
+
   /// The letter is on its way.
   sent,
 
@@ -54,6 +57,9 @@ Future<InviteMailResult> sendInviteMail({
   required String email,
   required String link,
   required String fromName,
+  /// Digits only, or empty. Given one, the Worker prefers WhatsApp: a link
+  /// sent there arrives on the phone the person is already holding.
+  String phone = '',
   http.Client? client,
 }) async {
   if (!AiConfig.isConfigured || idToken.isEmpty) {
@@ -77,11 +83,20 @@ Future<InviteMailResult> sendInviteMail({
             'email': email,
             'link': link,
             'from_name': fromName,
+            'phone': phone,
           }),
         )
         .timeout(const Duration(seconds: 20));
 
-    if (response.statusCode == 200) return InviteMailResult.sent;
+    if (response.statusCode == 200) {
+      // Which channel actually carried it, so the screen can name it rather
+      // than say «отправлено» and leave her guessing where to look.
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      final channels = (body['channels'] as List?)?.cast<String>() ?? const [];
+      return channels.contains('whatsapp')
+          ? InviteMailResult.sentWhatsApp
+          : InviteMailResult.sent;
+    }
     // 501 is the Worker saying it has no mail key configured, which is a
     // different thing from a refusal and worth a different sentence.
     if (response.statusCode == 501) return InviteMailResult.notConfigured;

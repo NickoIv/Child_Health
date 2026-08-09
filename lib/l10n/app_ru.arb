@@ -736,6 +736,10 @@
   "familyInvite": "Пригласить",
   "familyInviteEmail": "Электронная почта",
   "familyInviteHint": "Адрес, которым он входит в приложение",
+  "familyInvitePhone": "Телефон в WhatsApp",
+  "familyInvitePhoneHint": "Необязательно. Если указать — приглашение придёт в WhatsApp, туда его точно увидят",
+  "familyPhoneInvalid": "Проверьте номер",
+  "familyInviteWhatsApp": "Приглашение отправлено в WhatsApp",
   "familyInviteMailed": "Приглашение отправлено на {email}",
   "@familyInviteMailed": {
     "placeholders": { "email": { "type": "String" } }

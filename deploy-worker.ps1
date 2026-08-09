@@ -45,17 +45,26 @@ foreach ($name in @('GEMINI_API_KEY', 'FIREBASE_SERVICE_ACCOUNT')) {
   Write-Host "    $name is set"
 }
 
-# Optional: only family invitation letters depend on these, and the app has a
-# working answer without them - it offers the invitation to copy and send by
-# hand. So a missing mail key is a warning rather than a refusal; blocking the
-# assistant and the reminder sweep over it would be the wrong trade.
-foreach ($name in @('FIREBASE_API_KEY', 'BREVO_API_KEY')) {
+# Optional: only family invitations depend on these, and the app has a working
+# answer without them - it offers the invitation to copy and send by hand. So a
+# missing key is a warning rather than a refusal; blocking the assistant and
+# the reminder sweep over it would be the wrong trade.
+#
+# Either channel is enough on its own. WhatsApp is preferred when a number is
+# given, because that is where a link is read here.
+foreach ($name in @('FIREBASE_API_KEY', 'GREEN_API_ID', 'GREEN_API_TOKEN', 'BREVO_API_KEY')) {
   if ($secrets -notmatch $name) {
-    Write-Host "    $name is NOT set - invitation letters stay off" -ForegroundColor Yellow
+    Write-Host "    $name is NOT set - that channel stays off" -ForegroundColor Yellow
     if ($name -eq 'FIREBASE_API_KEY') {
       Write-Host '      The web API key from lib/firebase/firebase_options.dart.'
       Write-Host '      Public by design: it only lets the Worker ask Google'
       Write-Host '      who an ID token belongs to.'
+    }
+    if ($name -eq 'GREEN_API_ID' -or $name -eq 'GREEN_API_TOKEN') {
+      Write-Host '      https://console.green-api.com/instanceList - open the'
+      Write-Host '      instance and copy idInstance and apiTokenInstance.'
+      Write-Host '      WhatsApp is the channel that actually gets read here,'
+      Write-Host '      so this is the one worth setting first.'
     }
     if ($name -eq 'BREVO_API_KEY') {
       Write-Host '      https://app.brevo.com -> SMTP & API -> Generate a key.'

@@ -27,3 +27,11 @@ MAIL_FROM_NAME = "Дневник ребёнка"
 #   npx wrangler secret put FIREBASE_SERVICE_ACCOUNT
 #   npx wrangler secret put FIREBASE_API_KEY
 #   npx wrangler secret put BREVO_API_KEY
+#   npx wrangler secret put GREEN_API_ID
+#   npx wrangler secret put GREEN_API_TOKEN
+#
+# GREEN-API sends the invitation over WhatsApp, which is the channel that
+# actually gets read in Kazakhstan. Both values are on the instance page:
+# https://console.green-api.com/instanceList
+# If your instance was given a host of its own (7103.api.greenapi.com), set it:
+# GREEN_API_URL = "https://7103.api.greenapi.com"

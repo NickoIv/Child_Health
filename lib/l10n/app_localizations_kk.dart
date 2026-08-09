@@ -1410,6 +1410,19 @@ class AppLocalizationsKk extends AppLocalizations {
   String get familyInviteHint => 'Ол кіретін мекенжай';
 
   @override
+  String get familyInvitePhone => 'WhatsApp нөірі';
+
+  @override
+  String get familyInvitePhoneHint =>
+      'Міндетті емес. Көрсетсеңіз — шақыру WhatsApp-қа келеді, оны міндетті түрде көреді';
+
+  @override
+  String get familyPhoneInvalid => 'Нөмірді тексеріңіз';
+
+  @override
+  String get familyInviteWhatsApp => 'Шақыру WhatsApp арқылы жіберілді';
+
+  @override
   String familyInviteMailed(String email) {
     return 'Шақыру $email мекенжайына жіберілді';
   }

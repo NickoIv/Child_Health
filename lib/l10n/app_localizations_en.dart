@@ -1416,6 +1416,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get familyInviteHint => 'The address they sign in with';
 
   @override
+  String get familyInvitePhone => 'WhatsApp number';
+
+  @override
+  String get familyInvitePhoneHint =>
+      'Optional. Give one and the invitation goes to WhatsApp, where it will actually be seen';
+
+  @override
+  String get familyPhoneInvalid => 'Check the number';
+
+  @override
+  String get familyInviteWhatsApp => 'Invitation sent on WhatsApp';
+
+  @override
   String familyInviteMailed(String email) {
     return 'Invitation emailed to $email';
   }
