@@ -19,6 +19,11 @@ $env:PATH = "C:\Program Files\nodejs;$env:APPDATA\npm;$env:PATH"
 
 Set-Location "$PSScriptRoot\worker"
 
+# npx.cmd, never npx. PowerShell's execution policy refuses to load npm's
+# .ps1 shims - «Невозможно загрузить файл npx.ps1, так как выполнение
+# сценариев отключено» - and the .cmd shim works whatever the policy is. The
+# same trap as firebase.cmd, and it cost two attempts at the prompt.
+
 Write-Host '--- secrets ---' -ForegroundColor Cyan
 # Both are required, and each fails in its own quiet way when missing: without
 # GEMINI_API_KEY the assistant answers with an explanation instead of an
