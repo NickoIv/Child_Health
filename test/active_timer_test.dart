@@ -2,6 +2,7 @@ import 'package:child_health_tracker/app.dart';
 import 'package:child_health_tracker/core/analytics/daily_care.dart';
 import 'package:child_health_tracker/core/care/active_timer.dart';
 import 'package:child_health_tracker/features/dashboard/timer_card.dart';
+import 'package:child_health_tracker/features/shell/running_timer_strip.dart';
 import 'package:child_health_tracker/models/development_log.dart';
 import 'package:child_health_tracker/providers.dart';
 import 'package:flutter/material.dart';
@@ -346,6 +347,128 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.textContaining('Прошлое кормление — Правая'), findsOneWidget);
+    });
+  });
+
+  /// A clock nobody can see is a clock that gets forgotten. The strip carries
+  /// the number onto every other screen, and deliberately carries nothing
+  /// else: one place stops a feed, so a feed cannot be written down twice.
+  group('on every other screen', () {
+    setUp(() => SharedPreferences.setMockInitialValues({}));
+
+    /// Same reason as above: a running clock never settles.
+    Future<void> beat(WidgetTester tester, [int frames = 10]) async {
+      for (var i = 0; i < frames; i++) {
+        await tester.pump(const Duration(milliseconds: 120));
+      }
+    }
+
+    Future<ProviderContainer> pumpApp(WidgetTester tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(const ProviderScope(child: ChildHealthApp()));
+      await tester.pumpAndSettle();
+      return ProviderScope.containerOf(
+        tester.element(find.byType(ChildHealthApp)),
+      );
+    }
+
+    Future<void> startFeeding(ProviderContainer container) async {
+      final child = container.read(selectedChildProvider)!;
+      await container.read(activeTimerProvider.notifier).start(
+            kind: TimerKind.feeding,
+            childId: child.id,
+            side: FeedingSide.left,
+            now: DateTime.now().subtract(const Duration(minutes: 12)),
+          );
+    }
+
+    testWidgets('draws nothing at all while nothing is running', (
+      tester,
+    ) async {
+      await pumpApp(tester);
+
+      await tester.tap(find.text('Дневник').last);
+      await tester.pumpAndSettle();
+
+      // Present in the tree on every screen, and occupying no space.
+      expect(find.byType(RunningTimerStrip), findsOneWidget);
+      expect(tester.getSize(find.byType(RunningTimerStrip)).height, 0);
+    });
+
+    testWidgets('carries the clock onto the diary', (tester) async {
+      final container = await pumpApp(tester);
+      await startFeeding(container);
+      await beat(tester);
+
+      await tester.tap(find.text('Дневник').last);
+      await beat(tester);
+
+      final strip = find.byType(RunningTimerStrip);
+      expect(tester.getSize(strip).height, greaterThan(0));
+      expect(
+        find.descendant(of: strip, matching: find.text('Кормление идёт')),
+        findsOneWidget,
+      );
+      // Twelve minutes in, counting.
+      expect(
+        find.descendant(of: strip, matching: find.textContaining('12:')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('stays out of the way on «Обзор», where the card already is', (
+      tester,
+    ) async {
+      final container = await pumpApp(tester);
+      await startFeeding(container);
+      await beat(tester);
+
+      expect(tester.getSize(find.byType(RunningTimerStrip)).height, 0);
+      // The full card is what is on this screen instead.
+      expect(find.text('Сбросить'), findsOneWidget);
+    });
+
+    testWidgets('a tap on it goes back to the card that can stop it', (
+      tester,
+    ) async {
+      final container = await pumpApp(tester);
+      await startFeeding(container);
+      await beat(tester);
+
+      await tester.tap(find.text('Дневник').last);
+      await beat(tester);
+      expect(find.text('Сбросить'), findsNothing);
+
+      await tester.tap(find.byType(RunningTimerStrip));
+      await beat(tester);
+
+      // Home again, with the controls.
+      expect(find.text('Сбросить'), findsOneWidget);
+      expect(tester.getSize(find.byType(RunningTimerStrip)).height, 0);
+    });
+
+    testWidgets('offers no way to save, so a feed cannot be written twice', (
+      tester,
+    ) async {
+      final container = await pumpApp(tester);
+      await startFeeding(container);
+      await beat(tester);
+
+      await tester.tap(find.text('Дневник').last);
+      await beat(tester);
+
+      final strip = find.byType(RunningTimerStrip);
+      expect(
+        find.descendant(of: strip, matching: find.byType(FilledButton)),
+        findsNothing,
+      );
+      expect(
+        find.descendant(of: strip, matching: find.text('Сбросить')),
+        findsNothing,
+      );
     });
   });
 }

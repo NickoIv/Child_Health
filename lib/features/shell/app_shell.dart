@@ -16,6 +16,7 @@ import '../../providers.dart';
 import '../assistant/assistant_nav_icon.dart';
 import '../family/invite_banner.dart';
 import '../shared/photo_widgets.dart';
+import 'running_timer_strip.dart';
 
 /// Navigation chrome shared by every screen.
 ///
@@ -93,9 +94,21 @@ class AppShell extends ConsumerWidget {
       // that can both write «покормила левой 15 минут» down and answer
       // «сколько он должен есть». Two inputs meant deciding which one you
       // wanted before you started talking.
+      //
+      // The running clock rides just above it, on every screen but the one
+      // that already draws it in full — see [RunningTimerStrip]. It is part
+      // of the bottom bar rather than pinned over the content because the
+      // Scaffold hands this widget's height back to the page as padding, so
+      // nothing ends up underneath it without the pages having to know.
       bottomNavigationBar: isWide
-          ? null
-          : GlassPanel(child: _BottomBar(index: _index, location: location)),
+          ? RunningTimerStrip(location: location)
+          : Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                RunningTimerStrip(location: location),
+                GlassPanel(child: _BottomBar(index: _index, location: location)),
+              ],
+            ),
     );
   }
 }

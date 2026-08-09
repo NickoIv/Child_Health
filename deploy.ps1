@@ -44,26 +44,48 @@ Write-Host '--- build web ---' -ForegroundColor Cyan
 # deployed again by a script that never asked for it.
 if (Test-Path build\web) { Remove-Item build\web -Recurse -Force }
 
-# --pwa-strategy=none, and this is the flag the whole caching story turns on.
-# It was declared in df3c6b9 ('built with --pwa-strategy=none from here on')
-# and only ever applied to web/index.html; the script kept building the
-# default way, so every deploy since shipped flutter_service_worker.js and
-# flutter_bootstrap.js registered it. index.html unregisters service workers
-# on load and the bootstrap installed a fresh one on the same load, which is
-# how an app shell nobody wanted kept coming back. Offline reads come from
-# Firestore's own cache; the service worker only ever held the shell.
-flutter build web --release --pwa-strategy=none --dart-define=AI_PROXY_URL=$aiProxy --dart-define=FCM_VAPID_KEY=$vapidKey
+# No --pwa-strategy here, deliberately. The flag is what df3c6b9 relied on
+# ('built with --pwa-strategy=none from here on'), Flutter already prints a
+# deprecation notice for it, and the day it is removed a build that passes it
+# fails outright on an unknown option. So the result is produced rather than
+# requested: build the ordinary way, then take the service worker out.
+#
+# Why it must come out at all: index.html unregisters service workers on load,
+# and a bootstrap that registers a fresh one on the same load put the app
+# shell straight back. That is how three deploys reached the bucket and never
+# reached a phone. Offline reads come from Firestore's own cache; the worker
+# only ever held the shell.
+flutter build web --release --dart-define=AI_PROXY_URL=$aiProxy --dart-define=FCM_VAPID_KEY=$vapidKey
 if ($LASTEXITCODE -ne 0) { throw 'build failed' }
 
-# The tool still writes flutter_service_worker.js either way; what decides
-# whether a browser installs one is whether the bootstrap asks it to. With the
-# flag the file ends in a bare `_flutter.loader.load()`, and without it in
-# `load({serviceWorkerSettings:{serviceWorkerVersion:"..."}})`. So that is what
-# is checked - the file's presence never meant anything.
-# Matched on the final call, not on the word: the loader's own source is
-# inlined into this file and destructures a `serviceWorkerSettings` argument,
-# so searching for the name matches every build ever made.
-if (-not (Select-String -Path build\web\flutter_bootstrap.js -Pattern '_flutter\.loader\.load\(\)\;' -Quiet)) {
+# The registration is one argument on the last call of the bootstrap:
+# `_flutter.loader.load({serviceWorkerSettings:{serviceWorkerVersion:"..."}})`.
+# Rewritten to the bare call, which is exactly what the flag used to emit.
+#
+# Matched on that call rather than on the word `serviceWorkerSettings`: the
+# loader's own source is inlined into this file and destructures an argument
+# of that name in every build ever made. The inner brace belongs to the
+# settings object, so the lazy match has to run on to the brace that is
+# actually followed by the closing paren.
+$bootstrapPath = 'build\web\flutter_bootstrap.js'
+$bootstrap = [System.IO.File]::ReadAllText((Resolve-Path $bootstrapPath))
+$stripped = [regex]::Replace(
+  $bootstrap,
+  '_flutter\.loader\.load\(\s*\{[\s\S]*?\}\s*\)\s*;',
+  '_flutter.loader.load();'
+)
+if ($stripped -ne $bootstrap) {
+  # No BOM: this is served as JavaScript, and Set-Content would add one.
+  [System.IO.File]::WriteAllText(
+    (Resolve-Path $bootstrapPath),
+    $stripped,
+    (New-Object System.Text.UTF8Encoding $false)
+  )
+  Write-Host '    service worker registration stripped from flutter_bootstrap.js'
+}
+
+# Whatever the tool did, this is the state that gets published.
+if (-not (Select-String -Path $bootstrapPath -Pattern '_flutter\.loader\.load\(\)\;' -Quiet)) {
   throw 'flutter_bootstrap.js does not end in a bare load() - a service worker is being registered'
 }
 
