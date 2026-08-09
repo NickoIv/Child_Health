@@ -525,6 +525,25 @@ class AppLocalizationsKk extends AppLocalizations {
   String get quickSleep180 => 'Үш сағат';
 
   @override
+  String get pumpTitle => 'Сүт сауу';
+
+  @override
+  String get pumpAction => 'Сүт сауып алдым';
+
+  @override
+  String get pumpHowMuch => 'Қанша сауылды';
+
+  @override
+  String pumpMl(int n) {
+    return '$n мл';
+  }
+
+  @override
+  String pumpToday(String amount) {
+    return 'Бүгін сауылды: $amount';
+  }
+
+  @override
   String get feedingSolid => 'Қосымша тамақ';
 
   @override

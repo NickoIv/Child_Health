@@ -526,6 +526,25 @@ class AppLocalizationsRu extends AppLocalizations {
   String get quickSleep180 => 'Три часа';
 
   @override
+  String get pumpTitle => 'Сцеживание';
+
+  @override
+  String get pumpAction => 'Я сцеживалась';
+
+  @override
+  String get pumpHowMuch => 'Сколько сцежено';
+
+  @override
+  String pumpMl(int n) {
+    return '$n мл';
+  }
+
+  @override
+  String pumpToday(String amount) {
+    return 'Сегодня сцежено $amount';
+  }
+
+  @override
   String get feedingSolid => 'Прикорм';
 
   @override

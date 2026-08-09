@@ -134,6 +134,7 @@ String routineSummary(AppLocalizations l, DevelopmentLog log) => [
   // Her own word for it, never translated: «кабачок» is what she typed, and
   // a diary that renames a mother's food is a diary that is not hers.
   if ((log.food ?? '').trim().isNotEmpty) log.food!.trim(),
+  if (log.milkMl != null) l.pumpMl(log.milkMl!),
   if (log.nappyKind != null) log.nappyKind!.localizedLabel(l),
   if (log.durationMinutes != null) localizedDuration(l, log.durationMinutes!),
   if ((log.nightWakings ?? 0) > 0) l.nightWakingsCount(log.nightWakings!),
@@ -173,6 +174,7 @@ String localizedLogTitle(AppLocalizations l, DevelopmentLog log) {
 
   if (title == LogTitles.medicine) return l.reminderTypeMedication;
   if (title == LogTitles.reaction) return l.logReaction;
+  if (title == LogTitles.pumping) return l.pumpTitle;
   if (log.isNightSleep && title == LogType.sleep.label) {
     return l.quickNightSleep;
   }

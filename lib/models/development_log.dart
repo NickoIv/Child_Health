@@ -50,6 +50,14 @@ abstract final class LogTitles {
   /// the date and the words she wrote and nothing else.
   static const photo = 'Фото';
 
+  /// Milk expressed. The one entry in this diary that is about the mother.
+  ///
+  /// A note rather than a feed, and deliberately: nobody was fed. Counting it
+  /// as a feed would inflate the day's tally and, worse, tell a mother
+  /// checking herself against «8-12 кормлений» that she is doing better than
+  /// she is.
+  static const pumping = 'Сцеживание';
+
   /// Something the parent saw after a food — a rash, a stomach, a refusal.
   ///
   /// A note rather than an illness: an illness day colours the heat map and
@@ -213,6 +221,7 @@ class DevelopmentLog {
     this.nightWakings,
     this.nightFeeds,
     this.food,
+    this.milkMl,
   });
 
   final String id;
@@ -257,10 +266,20 @@ class DevelopmentLog {
   /// than the food given.
   final String? food;
 
+  /// Millilitres expressed, on a [LogTitles.pumping] note.
+  ///
+  /// A field of its own rather than a [Metrics] entry: metrics are what the
+  /// child measures, and this is what the mother produced. Putting it there
+  /// would also put it in front of the growth chart, which reads that map.
+  final int? milkMl;
+
   bool get isNightSleep => type == LogType.sleep && nightWakings != null;
 
   /// A spoon rather than a feed of milk.
   bool get isSolid => type == LogType.feeding && feedingSide == FeedingSide.solid;
+
+  bool get isPumping =>
+      type == LogType.note && title.trim() == LogTitles.pumping;
 
   /// Local copy of the duration wording, so the model stays free of imports
   /// from the analytics layer.
@@ -298,6 +317,7 @@ class DevelopmentLog {
     int? nightWakings,
     int? nightFeeds,
     String? food,
+    int? milkMl,
   }) {
     return DevelopmentLog(
       id: id,
@@ -316,6 +336,7 @@ class DevelopmentLog {
       nightWakings: nightWakings ?? this.nightWakings,
       nightFeeds: nightFeeds ?? this.nightFeeds,
       food: food ?? this.food,
+      milkMl: milkMl ?? this.milkMl,
     );
   }
 
@@ -338,6 +359,7 @@ class DevelopmentLog {
     nightWakings: nightWakings,
     nightFeeds: nightFeeds,
     food: food,
+    milkMl: milkMl,
   );
 
   Map<String, dynamic> toMap() => {
@@ -356,6 +378,7 @@ class DevelopmentLog {
     if (nightWakings != null) 'night_wakings': nightWakings,
     if (nightFeeds != null) 'night_feeds': nightFeeds,
     if (food != null) 'food': food,
+    if (milkMl != null) 'milk_ml': milkMl,
   };
 
   factory DevelopmentLog.fromMap(String id, Map<String, dynamic> map) {
@@ -376,6 +399,7 @@ class DevelopmentLog {
       nightWakings: (map['night_wakings'] as num?)?.toInt(),
       nightFeeds: (map['night_feeds'] as num?)?.toInt(),
       food: (map['food'] as String?)?.trim(),
+      milkMl: (map['milk_ml'] as num?)?.toInt(),
     );
   }
 }

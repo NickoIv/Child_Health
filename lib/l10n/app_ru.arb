@@ -224,6 +224,25 @@
   "quickSleep90": "Полтора часа",
   "quickSleep120": "Два часа",
   "quickSleep180": "Три часа",
+  "pumpTitle": "Сцеживание",
+  "pumpAction": "Я сцеживалась",
+  "pumpHowMuch": "Сколько сцежено",
+  "pumpMl": "{n} мл",
+  "@pumpMl": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "pumpToday": "Сегодня сцежено {amount}",
+  "@pumpToday": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "feedingSolid": "Прикорм",
   "solidsTitle": "Прикорм и реакции",
   "logReaction": "Реакция",

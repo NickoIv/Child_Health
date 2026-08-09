@@ -527,6 +527,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quickSleep180 => 'Three hours';
 
   @override
+  String get pumpTitle => 'Pumping';
+
+  @override
+  String get pumpAction => 'I expressed milk';
+
+  @override
+  String get pumpHowMuch => 'How much was expressed';
+
+  @override
+  String pumpMl(int n) {
+    return '$n ml';
+  }
+
+  @override
+  String pumpToday(String amount) {
+    return 'Expressed today: $amount';
+  }
+
+  @override
   String get feedingSolid => 'Solids';
 
   @override

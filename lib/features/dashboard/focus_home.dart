@@ -197,6 +197,9 @@ IconData logIcon(DevelopmentLog log) {
   if (log.type == LogType.note && log.title == LogTitles.medicine) {
     return Icons.medication_outlined;
   }
+  // A note about the mother rather than the child, and the one place in the
+  // timeline where that is worth seeing at a glance.
+  if (log.isPumping) return Icons.opacity;
   return switch (log.type) {
     LogType.milestone => Icons.star_outline,
     LogType.measurement => Icons.straighten,

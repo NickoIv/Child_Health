@@ -1048,6 +1048,36 @@ abstract class AppLocalizations {
   /// **'Три часа'**
   String get quickSleep180;
 
+  /// No description provided for @pumpTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сцеживание'**
+  String get pumpTitle;
+
+  /// No description provided for @pumpAction.
+  ///
+  /// In ru, this message translates to:
+  /// **'Я сцеживалась'**
+  String get pumpAction;
+
+  /// No description provided for @pumpHowMuch.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сколько сцежено'**
+  String get pumpHowMuch;
+
+  /// No description provided for @pumpMl.
+  ///
+  /// In ru, this message translates to:
+  /// **'{n} мл'**
+  String pumpMl(int n);
+
+  /// No description provided for @pumpToday.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сегодня сцежено {amount}'**
+  String pumpToday(String amount);
+
   /// No description provided for @feedingSolid.
   ///
   /// In ru, this message translates to:

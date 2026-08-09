@@ -43,6 +43,7 @@ void main() {
     // are stored in Russian like every other enum code and title.
     'Прикорм',
     'Реакция',
+    'Сцеживание',
   ];
 
   /// The one Russian word on these screens that is allowed to stay: «Кабачок»
@@ -66,6 +67,7 @@ void main() {
     double? temperature,
     Severity? severity,
     String? food,
+    int? milkMl,
   }) => DevelopmentLog(
     id: '$title$ago',
     childId: 'demo',
@@ -78,6 +80,7 @@ void main() {
     nappyKind: nappy,
     severity: severity,
     food: food,
+    milkMl: milkMl,
     metrics: Metrics(temperatureC: temperature),
   );
 
@@ -103,6 +106,8 @@ void main() {
         food: herOwnWords, ago: const Duration(hours: 2)),
     log(LogType.note, title: LogTitles.reaction, food: herOwnWords,
         ago: const Duration(hours: 1, minutes: 30)),
+    log(LogType.note, title: LogTitles.pumping, milkMl: 120,
+        ago: const Duration(hours: 5)),
   ];
 
   final child = Child(

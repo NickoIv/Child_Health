@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/analytics/daily_care.dart';
 import '../../core/care/active_timer.dart';
+import '../../core/care/pumping.dart';
 import '../../core/care/solids.dart';
 import '../../core/theme/app_sheet.dart';
 import '../../core/theme/app_snack.dart';
@@ -120,6 +121,10 @@ class _QuickLogSheetState extends ConsumerState<_QuickLogSheet> {
   bool _solid = false;
   final _food = TextEditingController();
 
+  /// She is recording her own pumping rather than the child's feed.
+  bool _pumping = false;
+  int _milkMl = pumpDefaultMl;
+
   DateTime _at = DateTime.now();
   final _note = TextEditingController();
   double _temperature = 37.0;
@@ -211,6 +216,21 @@ class _QuickLogSheetState extends ConsumerState<_QuickLogSheet> {
         _at = DateTime.now();
       }),
     ),
+    // The one thing in this app that is about the mother, and it is filed
+    // under the feed because that is where she is standing when she thinks of
+    // it. Quiet rather than a fourth big button: a mother who does not pump
+    // should not have to read past it forty times a day.
+    if (widget.action == QuickLogAction.feeding) ...[
+      const SizedBox(height: 4),
+      TextButton.icon(
+        onPressed: () => setState(() {
+          _now = true;
+          _pumping = true;
+        }),
+        icon: const Icon(Icons.water_drop_outlined, size: 18),
+        label: Text(l.pumpAction),
+      ),
+    ],
   ];
 
   bool get _canTime =>
@@ -282,11 +302,90 @@ class _QuickLogSheetState extends ConsumerState<_QuickLogSheet> {
     ],
     if (widget.action == QuickLogAction.temperature)
       ..._temperatureStep(l, theme)
+    else if (_pumping)
+      ..._pumpingStep(l, theme)
     else if (_solid)
       ..._solidStep(l, theme)
     else
       ..._options(l),
   ];
+
+  /// Millilitres, and the day's total under them.
+  ///
+  /// Built like the temperature step because it is the same kind of question —
+  /// one number, adjusted from a sensible middle — and because a mother who
+  /// has used one of them already knows this one.
+  List<Widget> _pumpingStep(AppLocalizations l, ThemeData theme) {
+    final logs = ref.watch(logsProvider).value ?? const <DevelopmentLog>[];
+    final today = pumpedOnDay(logs, DateTime.now());
+
+    return [
+      Text(
+        l.pumpMl(_milkMl),
+        textAlign: TextAlign.center,
+        style: theme.textTheme.displaySmall?.copyWith(
+          color: Warm.onCard(theme.brightness),
+          fontWeight: FontWeight.w700,
+          fontFeatures: AppTheme.tabular,
+        ),
+      ),
+      const SizedBox(height: 8),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          IconButton.filledTonal(
+            onPressed: () => _stepMilk(-pumpStepMl),
+            icon: const Icon(Icons.remove),
+          ),
+          const SizedBox(width: 24),
+          IconButton.filledTonal(
+            onPressed: () => _stepMilk(pumpStepMl),
+            icon: const Icon(Icons.add),
+          ),
+        ],
+      ),
+      Slider(
+        value: _milkMl.toDouble(),
+        max: pumpMaxMl.toDouble(),
+        divisions: pumpMaxMl ~/ pumpStepMl,
+        onChanged: (v) => setState(
+          () => _milkMl = (v / pumpStepMl).round() * pumpStepMl,
+        ),
+      ),
+      // The number she is actually keeping: whether today covered tomorrow's
+      // bottles. No target beside it — there is no norm here to fall short of.
+      if (today > 0)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Text(
+            l.pumpToday(l.pumpMl(today)),
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: Warm.onCardSoft(theme.brightness),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      const SizedBox(height: 10),
+      FilledButton(
+        onPressed: _saving || _milkMl <= 0 ? null : () => _savePumping(l),
+        style: FilledButton.styleFrom(
+          minimumSize: const Size.fromHeight(_BigButton.height),
+        ),
+        child: _saving
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : Text(l.quickSaveButton),
+      ),
+    ];
+  }
+
+  void _stepMilk(int delta) => setState(
+    () => _milkMl = (_milkMl + delta).clamp(0, pumpMaxMl),
+  );
 
   /// The spoon's own step: what it was, and nothing else.
   ///
@@ -528,6 +627,26 @@ class _QuickLogSheetState extends ConsumerState<_QuickLogSheet> {
         food: food,
       ),
       l.quickSaved('${l.feedingSolid.toLowerCase()}, ${food.toLowerCase()}'),
+    );
+  }
+
+  /// Milk expressed: a note, and nobody was fed.
+  ///
+  /// Filed as a note rather than a feed on purpose — counting it in the day's
+  /// feeds would tell a mother checking herself against «8-12 кормлений» that
+  /// she is doing better than she is.
+  Future<void> _savePumping(AppLocalizations l) {
+    return _commit(
+      DevelopmentLog(
+        id: '',
+        childId: widget.childId,
+        date: _when,
+        type: LogType.note,
+        title: LogTitles.pumping,
+        description: _note.text.trim(),
+        milkMl: _milkMl,
+      ),
+      l.quickSaved('${l.pumpTitle.toLowerCase()}, ${l.pumpMl(_milkMl)}'),
     );
   }
 
