@@ -214,6 +214,33 @@
   "quickSleep90": "Полтора часа",
   "quickSleep120": "Два часа",
   "quickSleep180": "Три часа",
+  "timerStart": "Засечь время",
+  "timerStartHint": "Отсчёт пойдёт с этой секунды",
+  "timerFeeding": "Кормление идёт",
+  "timerSleep": "Сон идёт",
+  "timerSince": "с {time}",
+  "@timerSince": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "timerStarted": "Отсчёт пошёл",
+  "timerDiscard": "Сбросить",
+  "timerDiscarded": "Отсчёт сброшен",
+  "timerForgotten": "Идёт очень долго — может, забыли остановить?",
+  "timerLastFeed": "Прошлое кормление — {side}, {ago}",
+  "@timerLastFeed": {
+    "placeholders": {
+      "side": {
+        "type": "String"
+      },
+      "ago": {
+        "type": "String"
+      }
+    }
+  },
   "durationH": "{h} ч",
   "@durationH": {
     "placeholders": {

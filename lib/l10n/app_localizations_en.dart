@@ -497,6 +497,41 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quickSleep180 => 'Three hours';
 
   @override
+  String get timerStart => 'Time it';
+
+  @override
+  String get timerStartHint => 'The clock starts from this second';
+
+  @override
+  String get timerFeeding => 'Feeding in progress';
+
+  @override
+  String get timerSleep => 'Sleeping now';
+
+  @override
+  String timerSince(String time) {
+    return 'since $time';
+  }
+
+  @override
+  String get timerStarted => 'The clock is running';
+
+  @override
+  String get timerDiscard => 'Discard';
+
+  @override
+  String get timerDiscarded => 'Timer discarded';
+
+  @override
+  String get timerForgotten =>
+      'This has been running a long time — left on by mistake?';
+
+  @override
+  String timerLastFeed(String side, String ago) {
+    return 'Last feed — $side, $ago';
+  }
+
+  @override
   String durationH(int h) {
     return '$h h';
   }

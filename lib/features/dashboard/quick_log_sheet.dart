@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/analytics/daily_care.dart';
+import '../../core/care/active_timer.dart';
 import '../../core/theme/app_sheet.dart';
 import '../../core/theme/app_snack.dart';
 import '../../core/l10n/labels.dart';
@@ -108,6 +110,11 @@ class _QuickLogSheetState extends ConsumerState<_QuickLogSheet> {
   /// is the whole of the first step.
   late bool? _now = widget.startNow;
 
+  /// She chose to measure it rather than to write it down. Only the side is
+  /// still missing, and only for a feed — so the second step is the same three
+  /// buttons, and what they do is start a clock instead of filing an entry.
+  bool _timing = false;
+
   DateTime _at = DateTime.now();
   final _note = TextEditingController();
   double _temperature = 37.0;
@@ -157,7 +164,8 @@ class _QuickLogSheetState extends ConsumerState<_QuickLogSheet> {
     );
   }
 
-  /// Step one: two buttons, nothing else on screen.
+  /// Step one: two buttons, nothing else on screen — three where the thing can
+  /// be measured instead of remembered.
   List<Widget> _whenStep(AppLocalizations l) => [
     _BigButton(
       icon: Icons.bolt_outlined,
@@ -166,6 +174,27 @@ class _QuickLogSheetState extends ConsumerState<_QuickLogSheet> {
       onPressed: () => setState(() => _now = true),
     ),
     const SizedBox(height: 12),
+    // Only a feed and a sleep have a length worth measuring. A nappy and a
+    // temperature are moments, and a stopwatch on either would be a joke at
+    // the parent's expense.
+    if (_canTime) ...[
+      _BigButton(
+        icon: Icons.timer_outlined,
+        label: l.timerStart,
+        onPressed: () {
+          if (widget.action == QuickLogAction.sleep) {
+            // Nothing left to ask: a sleep has no side.
+            _startTimer(l, null);
+          } else {
+            setState(() {
+              _now = true;
+              _timing = true;
+            });
+          }
+        },
+      ),
+      const SizedBox(height: 12),
+    ],
     _BigButton(
       icon: Icons.schedule_outlined,
       label: l.quickTimeChoose,
@@ -177,6 +206,33 @@ class _QuickLogSheetState extends ConsumerState<_QuickLogSheet> {
       }),
     ),
   ];
+
+  bool get _canTime =>
+      widget.action == QuickLogAction.feeding ||
+      widget.action == QuickLogAction.sleep;
+
+  /// Starts the clock and gets out of the way.
+  ///
+  /// No confirmation step and no second sheet: she is holding a child who has
+  /// just latched on, and the entire value of this is that it took one tap
+  /// while that was happening.
+  Future<void> _startTimer(AppLocalizations l, FeedingSide? side) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    setState(() => _saving = true);
+
+    await ref.read(activeTimerProvider.notifier).start(
+          kind: widget.action == QuickLogAction.feeding
+              ? TimerKind.feeding
+              : TimerKind.sleep,
+          childId: widget.childId,
+          side: side,
+        );
+
+    if (!mounted) return;
+    navigator.pop();
+    messenger.showSnackBar(appSnack(l.timerStarted, kind: SnackKind.done));
+  }
 
   /// Step two: when it happened, if she chose that, then what happened.
   List<Widget> _valueStep(AppLocalizations l, ThemeData theme) => [
@@ -207,6 +263,17 @@ class _QuickLogSheetState extends ConsumerState<_QuickLogSheet> {
       ),
       const SizedBox(height: 18),
     ],
+    // Which breast was last, before she has to choose one.
+    //
+    // The question every nursing mother asks herself every two hours and the
+    // one reason a paper notebook survives beside a phone. It is printed here
+    // rather than on the home screen because here is where it is needed: at
+    // the moment of choosing, with the answer directly above the three
+    // buttons it applies to.
+    if (widget.action == QuickLogAction.feeding) ...[
+      _LastFeedLine(childId: widget.childId),
+      const SizedBox(height: 14),
+    ],
     if (widget.action == QuickLogAction.temperature)
       ..._temperatureStep(l, theme)
     else
@@ -224,7 +291,7 @@ class _QuickLogSheetState extends ConsumerState<_QuickLogSheet> {
               FeedingSide.bottle => Icons.local_drink_outlined,
             },
             label: s.localizedLabel(l),
-            onTap: () => _saveFeeding(l, s),
+            onTap: () => _timing ? _startTimer(l, s) : _saveFeeding(l, s),
           ),
       ],
       QuickLogAction.nappy => [
@@ -467,6 +534,62 @@ class _QuickLogSheetState extends ConsumerState<_QuickLogSheet> {
         120 => l.quickSleep120,
         _ => l.quickSleep180,
       };
+}
+
+/// «Прошлое кормление — правая, 2 ч назад», or nothing at all.
+///
+/// Nothing at all on the first day, deliberately: a line that says there is no
+/// previous feed is a line about the absence of data, and the sheet it would
+/// sit in is one a mother opened to record her child's first one.
+class _LastFeedLine extends ConsumerWidget {
+  const _LastFeedLine({required this.childId});
+
+  final String childId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final l = AppLocalizations.of(context);
+    final logs = ref.watch(logsProvider).value ?? const <DevelopmentLog>[];
+    final last = lastFeedingIn(logs);
+    final side = last?.feedingSide;
+    if (last == null || side == null) return const SizedBox.shrink();
+
+    final minutes = DateTime.now().difference(last.date).inMinutes;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: Warm.soft(theme.brightness),
+        borderRadius: BorderRadius.circular(Warm.chipRadius),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.history,
+            size: 16,
+            color: Warm.onCardSoft(theme.brightness),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              l.timerLastFeed(
+                side.localizedLabel(l),
+                minutes < 1
+                    ? l.quickTimeNow.toLowerCase()
+                    : l.nowAgo(localizedDuration(l, minutes)),
+              ),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: Warm.onCard(theme.brightness),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 /// Every button in the sheet is this one: same height, same radius, same

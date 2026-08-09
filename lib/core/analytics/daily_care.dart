@@ -43,6 +43,19 @@ class DailyCare {
       : now.difference(lastFeedingAt!).inMinutes;
 }
 
+/// The last feed on record, whatever day it happened on.
+///
+/// Deliberately not [DailyCare.lastFeedingAt], which stops at midnight: the
+/// question this answers — which breast was last — is asked most often at two
+/// in the morning, when the previous feed was yesterday and the count for
+/// today is one. Logs arrive newest first, so the first match is the answer.
+DevelopmentLog? lastFeedingIn(List<DevelopmentLog> logs) {
+  for (final log in logs) {
+    if (log.type == LogType.feeding) return log;
+  }
+  return null;
+}
+
 /// How a count compares with what the knowledge base expects.
 enum CareStatus { onTrack, watch, unknown }
 

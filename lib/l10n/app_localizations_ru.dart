@@ -496,6 +496,40 @@ class AppLocalizationsRu extends AppLocalizations {
   String get quickSleep180 => 'Три часа';
 
   @override
+  String get timerStart => 'Засечь время';
+
+  @override
+  String get timerStartHint => 'Отсчёт пойдёт с этой секунды';
+
+  @override
+  String get timerFeeding => 'Кормление идёт';
+
+  @override
+  String get timerSleep => 'Сон идёт';
+
+  @override
+  String timerSince(String time) {
+    return 'с $time';
+  }
+
+  @override
+  String get timerStarted => 'Отсчёт пошёл';
+
+  @override
+  String get timerDiscard => 'Сбросить';
+
+  @override
+  String get timerDiscarded => 'Отсчёт сброшен';
+
+  @override
+  String get timerForgotten => 'Идёт очень долго — может, забыли остановить?';
+
+  @override
+  String timerLastFeed(String side, String ago) {
+    return 'Прошлое кормление — $side, $ago';
+  }
+
+  @override
   String durationH(int h) {
     return '$h ч';
   }

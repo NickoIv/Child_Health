@@ -988,6 +988,66 @@ abstract class AppLocalizations {
   /// **'Три часа'**
   String get quickSleep180;
 
+  /// No description provided for @timerStart.
+  ///
+  /// In ru, this message translates to:
+  /// **'Засечь время'**
+  String get timerStart;
+
+  /// No description provided for @timerStartHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отсчёт пойдёт с этой секунды'**
+  String get timerStartHint;
+
+  /// No description provided for @timerFeeding.
+  ///
+  /// In ru, this message translates to:
+  /// **'Кормление идёт'**
+  String get timerFeeding;
+
+  /// No description provided for @timerSleep.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сон идёт'**
+  String get timerSleep;
+
+  /// No description provided for @timerSince.
+  ///
+  /// In ru, this message translates to:
+  /// **'с {time}'**
+  String timerSince(String time);
+
+  /// No description provided for @timerStarted.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отсчёт пошёл'**
+  String get timerStarted;
+
+  /// No description provided for @timerDiscard.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сбросить'**
+  String get timerDiscard;
+
+  /// No description provided for @timerDiscarded.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отсчёт сброшен'**
+  String get timerDiscarded;
+
+  /// No description provided for @timerForgotten.
+  ///
+  /// In ru, this message translates to:
+  /// **'Идёт очень долго — может, забыли остановить?'**
+  String get timerForgotten;
+
+  /// No description provided for @timerLastFeed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Прошлое кормление — {side}, {ago}'**
+  String timerLastFeed(String side, String ago);
+
   /// No description provided for @durationH.
   ///
   /// In ru, this message translates to:

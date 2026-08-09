@@ -495,6 +495,41 @@ class AppLocalizationsKk extends AppLocalizations {
   String get quickSleep180 => 'Үш сағат';
 
   @override
+  String get timerStart => 'Уақытты өлшеу';
+
+  @override
+  String get timerStartHint => 'Санақ осы сәттен басталады';
+
+  @override
+  String get timerFeeding => 'Тамақтандыру жүріп жатыр';
+
+  @override
+  String get timerSleep => 'Ұйықтап жатыр';
+
+  @override
+  String timerSince(String time) {
+    return '$time бастап';
+  }
+
+  @override
+  String get timerStarted => 'Санақ басталды';
+
+  @override
+  String get timerDiscard => 'Тастау';
+
+  @override
+  String get timerDiscarded => 'Санақ тасталды';
+
+  @override
+  String get timerForgotten =>
+      'Тым ұзақ жүріп жатыр — тоқтатуды ұмытқан жоқсыз ба?';
+
+  @override
+  String timerLastFeed(String side, String ago) {
+    return 'Алдыңғы тамақтандыру — $side, $ago';
+  }
+
+  @override
   String durationH(int h) {
     return '$h сағ';
   }

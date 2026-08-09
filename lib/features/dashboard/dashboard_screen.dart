@@ -17,6 +17,7 @@ import 'dashboard_config.dart';
 import 'focus_home.dart';
 import 'now_card.dart';
 import 'smart_card.dart';
+import 'timer_card.dart';
 import '../family/digest_card.dart';
 import '../family/invite_banner.dart';
 import '../family/moments_card.dart';
@@ -51,6 +52,10 @@ class DashboardScreen extends ConsumerWidget {
         const InviteBanner(),
         WarmHeader(child: child),
         const SizedBox(height: 20),
+        // Above the four buttons and below the child's name, and drawn only
+        // while something is being measured. A parent who opens the app in the
+        // middle of a feed opens it for this and nothing else.
+        RunningTimerCard(childId: child.id),
         SectionLabel(text: AppLocalizations.of(context).homeQuickLog),
         PrimaryActions(child: child),
         NightSleepLink(childId: child.id),
