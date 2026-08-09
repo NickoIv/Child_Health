@@ -68,7 +68,7 @@ class ReflectionCard extends ConsumerWidget {
                     Icon(
                       Icons.nights_stay_outlined,
                       size: 19,
-                      color: Warm.accent,
+                      color: Warm.accentOn(theme.brightness),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -124,7 +124,7 @@ class ReflectionCard extends ConsumerWidget {
                     Icon(
                       Icons.favorite_outline,
                       size: 15,
-                      color: Warm.accent,
+                      color: Warm.accentOn(theme.brightness),
                     ),
                     const SizedBox(width: 8),
                     Expanded(

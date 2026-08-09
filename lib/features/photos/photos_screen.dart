@@ -341,7 +341,10 @@ class _PhotoEntrySheetState extends ConsumerState<_PhotoEntrySheet> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.photo_camera_outlined, color: Warm.accent),
+                      Icon(
+                        Icons.photo_camera_outlined,
+                        color: Warm.accentOn(theme.brightness),
+                      ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
@@ -605,7 +608,10 @@ class _AddTile extends StatelessWidget {
           color: Warm.soft(theme.brightness),
           borderRadius: BorderRadius.circular(14),
         ),
-        child: Icon(Icons.add_a_photo_outlined, color: Warm.accent),
+        child: Icon(
+          Icons.add_a_photo_outlined,
+          color: Warm.accentOn(theme.brightness),
+        ),
       ),
     );
   }

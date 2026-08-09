@@ -21,6 +21,7 @@ void main() {
       expect(Warm.lavender, const Color(0xFFF3EAFE));
       expect(Warm.accent, const Color(0xFFE67E22));
       expect(Warm.accentSoft, const Color(0xFFE8B899));
+      expect(Warm.accentInk, const Color(0xFFA8570B));
       expect(Warm.ink, const Color(0xFF1E1A18));
       expect(Warm.inkSoft, const Color(0xFF6E645F));
       expect(Warm.success, const Color(0xFF4E8B6B));
@@ -43,6 +44,25 @@ void main() {
       expect(ratio(Warm.ink, Warm.primaryCard), greaterThan(12));
       expect(ratio(Warm.ink, Warm.background), greaterThan(12));
       expect(ratio(Warm.inkSoft, Warm.primaryCard), greaterThan(3.0));
+
+      // The accent, which is one measurement in both directions because both
+      // are against white: white on the «Сохранить» button, and the orange
+      // label of the selected tab on the white bar. The bright accent was
+      // 2.85:1 on each — below the bar for a sentence and below it for a
+      // glyph too.
+      expect(ratio(Colors.white, Warm.accentInk), greaterThan(4.5));
+      expect(ratio(Warm.accentInk, Warm.primaryCard), greaterThan(4.5));
+      // All three light surfaces, not white alone: the page and the soft card
+      // are warm, and an orange that clears the bar on white misses it on the
+      // surface it is actually printed on.
+      expect(ratio(Warm.accentInk, Warm.background), greaterThan(4.5));
+      expect(ratio(Warm.accentInk, Warm.secondaryCard), greaterThan(4.5));
+
+      // The bright one keeps the fills and the washes, where there is nothing
+      // to read — and on the dark card it is already legible on its own.
+      expect(ratio(Warm.accent, Warm.card(Brightness.dark)), greaterThan(4.5));
+      expect(Warm.accentOn(Brightness.light), Warm.accentInk);
+      expect(Warm.accentOn(Brightness.dark), Warm.accent);
     });
   });
 
@@ -122,11 +142,15 @@ void main() {
       expect(light.chipTheme.backgroundColor, Warm.secondaryCard);
     });
 
-    test('the one button style is the accent', () {
+    test('the one button style is the accent, dark enough to carry white', () {
       final style = light.filledButtonTheme.style!;
       expect(
         style.backgroundColor!.resolve(const <WidgetState>{}),
-        Warm.accent,
+        Warm.accentInk,
+      );
+      expect(
+        style.foregroundColor!.resolve(const <WidgetState>{}),
+        Colors.white,
       );
       final shape =
           style.shape!.resolve(const <WidgetState>{})! as RoundedRectangleBorder;
@@ -153,7 +177,10 @@ void main() {
       // Smaller than it was: the height went to the two figures under it,
       // which are what the screen is opened forty times a day to read.
       expect(WarmHeader.photoSize, 64);
-      expect(Warm.accentGradient.colors.last, Warm.accent);
+      // It ends dark rather than starting pale: the disc carries a white glyph
+      // and the old light end held it at 2.1:1.
+      expect(Warm.accentGradient.colors.first, Warm.accent);
+      expect(Warm.accentGradient.colors.last, Warm.accentInk);
     });
   });
 }

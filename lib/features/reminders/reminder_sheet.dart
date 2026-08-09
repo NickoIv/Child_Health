@@ -140,7 +140,10 @@ class _ReminderSheetState extends ConsumerState<_ReminderSheet> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.notifications_outlined, color: Warm.accent),
+                      Icon(
+                        Icons.notifications_outlined,
+                        color: Warm.accentOn(theme.brightness),
+                      ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
@@ -407,7 +410,8 @@ class _Choice extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final ink = selected ? Warm.accent : Warm.onCardSoft(theme.brightness);
+    final accent = Warm.accentOn(theme.brightness);
+    final ink = selected ? accent : Warm.onCardSoft(theme.brightness);
 
     return InkWell(
       onTap: onTap,
@@ -420,7 +424,7 @@ class _Choice extends StatelessWidget {
               : Warm.soft(theme.brightness),
           borderRadius: BorderRadius.circular(Warm.cardRadius),
           border: Border.all(
-            color: selected ? Warm.accent : Colors.transparent,
+            color: selected ? accent : Colors.transparent,
             width: 2,
           ),
         ),
@@ -437,7 +441,7 @@ class _Choice extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                   letterSpacing: -0.2,
                   height: 1.15,
-                  color: selected ? Warm.accent : Warm.onCard(theme.brightness),
+                  color: selected ? accent : Warm.onCard(theme.brightness),
                 ),
               ),
             ),

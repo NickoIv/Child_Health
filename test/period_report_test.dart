@@ -87,6 +87,20 @@ void main() {
         title: 'Заметка', description: 'Улыбался весь день'),
   ];
 
+  /// The same week, hung on the real clock instead of on [now].
+  ///
+  /// The arithmetic tests hand `buildPeriodReport` the date they were written
+  /// for; the widget flow cannot — it goes through the screen, and the screen
+  /// asks the machine what day it is. A fixture pinned to a date is therefore
+  /// «the last seven days» for one week and an empty report ever after, which
+  /// is exactly how this test spent a week failing.
+  List<DevelopmentLog> aWeekFromToday() {
+    final shift = DateTime.now().difference(now);
+    return [
+      for (final l in aWeek()) l.copyWith(date: l.date.add(shift)),
+    ];
+  }
+
   group('the arithmetic', () {
     test('sleep is averaged per night and per day', () {
       final r = buildPeriodReport(child, aWeek(), ReportPeriod.week, now: now);
@@ -356,7 +370,9 @@ void main() {
         ProviderScope(
           overrides: [
             childrenProvider.overrideWith((ref) => Stream.value([child])),
-            logsProvider.overrideWith((ref) => Stream.value(aWeek())),
+            // The screen reads the machine's clock, so the week has to be the
+            // one the machine is in. See [aWeekFromToday].
+            logsProvider.overrideWith((ref) => Stream.value(aWeekFromToday())),
           ],
           child: const ChildHealthApp(),
         ),

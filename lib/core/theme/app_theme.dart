@@ -79,6 +79,30 @@ abstract final class Warm {
   /// The pale version of it, for a fill behind an accent icon.
   static const accentSoft = Color(0xFFE8B899);
 
+  /// The same orange, taken down until it can be read.
+  ///
+  /// [accent] against white is 2.85:1 — below the 4.5:1 a sentence needs and
+  /// below even the 3:1 an icon needs. That was true in both directions: white
+  /// on the «Сохранить» button, and the orange label of the selected tab on a
+  /// white bar. Both are the same measurement, because both are a contrast
+  /// against white, so one darker orange fixes both.
+  ///
+  /// Taken down far enough to clear 4.5:1 on all three light surfaces, not
+  /// just on white: the page and the soft card are warm, and an orange that
+  /// passes on white alone fails by the width of a hair on the page it is
+  /// actually printed on.
+  ///
+  /// Same hue as [accent] to within a degree, so nothing changes colour —
+  /// only the pale end of it is gone from anything carrying meaning. [accent]
+  /// keeps the fills, the washes and the halos, where there is nothing to read.
+  static const accentInk = Color(0xFFA8570B);
+
+  /// The accent to paint text or a glyph in, given the surface under it.
+  ///
+  /// Light needs [accentInk]; in the dark the pale one is already 5.9:1 on the
+  /// card and the dark one would disappear into it.
+  static Color accentOn(Brightness b) => b == Brightness.dark ? accent : accentInk;
+
   /// Reading colour on any of the above.
   ///
   /// Near-black with a grain of warmth left in it. The old #3B2B23 was brown,
@@ -144,10 +168,14 @@ abstract final class Warm {
 
   /// The face of the microphone, and of anything else that is the one thing
   /// to press on its screen.
+  /// It runs from the accent into [accentInk] rather than from a pale peach
+  /// into the accent: the disc carries a white glyph, and on the old light end
+  /// that glyph sat at 2.1:1. It now crosses the middle of the disc at about
+  /// 3.5:1, which is the bar for a shape rather than for a sentence.
   static const LinearGradient accentGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFFF2A25C), accent],
+    colors: [accent, accentInk],
   );
 
   /// The dark-mode counterpart of each surface, so a widget can ask for a
@@ -277,7 +305,7 @@ abstract final class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Warm.accent, width: 2),
+          borderSide: BorderSide(color: Warm.accentOn(brightness), width: 2),
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
@@ -289,7 +317,9 @@ abstract final class AppTheme {
           // Tall enough to hit one-handed while holding a child.
           minimumSize: const Size(0, 52),
           padding: const EdgeInsets.symmetric(horizontal: 24),
-          backgroundColor: isDark ? null : Warm.accent,
+          // The deep orange, not the bright one: white on the bright accent
+          // was 2.85:1, and this button is where a record is saved.
+          backgroundColor: isDark ? null : Warm.accentInk,
           foregroundColor: isDark ? null : Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(Warm.buttonRadius),
@@ -372,7 +402,10 @@ abstract final class AppTheme {
               ? TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
-                  color: isDark ? const Color(0xFFF2A25C) : Warm.accent,
+                  // Eleven pixels of orange on a white bar: the pale accent
+                  // read at 2.85:1 here, which is the label a parent uses to
+                  // know where in the app she is.
+                  color: isDark ? const Color(0xFFF2A25C) : Warm.accentInk,
                 )
               : TextStyle(
                   fontSize: 11,
