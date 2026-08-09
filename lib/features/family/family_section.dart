@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_snack.dart';
@@ -74,6 +75,13 @@ class _FamilySectionState extends ConsumerState<FamilySection> {
               detail: member.email,
               status: member.isAccepted ? l.familyAccepted : l.familyPending,
               accepted: member.isAccepted,
+              // Only while it is still waiting, and only for the owner: once
+              // he has accepted there is nothing left to send, and the strip
+              // that offered this at the moment of inviting is long gone by
+              // the time she thinks to do it.
+              onCopy: member.isAccepted || readOnly
+                  ? null
+                  : () => _copyInvite(child.name, member.email),
               onRemove: readOnly
                   ? null
                   : () => ref.read(familyRepositoryProvider).revoke(
@@ -123,17 +131,18 @@ class _FamilySectionState extends ConsumerState<FamilySection> {
               autocorrect: false,
               decoration: InputDecoration(
                 labelText: l.familyInviteEmail,
-                helperText: l.familyInviteHint,
+                helperText: '${l.familyInviteHint}. ${l.familyInviteExplain}',
+                helperMaxLines: 4,
                 errorText: _error,
                 prefixIcon: const Icon(Icons.alternate_email),
               ),
-              onSubmitted: (_) => _invite(child.id),
+              onSubmitted: (_) => _invite(child.id, child.name),
             ),
             const SizedBox(height: 12),
             Align(
               alignment: Alignment.centerLeft,
               child: FilledButton.tonalIcon(
-                onPressed: _sending ? null : () => _invite(child.id),
+                onPressed: _sending ? null : () => _invite(child.id, child.name),
                 icon: const Icon(Icons.person_add_alt),
                 label: Text(l.familyInvite),
               ),
@@ -144,7 +153,31 @@ class _FamilySectionState extends ConsumerState<FamilySection> {
     );
   }
 
-  Future<void> _invite(String childId) async {
+
+  /// The invitation as something she can actually send.
+  ///
+  /// The clipboard rather than a share sheet: this runs in a browser, the
+  /// share sheet is not there on a desktop, and every messenger she might
+  /// use accepts a paste.
+  Future<void> _copyInvite(String childName, String email) async {
+    final l = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    // Where this copy of the app is actually served from, so the link works
+    // on a custom domain too.
+    final link = Uri.base.origin;
+
+    await Clipboard.setData(
+      ClipboardData(
+        text: l.familyInviteMessage(childName, email, link),
+      ),
+    );
+    if (!mounted) return;
+    messenger.showSnackBar(
+      appSnack(l.familyInviteCopied, kind: SnackKind.done),
+    );
+  }
+
+  Future<void> _invite(String childId, String childName) async {
     final l = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
     final email = normalizeEmail(_email.text);
@@ -179,7 +212,20 @@ class _FamilySectionState extends ConsumerState<FamilySection> {
       );
       if (!mounted) return;
       _email.clear();
-      messenger.showSnackBar(appSnack(l.familyInviteSent, kind: SnackKind.done));
+      // «Создано», not «отправлено». Nothing is emailed and nothing ever was:
+      // the invitation is a document the other person meets when they sign in
+      // with that address. Saying «отправлено» sent a mother to check an inbox
+      // that was never going to have anything in it.
+      messenger.showSnackBar(
+        appSnack(
+          l.familyInviteCreated,
+          kind: SnackKind.done,
+          action: SnackBarAction(
+            label: l.familyCopyInvite,
+            onPressed: () => _copyInvite(childName, email),
+          ),
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
       setState(() => _error = friendlyError(l, e));
@@ -195,6 +241,7 @@ class _MemberRow extends StatelessWidget {
     required this.detail,
     required this.status,
     this.accepted = false,
+    this.onCopy,
     this.onRemove,
   });
 
@@ -202,6 +249,10 @@ class _MemberRow extends StatelessWidget {
   final String detail;
   final String? status;
   final bool accepted;
+
+  /// Offered while an invitation is still waiting: nothing was emailed, so
+  /// this is how it actually reaches the other person.
+  final VoidCallback? onCopy;
   final VoidCallback? onRemove;
 
   @override
@@ -255,6 +306,13 @@ class _MemberRow extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
               ),
+            ),
+          if (onCopy != null)
+            IconButton(
+              tooltip: l.familyCopyInvite,
+              onPressed: onCopy,
+              visualDensity: VisualDensity.compact,
+              icon: const Icon(Icons.copy_outlined, size: 18),
             ),
           if (onRemove != null)
             IconButton(

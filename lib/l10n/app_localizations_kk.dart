@@ -1410,6 +1410,25 @@ class AppLocalizationsKk extends AppLocalizations {
   String get familyInviteHint => 'Ол кіретін мекенжай';
 
   @override
+  String get familyInviteCreated => 'Шақыру жасалды';
+
+  @override
+  String get familyInviteExplain =>
+      'Хатты біз жібермейміз. Шақыруды көшіріп, өзіңіз жіберіңіз — ол осы поштамен кірген кезде көреді.';
+
+  @override
+  String get familyCopyInvite => 'Шақыруды көшіру';
+
+  @override
+  String get familyInviteCopied =>
+      'Шақыру мәтіні көшірілді — мессенджерге қойыңыз';
+
+  @override
+  String familyInviteMessage(String name, String email, String link) {
+    return '$name күнделігіне қолжетімділік аштым. Сілтемені ашып, $email поштасымен кіріңіз: $link';
+  }
+
+  @override
   String get familyInviteSent => 'Шақыру жіберілді';
 
   @override

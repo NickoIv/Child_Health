@@ -2602,6 +2602,36 @@ abstract class AppLocalizations {
   /// **'Адрес, которым он входит в приложение'**
   String get familyInviteHint;
 
+  /// No description provided for @familyInviteCreated.
+  ///
+  /// In ru, this message translates to:
+  /// **'Приглашение создано'**
+  String get familyInviteCreated;
+
+  /// No description provided for @familyInviteExplain.
+  ///
+  /// In ru, this message translates to:
+  /// **'Письмо мы не отправляем. Скопируйте приглашение и передайте сами — он увидит его, когда войдёт в приложение этой почтой.'**
+  String get familyInviteExplain;
+
+  /// No description provided for @familyCopyInvite.
+  ///
+  /// In ru, this message translates to:
+  /// **'Скопировать приглашение'**
+  String get familyCopyInvite;
+
+  /// No description provided for @familyInviteCopied.
+  ///
+  /// In ru, this message translates to:
+  /// **'Текст приглашения скопирован — вставьте в мессенджер'**
+  String get familyInviteCopied;
+
+  /// No description provided for @familyInviteMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Я открыл доступ к дневнику ребёнка ({name}). Открой ссылку и войди почтой {email}: {link}'**
+  String familyInviteMessage(String name, String email, String link);
+
   /// No description provided for @familyInviteSent.
   ///
   /// In ru, this message translates to:

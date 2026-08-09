@@ -525,9 +525,25 @@ void main() {
       await tester.tap(find.widgetWithText(FilledButton, l.familyInvite));
       await pumpFrames(tester);
 
-      expect(find.text(l.familyInviteSent), findsOneWidget);
+      // «Создано», not «отправлено»: no email leaves the app, and the strip
+      // that says so also offers the only way it actually reaches him.
+      expect(find.text(l.familyInviteCreated), findsOneWidget);
+      expect(find.text(l.familyCopyInvite), findsWidgets);
       expect(find.text(fatherEmail), findsWidgets);
       expect(find.text(l.familyPending), findsOneWidget);
+    });
+
+    testWidgets('and nothing in the wording promises an email', (tester) async {
+      // He waited for one: «приглашение отправляется но на почту не приходит».
+      // Nothing here may say sent, letter or inbox unless it is saying that
+      // no letter is coming.
+      for (final locale in supportedLocales) {
+        final l = await AppLocalizations.delegate.load(locale);
+        expect(l.familyInviteCreated.toLowerCase(), isNot(contains('отправ')));
+        expect(l.familyInviteCreated.toLowerCase(), isNot(contains('sent')));
+        // And the field says up front what will and will not happen.
+        expect(l.familyInviteExplain.trim(), isNotEmpty);
+      }
     });
 
     testWidgets('a typo is caught before an invitation is written', (

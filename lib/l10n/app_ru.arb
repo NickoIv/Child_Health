@@ -736,6 +736,14 @@
   "familyInvite": "Пригласить",
   "familyInviteEmail": "Электронная почта",
   "familyInviteHint": "Адрес, которым он входит в приложение",
+  "familyInviteCreated": "Приглашение создано",
+  "familyInviteExplain": "Письмо мы не отправляем. Скопируйте приглашение и передайте сами — он увидит его, когда войдёт в приложение этой почтой.",
+  "familyCopyInvite": "Скопировать приглашение",
+  "familyInviteCopied": "Текст приглашения скопирован — вставьте в мессенджер",
+  "familyInviteMessage": "Я открыл доступ к дневнику ребёнка ({name}). Открой ссылку и войди почтой {email}: {link}",
+  "@familyInviteMessage": {
+    "placeholders": { "name": { "type": "String" }, "email": { "type": "String" }, "link": { "type": "String" } }
+  },
   "familyInviteSent": "Приглашение отправлено",
   "familyEmailInvalid": "Проверьте адрес",
   "familyPending": "Ожидает подтверждения",

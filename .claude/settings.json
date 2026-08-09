@@ -26,7 +26,10 @@
       "Read(**)",
       "Edit(**)",
       "Write(**)",
-      "Bash(grep -n \"logRepositoryProvider\\)\\\\s*$\\\\|logRepositoryProvider\\)\\\\.\\\\|\\\\.delete\\(\\\\|\\\\.add\\(\\\\|\\\\.update\\(\" lib/features/diary/diary_screen.dart)"
+      "Bash(grep -n \"logRepositoryProvider\\)\\\\s*$\\\\|logRepositoryProvider\\)\\\\.\\\\|\\\\.delete\\(\\\\|\\\\.add\\(\\\\|\\\\.update\\(\" lib/features/diary/diary_screen.dart)",
+      "Read(//c/Users/Nick/AppData/Local/Pub/Cache/hosted/**)",
+      "Bash(xargs grep -n \"getTooltipColor\\\\|tooltipBgColor\\\\|this.tooltipBorder\\\\|tooltipPadding\")",
+      "Bash(flutter gen-l10n *)"
     ]
   }
 }

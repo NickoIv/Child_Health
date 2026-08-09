@@ -1416,6 +1416,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get familyInviteHint => 'The address they sign in with';
 
   @override
+  String get familyInviteCreated => 'Invitation created';
+
+  @override
+  String get familyInviteExplain =>
+      'We do not send the email. Copy the invitation and pass it on yourself — they will see it when they sign in with that address.';
+
+  @override
+  String get familyCopyInvite => 'Copy the invitation';
+
+  @override
+  String get familyInviteCopied =>
+      'Invitation copied — paste it into a message';
+
+  @override
+  String familyInviteMessage(String name, String email, String link) {
+    return 'I have shared $name’s diary with you. Open the link and sign in with $email: $link';
+  }
+
+  @override
   String get familyInviteSent => 'Invitation sent';
 
   @override

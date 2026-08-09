@@ -1422,6 +1422,25 @@ class AppLocalizationsRu extends AppLocalizations {
   String get familyInviteHint => 'Адрес, которым он входит в приложение';
 
   @override
+  String get familyInviteCreated => 'Приглашение создано';
+
+  @override
+  String get familyInviteExplain =>
+      'Письмо мы не отправляем. Скопируйте приглашение и передайте сами — он увидит его, когда войдёт в приложение этой почтой.';
+
+  @override
+  String get familyCopyInvite => 'Скопировать приглашение';
+
+  @override
+  String get familyInviteCopied =>
+      'Текст приглашения скопирован — вставьте в мессенджер';
+
+  @override
+  String familyInviteMessage(String name, String email, String link) {
+    return 'Я открыл доступ к дневнику ребёнка ($name). Открой ссылку и войди почтой $email: $link';
+  }
+
+  @override
   String get familyInviteSent => 'Приглашение отправлено';
 
   @override

@@ -258,6 +258,20 @@ class _GrowthChart extends StatelessWidget {
               ),
               lineTouchData: LineTouchData(
                 touchTooltipData: LineTouchTooltipData(
+                  // Both colours stated, because the two defaults do not
+                  // agree: fl_chart paints the bubble dark blue-grey and the
+                  // app's labelMedium is near-black ink, so on a light theme
+                  // the reading came out black on black and the tooltip read
+                  // as a hole in the chart.
+                  //
+                  // Dark bubble, white type — the same pairing the snack
+                  // strip uses, which is the app's one dark surface.
+                  getTooltipColor: (_) => Warm.ink.withValues(alpha: 0.92),
+                  tooltipBorderRadius: BorderRadius.circular(10),
+                  tooltipPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   getTooltipItems: (spots) => spots.map((s) {
                     // Only the child's own series is worth a tooltip; the
                     // reference curves would just add noise.
@@ -265,7 +279,12 @@ class _GrowthChart extends StatelessWidget {
                     return LineTooltipItem(
                       '${s.y.toStringAsFixed(1)} $_unitLabel\n'
                       '${l.monthsShort(s.x.toInt())}',
-                      theme.textTheme.labelMedium ?? const TextStyle(),
+                      (theme.textTheme.labelMedium ?? const TextStyle())
+                          .copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontFeatures: AppTheme.tabular,
+                          ),
                     );
                   }).toList(),
                 ),
