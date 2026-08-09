@@ -32,7 +32,8 @@
       "Bash(flutter gen-l10n *)",
       "Bash(node --check worker/worker.js)",
       "Bash(node --input-type=module -e \"import\\('./worker/invites.js'\\).then\\(\\(\\)=>console.log\\('invites.js parses'\\)\\).catch\\(e=>console.log\\('ERR',e.message\\)\\)\")",
-      "Bash(python -c ' *)"
+      "Bash(python -c ' *)",
+      "PowerShell(cd h:\\\\MyProjects\\\\TZ_Child_Health_App; powershell -ExecutionPolicy Bypass -File .\\\\deploy-worker.ps1 2>&1 | Select-String -Pattern \"is set|NOT set|schedule|Deployed|Total Upload|Error|error\" | Select-Object -First 15)"
     ]
   }
 }

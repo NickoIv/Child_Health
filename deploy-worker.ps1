@@ -25,7 +25,12 @@ Write-Host '--- secrets ---' -ForegroundColor Cyan
 # answer, and without FIREBASE_SERVICE_ACCOUNT the hourly sweep logs "not
 # configured" and sends nothing at all. Neither is visible from the app.
 $secrets = npx wrangler secret list 2>&1 | Out-String
-foreach ($name in @('GEMINI_API_KEY', 'FIREBASE_SERVICE_ACCOUNT', 'FIREBASE_API_KEY', 'BREVO_API_KEY')) {
+
+# Required: without either of these something the app promises silently does
+# not happen. Without GEMINI_API_KEY the assistant answers with an explanation
+# instead of an answer; without FIREBASE_SERVICE_ACCOUNT the hourly sweep logs
+# "not configured" and sends nothing at all.
+foreach ($name in @('GEMINI_API_KEY', 'FIREBASE_SERVICE_ACCOUNT')) {
   if ($secrets -notmatch $name) {
     Write-Host ''
     Write-Host "MISSING SECRET: $name" -ForegroundColor Yellow
@@ -33,22 +38,35 @@ foreach ($name in @('GEMINI_API_KEY', 'FIREBASE_SERVICE_ACCOUNT', 'FIREBASE_API_
       Write-Host '  Firebase Console -> Project settings -> Service accounts'
       Write-Host '  -> Generate new private key. Paste the whole JSON file.'
     }
-    if ($name -eq 'FIREBASE_API_KEY') {
-      Write-Host '  The web API key from lib/firebase/firebase_options.dart.'
-      Write-Host '  Public by design - it only lets the Worker ask Google who'
-      Write-Host '  an ID token belongs to.'
-    }
-    if ($name -eq 'BREVO_API_KEY') {
-      Write-Host '  https://app.brevo.com -> SMTP & API -> Generate a new key.'
-      Write-Host '  Free tier sends 300 letters a day from one verified sender.'
-      Write-Host '  Verify your own address there first, then set MAIL_FROM in'
-      Write-Host '  wrangler.toml to it.'
-    }
     Write-Host "  npx wrangler secret put $name"
     Write-Host ''
     throw "$name is not set on the Worker"
   }
   Write-Host "    $name is set"
+}
+
+# Optional: only family invitation letters depend on these, and the app has a
+# working answer without them - it offers the invitation to copy and send by
+# hand. So a missing mail key is a warning rather than a refusal; blocking the
+# assistant and the reminder sweep over it would be the wrong trade.
+foreach ($name in @('FIREBASE_API_KEY', 'BREVO_API_KEY')) {
+  if ($secrets -notmatch $name) {
+    Write-Host "    $name is NOT set - invitation letters stay off" -ForegroundColor Yellow
+    if ($name -eq 'FIREBASE_API_KEY') {
+      Write-Host '      The web API key from lib/firebase/firebase_options.dart.'
+      Write-Host '      Public by design: it only lets the Worker ask Google'
+      Write-Host '      who an ID token belongs to.'
+    }
+    if ($name -eq 'BREVO_API_KEY') {
+      Write-Host '      https://app.brevo.com -> SMTP & API -> Generate a key.'
+      Write-Host '      Free tier: 300 letters a day from one verified mailbox,'
+      Write-Host '      no domain needed. Verify your address, then check that'
+      Write-Host '      MAIL_FROM in wrangler.toml is that address.'
+    }
+    Write-Host "      npx wrangler secret put $name"
+  } else {
+    Write-Host "    $name is set"
+  }
 }
 
 Write-Host '--- deploy ---' -ForegroundColor Cyan
