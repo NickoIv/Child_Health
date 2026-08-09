@@ -868,6 +868,18 @@ abstract class AppLocalizations {
   /// **'Напоминание'**
   String get reminderAdd;
 
+  /// No description provided for @reminderCompleted.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отмечено выполненным'**
+  String get reminderCompleted;
+
+  /// No description provided for @reminderDeleteConfirm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить «{title}»? Вернуть это будет нельзя.'**
+  String reminderDeleteConfirm(String title);
+
   /// No description provided for @reminderDelete.
   ///
   /// In ru, this message translates to:

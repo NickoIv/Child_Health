@@ -434,6 +434,14 @@ class AppLocalizationsRu extends AppLocalizations {
   String get reminderAdd => 'Напоминание';
 
   @override
+  String get reminderCompleted => 'Отмечено выполненным';
+
+  @override
+  String reminderDeleteConfirm(String title) {
+    return 'Удалить «$title»? Вернуть это будет нельзя.';
+  }
+
+  @override
   String get reminderDelete => 'Удалить напоминание';
 
   @override

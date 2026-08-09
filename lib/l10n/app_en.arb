@@ -128,6 +128,8 @@
   "reminderSaved": "I will remind you {when}",
   "reminderNameRequired": "Say what to remind about",
   "reminderAdd": "Reminder",
+  "reminderCompleted": "Marked as done",
+  "reminderDeleteConfirm": "Delete “{title}”? This cannot be undone.",
   "reminderDelete": "Delete reminder",
   "reminderDeleted": "Reminder deleted",
   "remindersVaccinations": "Vaccination schedule",

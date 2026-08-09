@@ -291,7 +291,10 @@ class _ReminderSheetState extends ConsumerState<_ReminderSheet> {
                     child: Text(l.commonSave),
                   ),
                   if (widget.existing != null) ...[
-                    const SizedBox(height: 4),
+                    // Well clear of «Сохранить». Four pixels under the
+                    // primary button is where a thumb aiming for it lands,
+                    // and this one cannot be undone.
+                    const SizedBox(height: 16),
                     TextButton.icon(
                       onPressed: _saving ? null : _delete,
                       style: TextButton.styleFrom(
@@ -371,6 +374,29 @@ class _ReminderSheetState extends ConsumerState<_ReminderSheet> {
     final l = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
+
+    // Asked first, because this one has no undo: a deleted reminder is gone,
+    // and a hand-typed dose schedule is not something a parent can rebuild
+    // from memory.
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l.reminderDelete),
+        content: Text(l.reminderDeleteConfirm(_name.text.trim())),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(l.commonCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(l.commonDelete),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
     setState(() => _saving = true);
 
     try {

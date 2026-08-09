@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/l10n/labels.dart';
+import '../../core/theme/app_snack.dart';
 import '../../core/theme/app_theme.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/reminder.dart';
@@ -19,6 +20,40 @@ class RemindersScreen extends ConsumerStatefulWidget {
 
 class _RemindersScreenState extends ConsumerState<RemindersScreen> {
   bool _showCompleted = false;
+
+  /// Ticking one off, with a way back.
+  ///
+  /// A completed reminder leaves the list — that is the point of the list —
+  /// but until now it left in silence, and a tick landed on by accident was
+  /// indistinguishable from a reminder that had vanished. He reported exactly
+  /// that: «нажал на напоминание, и оно исчезло». So the row says what it
+  /// did and offers to undo it, which is also the honest answer when the tap
+  /// was meant for the title beside it.
+  Future<void> _toggle(Reminder reminder) async {
+    final l = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final repository = ref.read(reminderRepositoryProvider);
+    final done = !reminder.isCompleted;
+
+    await repository.update(reminder.copyWith(isCompleted: done));
+    if (!mounted) return;
+
+    // Only the direction that hides something needs explaining; bringing one
+    // back is its own confirmation, because the row reappears.
+    if (!done) return;
+
+    messenger.showSnackBar(
+      appSnack(
+        l.reminderCompleted,
+        kind: SnackKind.done,
+        action: SnackBarAction(
+          label: l.commonUndo,
+          onPressed: () =>
+              repository.update(reminder.copyWith(isCompleted: false)),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,9 +113,7 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
             _TypeSection(
               type: type,
               reminders: visible.where((r) => r.type == type).toList(),
-              onToggle: (r) => ref
-                  .read(reminderRepositoryProvider)
-                  .update(r.copyWith(isCompleted: !r.isCompleted)),
+              onToggle: _toggle,
               // A generated vaccination is the calendar's to move, not a
               // parent's; the two she wrote herself open for editing.
               onOpen: type == ReminderType.vaccination
@@ -202,8 +235,15 @@ class _ReminderRow extends StatelessWidget {
       _ => l.remindersInDays(days),
     };
 
-    // The row opens for editing, the box ticks it off. Two targets on one
-    // line, and the smaller of them is the one that changes nothing.
+    // The row opens for editing, the box ticks it off — and the box is the
+    // one that makes the row disappear, so it gets room around it. Twelve
+    // pixels rather than four: the Checkbox already claims a 48px tap target
+    // of its own, and the gap is what keeps a thumb aimed at the first letters
+    // of the title from landing on the edge of it.
+    //
+    // The width is deliberately not constrained. Boxing the Checkbox into
+    // anything under 48 makes its hit area overflow the box, and taps start
+    // missing it altogether — which the test below caught the first time.
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -211,7 +251,7 @@ class _ReminderRow extends StatelessWidget {
           value: reminder.isCompleted,
           onChanged: (_) => onToggle(),
         ),
-        const SizedBox(width: 4),
+        const SizedBox(width: 12),
         Expanded(
           child: InkWell(
             onTap: onOpen,

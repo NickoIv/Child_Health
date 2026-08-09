@@ -435,6 +435,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reminderAdd => 'Reminder';
 
   @override
+  String get reminderCompleted => 'Marked as done';
+
+  @override
+  String reminderDeleteConfirm(String title) {
+    return 'Delete “$title”? This cannot be undone.';
+  }
+
+  @override
   String get reminderDelete => 'Delete reminder';
 
   @override

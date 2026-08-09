@@ -433,6 +433,14 @@ class AppLocalizationsKk extends AppLocalizations {
   String get reminderAdd => 'Еске салу';
 
   @override
+  String get reminderCompleted => 'Орындалды деп белгіленді';
+
+  @override
+  String reminderDeleteConfirm(String title) {
+    return '«$title» жойылсын ба? Мұны қайтару мүмкін болмайды.';
+  }
+
+  @override
   String get reminderDelete => 'Еске салуды жою';
 
   @override

@@ -177,6 +177,11 @@
   "reminderSaved": "Напомню {when}",
   "reminderNameRequired": "Напишите, о чём напомнить",
   "reminderAdd": "Напоминание",
+  "reminderCompleted": "Отмечено выполненным",
+  "reminderDeleteConfirm": "Удалить «{title}»? Вернуть это будет нельзя.",
+  "@reminderDeleteConfirm": {
+    "placeholders": { "title": { "type": "String" } }
+  },
   "reminderDelete": "Удалить напоминание",
   "reminderDeleted": "Напоминание удалено",
   "@reminderInHours": {
