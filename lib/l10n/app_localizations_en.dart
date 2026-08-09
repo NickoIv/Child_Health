@@ -527,6 +527,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quickSleep180 => 'Three hours';
 
   @override
+  String get sleepForecastTitle => 'Sleep is due soon';
+
+  @override
+  String get sleepForecastOverdue => 'Awake longer than usual';
+
+  @override
+  String sleepForecastAt(String time) {
+    return 'Usually falls asleep around $time';
+  }
+
+  @override
+  String sleepForecastAwake(String awake, String window) {
+    return 'Awake $awake · window ≈ $window';
+  }
+
+  @override
+  String sleepForecastFromHistory(int count) {
+    return 'From two weeks of entries: $count gaps';
+  }
+
+  @override
+  String get sleepForecastFromAge =>
+      'From the age norms for now — too few entries yet';
+
+  @override
   String get timerStart => 'Time it';
 
   @override

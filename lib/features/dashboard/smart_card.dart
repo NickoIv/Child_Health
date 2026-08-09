@@ -4,7 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/care/appreciation_store.dart';
 import '../../core/care/check_in.dart';
 import '../../core/care/check_in_store.dart';
+import '../../core/care/active_timer.dart';
 import '../../core/care/daily_reflection.dart';
+import '../../core/care/forecast_store.dart';
+import '../../core/care/sleep_forecast.dart';
 import '../../core/care/heavy_day.dart';
 import '../../core/care/pattern_store.dart';
 import '../../core/care/patterns.dart';
@@ -18,17 +21,26 @@ import '../family/appreciation_card.dart';
 import 'check_in_card.dart';
 import 'pattern_card.dart';
 import 'reflection_card.dart';
+import 'sleep_forecast_card.dart';
 import 'suggestion_card.dart';
 
 /// Which of the smart cards, if any, the home screen shows.
 ///
 /// Ordered rather than stacked, and the order is a claim about the parent
 /// rather than about the code. What somebody else said to her outranks a
-/// question about her night; both outrank a shortcut to a button already on
-/// the screen; and the two that only report — the evening's tally and an
-/// observation about the week — come last, because neither is time-critical
-/// and both are still in full on the assistant tab.
-enum SmartCardKind { appreciation, checkIn, suggestion, reflection, pattern }
+/// question about her night; both outrank the next hour; the next hour
+/// outranks a shortcut to a button already on the screen; and the two that
+/// only report — the evening's tally and an observation about the week — come
+/// last, because neither is time-critical and both are still in full on the
+/// assistant tab.
+enum SmartCardKind {
+  appreciation,
+  checkIn,
+  sleepForecast,
+  suggestion,
+  reflection,
+  pattern,
+}
 
 /// The one card the home screen is allowed to show.
 ///
@@ -51,6 +63,7 @@ class SmartCard extends ConsumerWidget {
     return switch (smartCardFor(ref, moment)) {
       SmartCardKind.appreciation => AppreciationCard(now: moment),
       SmartCardKind.checkIn => CheckInCard(now: moment),
+      SmartCardKind.sleepForecast => SleepForecastCard(now: moment),
       SmartCardKind.suggestion => SuggestionCard(now: moment),
       SmartCardKind.reflection => ReflectionCard(now: moment),
       SmartCardKind.pattern => PatternCard(now: moment),
@@ -77,6 +90,24 @@ SmartCardKind? smartCardFor(WidgetRef ref, DateTime now) {
   final checkIn = ref.watch(checkInStoreProvider);
   if (checkInDue(logs, now, shownDay: checkIn?.day)) {
     return SmartCardKind.checkIn;
+  }
+
+  // The only card here about the next hour rather than the last one, so it
+  // outranks everything that is merely useful. It is narrow by construction —
+  // an awake child under three, inside three quarters of an hour of the end of
+  // his wake window — so it displaces the others rarely.
+  final dismissedUntil = ref.watch(forecastStoreProvider);
+  if (dismissedUntil == null || !now.isBefore(dismissedUntil)) {
+    final child = ref.watch(selectedChildProvider);
+    final forecast = child == null
+        ? null
+        : sleepForecastFor(
+            logs,
+            now,
+            ageMonths: child.ageInMonths,
+            asleep: ref.watch(activeTimerProvider)?.kind == TimerKind.sleep,
+          );
+    if (forecast != null) return SmartCardKind.sleepForecast;
   }
 
   final suggestion = suggestionFor(

@@ -224,6 +224,36 @@
   "quickSleep90": "Полтора часа",
   "quickSleep120": "Два часа",
   "quickSleep180": "Три часа",
+  "sleepForecastTitle": "Скоро сон",
+  "sleepForecastOverdue": "Не спит дольше обычного",
+  "sleepForecastAt": "Обычно засыпает около {time}",
+  "@sleepForecastAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "sleepForecastAwake": "Не спит {awake} · окно ≈ {window}",
+  "@sleepForecastAwake": {
+    "placeholders": {
+      "awake": {
+        "type": "String"
+      },
+      "window": {
+        "type": "String"
+      }
+    }
+  },
+  "sleepForecastFromHistory": "По записям за две недели: {count} промежутков",
+  "@sleepForecastFromHistory": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sleepForecastFromAge": "Пока по возрастным нормам — записей ещё мало",
   "timerStart": "Засечь время",
   "timerStartHint": "Отсчёт пойдёт с этой секунды",
   "timerFeeding": "Кормление идёт",

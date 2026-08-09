@@ -1048,6 +1048,42 @@ abstract class AppLocalizations {
   /// **'Три часа'**
   String get quickSleep180;
 
+  /// No description provided for @sleepForecastTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Скоро сон'**
+  String get sleepForecastTitle;
+
+  /// No description provided for @sleepForecastOverdue.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не спит дольше обычного'**
+  String get sleepForecastOverdue;
+
+  /// No description provided for @sleepForecastAt.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обычно засыпает около {time}'**
+  String sleepForecastAt(String time);
+
+  /// No description provided for @sleepForecastAwake.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не спит {awake} · окно ≈ {window}'**
+  String sleepForecastAwake(String awake, String window);
+
+  /// No description provided for @sleepForecastFromHistory.
+  ///
+  /// In ru, this message translates to:
+  /// **'По записям за две недели: {count} промежутков'**
+  String sleepForecastFromHistory(int count);
+
+  /// No description provided for @sleepForecastFromAge.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пока по возрастным нормам — записей ещё мало'**
+  String get sleepForecastFromAge;
+
   /// No description provided for @timerStart.
   ///
   /// In ru, this message translates to:

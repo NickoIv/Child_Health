@@ -525,6 +525,31 @@ class AppLocalizationsKk extends AppLocalizations {
   String get quickSleep180 => 'Үш сағат';
 
   @override
+  String get sleepForecastTitle => 'Жақында ұйқы';
+
+  @override
+  String get sleepForecastOverdue => 'Әдеттегіден ұзақ ояу';
+
+  @override
+  String sleepForecastAt(String time) {
+    return 'Әдетте $time шамасында ұйықтайды';
+  }
+
+  @override
+  String sleepForecastAwake(String awake, String window) {
+    return 'Ояу $awake · терезе ≈ $window';
+  }
+
+  @override
+  String sleepForecastFromHistory(int count) {
+    return 'Екі апталық жазбалар бойынша: $count аралық';
+  }
+
+  @override
+  String get sleepForecastFromAge =>
+      'Әзірге жас нормалары бойынша — жазба әлі аз';
+
+  @override
   String get timerStart => 'Уақытты өлшеу';
 
   @override

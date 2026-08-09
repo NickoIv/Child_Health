@@ -526,6 +526,31 @@ class AppLocalizationsRu extends AppLocalizations {
   String get quickSleep180 => 'Три часа';
 
   @override
+  String get sleepForecastTitle => 'Скоро сон';
+
+  @override
+  String get sleepForecastOverdue => 'Не спит дольше обычного';
+
+  @override
+  String sleepForecastAt(String time) {
+    return 'Обычно засыпает около $time';
+  }
+
+  @override
+  String sleepForecastAwake(String awake, String window) {
+    return 'Не спит $awake · окно ≈ $window';
+  }
+
+  @override
+  String sleepForecastFromHistory(int count) {
+    return 'По записям за две недели: $count промежутков';
+  }
+
+  @override
+  String get sleepForecastFromAge =>
+      'Пока по возрастным нормам — записей ещё мало';
+
+  @override
   String get timerStart => 'Засечь время';
 
   @override

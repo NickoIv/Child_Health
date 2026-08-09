@@ -1,4 +1,5 @@
 import '../core/analytics/daily_care.dart';
+import '../core/care/sleep_forecast.dart';
 import '../core/analytics/illness_stats.dart';
 import '../core/growth/who_standards.dart';
 import '../core/vaccination/national_calendar.dart';
@@ -46,13 +47,16 @@ String childSnapshot({
   final moment = now ?? DateTime.now();
   final lines = <String>[
     'Имя: ${child.name}, ${_gender(child)}, ${child.ageInMonthsAt(moment)} мес. '
-        '(родился${child.gender == Gender.female ? 'ась' : 'ся'} '
+        // «родилась» / «родился» — the stem is «родил», and it used to be
+        // «родился» with the feminine ending stuck on the end of it.
+        '(родил${child.gender == Gender.female ? 'ась' : 'ся'} '
         '${_date(child.birthDate)})',
   ];
 
   lines.addAll(_growthLines(child, logs, moment));
   lines.addAll(_todayLines(logs, moment));
   lines.addAll(_temperatureLines(logs, moment));
+  lines.addAll(_sleepWindowLines(child, logs, moment));
   lines.addAll(_weekLines(logs, moment));
   lines.addAll(_illnessLines(logs, moment));
   lines.addAll(_reminderLines(reminders, moment));
@@ -177,6 +181,52 @@ List<String> _temperatureLines(List<DevelopmentLog> logs, DateTime now) {
   if (highest != null && highest > latest) {
     line.write(', максимум за день $highest °C');
   }
+  return [line.toString()];
+}
+
+// --- Sleep window ---------------------------------------------------------
+
+/// How long he is usually awake, and when the current stretch started.
+///
+/// Here so that «когда он захочет спать» is answered from his own fortnight
+/// rather than from the model's memory of a sleep book. The line says which of
+/// the two the figure came from, so the assistant can pass that on instead of
+/// presenting an age norm as an observation about this child.
+List<String> _sleepWindowLines(
+  Child child,
+  List<DevelopmentLog> logs,
+  DateTime now,
+) {
+  final months = child.ageInMonthsAt(now);
+  if (months > forecastMaxAgeMonths) return const [];
+
+  // Nothing at all until one sleep has been written down. The age table would
+  // print a window for a child nobody has recorded anything about, and the
+  // snapshot's job is to say what is known — «записей пока нет» is the honest
+  // line for that case, and a wake window on top of it would contradict it.
+  final awakeSince = lastWakingAt(logs, now);
+  if (awakeSince == null) return const [];
+
+  final window = wakeWindowFor(logs, now, ageMonths: months);
+  final source = window.samples >= minForecastSamples
+      ? 'по ${window.samples} промежуткам за $forecastHistoryDays дней'
+      : 'по возрастным нормам, своих записей пока мало';
+  final line = StringBuffer(
+    'Окно бодрствования: ≈${window.minutes} мин ($source)',
+  );
+
+  final awake = now.difference(awakeSince).inMinutes;
+  // The current stretch only while it is still today's. Yesterday's last nap
+  // says nothing about this afternoon, and printing it invites the model to do
+  // arithmetic on a stale number.
+  if (awake >= 0 && awake <= 12 * 60) {
+    final expected = awakeSince.add(Duration(minutes: window.minutes));
+    line.write(
+      '. Не спит с ${_clock(awakeSince)} ($awake мин), '
+      'следующий сон ориентировочно ${_clock(expected)}',
+    );
+  }
+
   return [line.toString()];
 }
 
