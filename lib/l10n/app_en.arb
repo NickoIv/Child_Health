@@ -765,6 +765,7 @@
   "importRoleIgnored": "not used",
   "settingsImport": "Bring data over",
   "settingsImportHint": "From another diary, using its export file",
+  "teethDisclaimer": "These months are averages from paediatric charts, not a yardstick for one child. If anything worries you, ask your paediatrician or dentist.",
   "teethTitle": "Teeth",
   "teethCount": "{n} of 20 through",
   "teethNone": "None yet",

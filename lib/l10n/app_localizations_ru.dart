@@ -2556,6 +2556,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsImportHint => 'Из другого дневника — по файлу выгрузки';
 
   @override
+  String get teethDisclaimer =>
+      'Сроки — средние по педиатрическим таблицам, а не мерка для конкретного ребёнка. Если что-то беспокоит — спросите педиатра или стоматолога.';
+
+  @override
   String get teethTitle => 'Зубы';
 
   @override

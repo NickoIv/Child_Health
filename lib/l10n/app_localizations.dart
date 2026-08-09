@@ -4504,6 +4504,12 @@ abstract class AppLocalizations {
   /// **'Из другого дневника — по файлу выгрузки'**
   String get settingsImportHint;
 
+  /// No description provided for @teethDisclaimer.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сроки — средние по педиатрическим таблицам, а не мерка для конкретного ребёнка. Если что-то беспокоит — спросите педиатра или стоматолога.'**
+  String get teethDisclaimer;
+
   /// No description provided for @teethTitle.
   ///
   /// In ru, this message translates to:

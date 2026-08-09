@@ -82,6 +82,17 @@ class TeethCard extends ConsumerWidget {
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
+          const SizedBox(height: 10),
+          // The same line every other screen carrying a figure has. The one
+          // on this screen belongs to the WHO percentiles above and says
+          // nothing about teething, and a published month range read without
+          // it is a number that can pass for a verdict.
+          Text(
+            l.teethDisclaimer,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
         ],
       ),
     );

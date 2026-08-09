@@ -2537,6 +2537,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsImportHint => 'From another diary, using its export file';
 
   @override
+  String get teethDisclaimer =>
+      'These months are averages from paediatric charts, not a yardstick for one child. If anything worries you, ask your paediatrician or dentist.';
+
+  @override
   String get teethTitle => 'Teeth';
 
   @override

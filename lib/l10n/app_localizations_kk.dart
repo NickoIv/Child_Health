@@ -2520,6 +2520,10 @@ class AppLocalizationsKk extends AppLocalizations {
   String get settingsImportHint => 'Басқа күнделіктен — шығару файлы арқылы';
 
   @override
+  String get teethDisclaimer =>
+      'Мерзімдер — педиатриялық кестелердегі орташа мәндер, нақты балаға арналған өлшем емес. Алаңдатса — педиатрдан немесе тіс дәрігерінен сұраңыз.';
+
+  @override
   String get teethTitle => 'Тістер';
 
   @override
