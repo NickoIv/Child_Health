@@ -16,9 +16,11 @@ class ChildHealthApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Nothing is read from it: watching is what keeps the reminder schedule
-    // alive for as long as the app is.
+    // Nothing is read from either: watching is what keeps the reminder
+    // schedule alive for as long as the app is, and what catches a push token
+    // the browser rotated while the app was closed.
     ref.watch(notificationSyncProvider);
+    ref.watch(pushTokenSyncProvider);
 
     final locale = ref.watch(localeProvider);
     // `intl` keeps its own idea of the current locale, and every DateFormat

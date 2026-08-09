@@ -12,6 +12,7 @@ import 'core/voice/dictation.dart';
 import 'firebase/firebase_auth_repository.dart';
 import 'firebase/firebase_options.dart';
 import 'firebase/firestore_repositories.dart';
+import 'firebase/push_messaging.dart';
 import 'l10n/app_localizations.dart';
 import 'providers.dart';
 
@@ -57,6 +58,8 @@ Future<void> main() async {
         // nobody ever dictates into never touches the microphone at all.
         dictationProvider.overrideWith((ref) => PlatformDictation()),
         authRepositoryProvider.overrideWithValue(FirebaseAuthRepository()),
+        // Reads, never prompts — see [pushTokenSyncProvider].
+        pushTokenReaderProvider.overrideWithValue(currentPushToken),
         // The *raw* repositories, deliberately. The public providers wrap
         // these in a read-only guard when the session is a viewer's, and
         // overriding those instead would hand a father a writable client.

@@ -29,6 +29,27 @@ npx wrangler secret put GEMINI_API_KEY   # вставьте ключ, он не 
 npx wrangler deploy
 ```
 
+**Второй секрет — для напоминаний.** Тот же Worker раз в час обходит
+напоминания, которым подошёл срок, и рассылает их push-уведомлениями (крон
+`0 * * * *` в `wrangler.toml`). Для этого ему нужен сервисный аккаунт
+Firebase — он обращается к Firestore от имени проекта, минуя правила:
+
+```bash
+npx wrangler secret put FIREBASE_SERVICE_ACCOUNT   # весь JSON целиком
+```
+
+Ключ берётся в Firebase Console → «Настройки проекта» → «Сервисные аккаунты»
+→ «Создать новый закрытый ключ». **Без этого секрета рассылка молча ничего не
+делает**: в логах Worker будет `FIREBASE_SERVICE_ACCOUNT is not configured`, а
+в приложении это выглядит как «уведомления включены, но не приходят».
+
+Проще всего запускать не руками, а скриптом из корня проекта — он проверит оба
+секрета до деплоя:
+
+```
+powershell -ExecutionPolicy Bypass -File .\deploy-worker.ps1
+```
+
 Wrangler напечатает адрес вида `https://child-health-ai.NAME.workers.dev`.
 
 **3. Пересоберите приложение с этим адресом:**

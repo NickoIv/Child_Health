@@ -68,16 +68,33 @@
 
       var work = [];
 
-      // The service worker is not registered any more (built with
-      // --pwa-strategy=none), but one installed by an earlier version is
-      // still in charge until it is told otherwise.
+      // Flutter's app-shell worker is not registered any more, but one
+      // installed by an earlier version is still in charge until it is told
+      // otherwise.
+      //
+      // Only that one. This used to unregister every service worker on the
+      // origin, which took firebase-messaging-sw.js with it on every single
+      // load — and that worker is the whole of background push: without it
+      // registered, a reminder can only arrive while the tab is open, which
+      // is exactly when nobody needs reminding. Push was built, shipped and
+      // silently undone here.
+      function isFlutterShell(registration) {
+        var worker =
+          registration.active || registration.waiting || registration.installing;
+        return !!worker && worker.scriptURL.indexOf('flutter_service_worker.js') !== -1;
+      }
+
       if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
         work.push(
           navigator.serviceWorker.getRegistrations().then(function (regs) {
-            return Promise.all(regs.map(function (r) { return r.unregister(); }));
+            return Promise.all(
+              regs.filter(isFlutterShell).map(function (r) { return r.unregister(); })
+            );
           })
         );
       }
+      // Cache storage, on the other hand, is Flutter's alone: the messaging
+      // worker keeps no caches, so there is nothing here to spare.
       if (window.caches && caches.keys) {
         work.push(
           caches.keys().then(function (keys) {

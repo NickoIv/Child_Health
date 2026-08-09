@@ -346,6 +346,42 @@ Stream<List<Reminder>> _combineLatest(List<Stream<List<Reminder>>> streams) {
   return controller.stream;
 }
 
+/// Reads the push token this device currently holds, without prompting.
+///
+/// A hook rather than a direct call, exactly like [dictationProvider]: the
+/// default answers "none", so a test and the offline demo stack never reach
+/// for Firebase Messaging. `main.dart` overrides it with the real one.
+final pushTokenReaderProvider = Provider<Future<String?> Function()>(
+  (ref) => () async => null,
+);
+
+/// Keeps the profile's list of devices honest.
+///
+/// A push token is not permanent — a browser rotates it when storage is
+/// cleared or the app is reinstalled to the home screen — and the stale copy
+/// in the profile then points at a device that no longer exists. The worker
+/// sends to it, nothing arrives, and nobody finds out. So the token is read
+/// once on every start and added if it is new.
+///
+/// Only ever adds. Removing the tokens of *other* devices is what the switch
+/// in settings does deliberately; a phone that has not been opened this week
+/// still has a perfectly good token, and pruning from here would silently
+/// unsubscribe the tablet every time the phone starts.
+final pushTokenSyncProvider = Provider<void>((ref) {
+  ref.listen<AsyncValue<AppUser?>>(userProfileProvider, (_, next) async {
+    final profile = next.value;
+    if (profile == null || !profile.settings.notificationsEnabled) return;
+
+    final token = await ref.read(pushTokenReaderProvider)();
+    if (token == null || token.isEmpty) return;
+    if (profile.pushTokens.contains(token)) return;
+
+    await ref.read(userRepositoryProvider).save(
+          profile.copyWith(pushTokens: [...profile.pushTokens, token]),
+        );
+  }, fireImmediately: true);
+});
+
 /// Keeps the scheduled notifications in step with the planner.
 ///
 /// Watched once from the root widget. Every change to the reminder list —

@@ -83,6 +83,32 @@ Future<PushRegistration> registerForPush() async {
   }
 }
 
+/// The token this browser holds right now, or null.
+///
+/// Never prompts and never asks for anything: it reports what permission has
+/// already been given. Called on every start, because a push token is not
+/// permanent — a browser rotates it when storage is cleared, when the app is
+/// reinstalled to the home screen, or on its own schedule. The copy saved in
+/// the profile then points at a device that no longer exists, and reminders
+/// go nowhere with nothing to report. Registering once was not enough.
+Future<String?> currentPushToken() async {
+  if (!PushConfig.isConfigured) return null;
+
+  try {
+    final messaging = FirebaseMessaging.instance;
+    final settings = await messaging.getNotificationSettings();
+    if (settings.authorizationStatus != AuthorizationStatus.authorized &&
+        settings.authorizationStatus != AuthorizationStatus.provisional) {
+      return null;
+    }
+    return await messaging.getToken(
+      vapidKey: kIsWeb ? PushConfig.vapidKey : null,
+    );
+  } catch (_) {
+    return null;
+  }
+}
+
 /// Stops this device receiving reminders. The token is dropped from the
 /// profile by the caller; deleting it here also invalidates it upstream.
 Future<void> unregisterFromPush() async {
