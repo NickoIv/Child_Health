@@ -19,6 +19,8 @@
   "navGrowthHint": "Вес, рост и перцентили ВОЗ",
   "navIllnessHint": "Дни болезни и температура",
   "navMedicalHint": "Прививки, приёмы, отчёт для врача",
+  "navVisit": "Приём врача",
+  "navVisitHint": "О чём спросить и что взять с собой",
   "navRemindersHint": "Лекарства и календарь прививок",
   "navPhotosHint": "Альбом и недельная история",
   "navChildrenHint": "Кто в приложении",
@@ -1273,6 +1275,113 @@
   "reportTempCount": "Измерений",
   "reportSectionMedicines": "Лекарства",
   "reportSectionNotes": "Заметки",
+  "reportFoodName": "Продукт",
+  "reportFoodFirst": "Впервые",
+  "reportFoodTimes": "Раз",
+  "reportFoodReaction": "Что было после",
+  "reportSectionQuestions": "Вопросы врачу",
+  "reportQuestion": "Вопрос",
+  "reportAnswer": "Ответ врача",
+  "visitTitle": "Подготовка к приёму",
+  "visitCardHint": "Вопросы, прививки, прикорм и что было с прошлого раза — на одном экране",
+  "visitOpen": "Открыть",
+  "visitQuestionsWaiting": "Записано вопросов: {n}",
+  "@visitQuestionsWaiting": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "visitMeasureTitle": "Вес и рост",
+  "visitMeasuredAt": "Измеряли {date} — {days} дн. назад",
+  "@visitMeasuredAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "visitMeasureNone": "Измерений ещё нет",
+  "visitVaccinesTitle": "Прививки",
+  "visitVaccinesNone": "На ближайшие две недели ничего не запланировано",
+  "visitVaccineDue": "{name} — {date}",
+  "@visitVaccineDue": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "visitVaccineOverdue": "{name} — срок был {date}",
+  "@visitVaccineOverdue": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "visitFoodsNew": "Новых продуктов за этот период: {n}",
+  "@visitFoodsNew": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "visitHistoryTitle": "Что было",
+  "visitSinceVisit": "С приёма {date}",
+  "@visitSinceVisit": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "visitSinceDays": "За последние {days} дн.",
+  "@visitSinceDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "visitHistoryEmpty": "За это время записей о болезни, температуре и лекарствах нет",
+  "visitSickDays": "Дней с болезнью: {n}",
+  "@visitSickDays": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "visitMaxTemperature": "Максимальная температура: {value} °C",
+  "@visitMaxTemperature": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "visitMedicines": "Записей о лекарствах: {n}",
+  "@visitMedicines": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "visitTakeTitle": "Взять с собой",
+  "visitTakeHint": "Один лист: цифры за период, прикорм и ваши вопросы с местом для ответов врача.",
   "reportDisclaimer": "Отчёт предназначен для удобства обсуждения с врачом и не является медицинским заключением.",
   "reportPage": "Страница {page} из {total}",
   "@reportPage": {

@@ -66,6 +66,12 @@ class AppLocalizationsKk extends AppLocalizations {
   String get navMedicalHint => 'Егулер, қабылдаулар, дәрігерге есеп';
 
   @override
+  String get navVisit => 'Дәрігер қабылдауы';
+
+  @override
+  String get navVisitHint => 'Нені сұрау керек және не алу керек';
+
+  @override
   String get navRemindersHint => 'Дәрілер мен егу күнтізбесі';
 
   @override
@@ -2415,6 +2421,113 @@ class AppLocalizationsKk extends AppLocalizations {
 
   @override
   String get reportSectionNotes => 'Ескертпелер';
+
+  @override
+  String get reportFoodName => 'Өнім';
+
+  @override
+  String get reportFoodFirst => 'Алғаш';
+
+  @override
+  String get reportFoodTimes => 'Рет';
+
+  @override
+  String get reportFoodReaction => 'Кейін не болды';
+
+  @override
+  String get reportSectionQuestions => 'Дәрігерге сұрақтар';
+
+  @override
+  String get reportQuestion => 'Сұрақ';
+
+  @override
+  String get reportAnswer => 'Дәрігердің жауабы';
+
+  @override
+  String get visitTitle => 'Қабылдауға дайындық';
+
+  @override
+  String get visitCardHint =>
+      'Сұрақтар, егулер, қосымша тамақ және өткен реттен бері не болғаны — бір экранда';
+
+  @override
+  String get visitOpen => 'Ашу';
+
+  @override
+  String visitQuestionsWaiting(int n) {
+    return 'Жазылған сұрақтар: $n';
+  }
+
+  @override
+  String get visitMeasureTitle => 'Салмағы мен бойы';
+
+  @override
+  String visitMeasuredAt(String date, int days) {
+    return '$date өлшенді — $days күн бұрын';
+  }
+
+  @override
+  String get visitMeasureNone => 'Әзірге өлшеу жоқ';
+
+  @override
+  String get visitVaccinesTitle => 'Егулер';
+
+  @override
+  String get visitVaccinesNone => 'Алдағы екі аптада жоспарланғаны жоқ';
+
+  @override
+  String visitVaccineDue(String name, String date) {
+    return '$name — $date';
+  }
+
+  @override
+  String visitVaccineOverdue(String name, String date) {
+    return '$name — мерзімі $date болатын';
+  }
+
+  @override
+  String visitFoodsNew(int n) {
+    return 'Осы кезеңдегі жаңа өнімдер: $n';
+  }
+
+  @override
+  String get visitHistoryTitle => 'Не болды';
+
+  @override
+  String visitSinceVisit(String date) {
+    return '$date қабылдауынан бері';
+  }
+
+  @override
+  String visitSinceDays(int days) {
+    return 'Соңғы $days күнде';
+  }
+
+  @override
+  String get visitHistoryEmpty =>
+      'Бұл кезеңде ауру, температура және дәрі туралы жазба жоқ';
+
+  @override
+  String visitSickDays(int n) {
+    return 'Ауырған күндер: $n';
+  }
+
+  @override
+  String visitMaxTemperature(String value) {
+    return 'Ең жоғары температура: $value °C';
+  }
+
+  @override
+  String visitMedicines(int n) {
+    return 'Дәрі жазбалары: $n';
+  }
+
+  @override
+  String get visitTakeTitle => 'Өзіңізбен алыңыз';
+
+  @override
+  String get visitTakeHint =>
+      'Бір парақ: кезең сандары, қосымша тамақ және дәрігердің жауабына орын қалдырылған сұрақтарыңыз.';
 
   @override
   String get reportDisclaimer =>

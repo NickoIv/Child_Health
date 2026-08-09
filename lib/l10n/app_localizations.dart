@@ -214,6 +214,18 @@ abstract class AppLocalizations {
   /// **'Прививки, приёмы, отчёт для врача'**
   String get navMedicalHint;
 
+  /// No description provided for @navVisit.
+  ///
+  /// In ru, this message translates to:
+  /// **'Приём врача'**
+  String get navVisit;
+
+  /// No description provided for @navVisitHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'О чём спросить и что взять с собой'**
+  String get navVisitHint;
+
   /// No description provided for @navRemindersHint.
   ///
   /// In ru, this message translates to:
@@ -4317,6 +4329,174 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Заметки'**
   String get reportSectionNotes;
+
+  /// No description provided for @reportFoodName.
+  ///
+  /// In ru, this message translates to:
+  /// **'Продукт'**
+  String get reportFoodName;
+
+  /// No description provided for @reportFoodFirst.
+  ///
+  /// In ru, this message translates to:
+  /// **'Впервые'**
+  String get reportFoodFirst;
+
+  /// No description provided for @reportFoodTimes.
+  ///
+  /// In ru, this message translates to:
+  /// **'Раз'**
+  String get reportFoodTimes;
+
+  /// No description provided for @reportFoodReaction.
+  ///
+  /// In ru, this message translates to:
+  /// **'Что было после'**
+  String get reportFoodReaction;
+
+  /// No description provided for @reportSectionQuestions.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вопросы врачу'**
+  String get reportSectionQuestions;
+
+  /// No description provided for @reportQuestion.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вопрос'**
+  String get reportQuestion;
+
+  /// No description provided for @reportAnswer.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ответ врача'**
+  String get reportAnswer;
+
+  /// No description provided for @visitTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подготовка к приёму'**
+  String get visitTitle;
+
+  /// No description provided for @visitCardHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вопросы, прививки, прикорм и что было с прошлого раза — на одном экране'**
+  String get visitCardHint;
+
+  /// No description provided for @visitOpen.
+  ///
+  /// In ru, this message translates to:
+  /// **'Открыть'**
+  String get visitOpen;
+
+  /// No description provided for @visitQuestionsWaiting.
+  ///
+  /// In ru, this message translates to:
+  /// **'Записано вопросов: {n}'**
+  String visitQuestionsWaiting(int n);
+
+  /// No description provided for @visitMeasureTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вес и рост'**
+  String get visitMeasureTitle;
+
+  /// No description provided for @visitMeasuredAt.
+  ///
+  /// In ru, this message translates to:
+  /// **'Измеряли {date} — {days} дн. назад'**
+  String visitMeasuredAt(String date, int days);
+
+  /// No description provided for @visitMeasureNone.
+  ///
+  /// In ru, this message translates to:
+  /// **'Измерений ещё нет'**
+  String get visitMeasureNone;
+
+  /// No description provided for @visitVaccinesTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Прививки'**
+  String get visitVaccinesTitle;
+
+  /// No description provided for @visitVaccinesNone.
+  ///
+  /// In ru, this message translates to:
+  /// **'На ближайшие две недели ничего не запланировано'**
+  String get visitVaccinesNone;
+
+  /// No description provided for @visitVaccineDue.
+  ///
+  /// In ru, this message translates to:
+  /// **'{name} — {date}'**
+  String visitVaccineDue(String name, String date);
+
+  /// No description provided for @visitVaccineOverdue.
+  ///
+  /// In ru, this message translates to:
+  /// **'{name} — срок был {date}'**
+  String visitVaccineOverdue(String name, String date);
+
+  /// No description provided for @visitFoodsNew.
+  ///
+  /// In ru, this message translates to:
+  /// **'Новых продуктов за этот период: {n}'**
+  String visitFoodsNew(int n);
+
+  /// No description provided for @visitHistoryTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Что было'**
+  String get visitHistoryTitle;
+
+  /// No description provided for @visitSinceVisit.
+  ///
+  /// In ru, this message translates to:
+  /// **'С приёма {date}'**
+  String visitSinceVisit(String date);
+
+  /// No description provided for @visitSinceDays.
+  ///
+  /// In ru, this message translates to:
+  /// **'За последние {days} дн.'**
+  String visitSinceDays(int days);
+
+  /// No description provided for @visitHistoryEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'За это время записей о болезни, температуре и лекарствах нет'**
+  String get visitHistoryEmpty;
+
+  /// No description provided for @visitSickDays.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дней с болезнью: {n}'**
+  String visitSickDays(int n);
+
+  /// No description provided for @visitMaxTemperature.
+  ///
+  /// In ru, this message translates to:
+  /// **'Максимальная температура: {value} °C'**
+  String visitMaxTemperature(String value);
+
+  /// No description provided for @visitMedicines.
+  ///
+  /// In ru, this message translates to:
+  /// **'Записей о лекарствах: {n}'**
+  String visitMedicines(int n);
+
+  /// No description provided for @visitTakeTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Взять с собой'**
+  String get visitTakeTitle;
+
+  /// No description provided for @visitTakeHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Один лист: цифры за период, прикорм и ваши вопросы с местом для ответов врача.'**
+  String get visitTakeHint;
 
   /// No description provided for @reportDisclaimer.
   ///

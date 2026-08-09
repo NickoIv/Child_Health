@@ -66,6 +66,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navMedicalHint => 'Vaccines, visits, a report for the doctor';
 
   @override
+  String get navVisit => 'Doctor visit';
+
+  @override
+  String get navVisitHint => 'What to ask and what to take with you';
+
+  @override
   String get navRemindersHint => 'Medicines and the vaccination calendar';
 
   @override
@@ -2431,6 +2437,113 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reportSectionNotes => 'Notes';
+
+  @override
+  String get reportFoodName => 'Food';
+
+  @override
+  String get reportFoodFirst => 'First given';
+
+  @override
+  String get reportFoodTimes => 'Times';
+
+  @override
+  String get reportFoodReaction => 'What followed';
+
+  @override
+  String get reportSectionQuestions => 'Questions for the doctor';
+
+  @override
+  String get reportQuestion => 'Question';
+
+  @override
+  String get reportAnswer => 'Doctor\'s answer';
+
+  @override
+  String get visitTitle => 'Getting ready for the visit';
+
+  @override
+  String get visitCardHint =>
+      'Questions, vaccinations, solids and what happened since last time — on one screen';
+
+  @override
+  String get visitOpen => 'Open';
+
+  @override
+  String visitQuestionsWaiting(int n) {
+    return 'Questions written down: $n';
+  }
+
+  @override
+  String get visitMeasureTitle => 'Weight and height';
+
+  @override
+  String visitMeasuredAt(String date, int days) {
+    return 'Measured $date — $days days ago';
+  }
+
+  @override
+  String get visitMeasureNone => 'No measurements yet';
+
+  @override
+  String get visitVaccinesTitle => 'Vaccinations';
+
+  @override
+  String get visitVaccinesNone => 'Nothing scheduled for the next two weeks';
+
+  @override
+  String visitVaccineDue(String name, String date) {
+    return '$name — $date';
+  }
+
+  @override
+  String visitVaccineOverdue(String name, String date) {
+    return '$name — was due $date';
+  }
+
+  @override
+  String visitFoodsNew(int n) {
+    return 'New foods in this period: $n';
+  }
+
+  @override
+  String get visitHistoryTitle => 'What happened';
+
+  @override
+  String visitSinceVisit(String date) {
+    return 'Since the visit on $date';
+  }
+
+  @override
+  String visitSinceDays(int days) {
+    return 'Over the last $days days';
+  }
+
+  @override
+  String get visitHistoryEmpty =>
+      'Nothing about illness, temperature or medicines in this period';
+
+  @override
+  String visitSickDays(int n) {
+    return 'Days with illness: $n';
+  }
+
+  @override
+  String visitMaxTemperature(String value) {
+    return 'Highest temperature: $value °C';
+  }
+
+  @override
+  String visitMedicines(int n) {
+    return 'Medicine entries: $n';
+  }
+
+  @override
+  String get visitTakeTitle => 'Take with you';
+
+  @override
+  String get visitTakeHint =>
+      'One sheet: the counts for the period, the foods, and your questions with room for the doctor\'s answers.';
 
   @override
   String get reportDisclaimer =>

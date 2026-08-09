@@ -1,3 +1,4 @@
+import '../../core/care/solids.dart';
 import '../../models/child.dart';
 import '../../models/development_log.dart';
 import '../../models/json.dart';
@@ -41,6 +42,8 @@ class PeriodReport {
     required this.temperatureCount,
     required this.medicines,
     required this.notes,
+    required this.questions,
+    required this.foods,
     this.maxTemperature,
     this.minTemperature,
   });
@@ -71,6 +74,18 @@ class PeriodReport {
   final List<ReportEntry> medicines;
   final List<ReportEntry> notes;
 
+  /// What she means to ask, oldest first, with the period deliberately
+  /// ignored: a question written five weeks ago and still unasked is exactly
+  /// the one worth printing. They are deleted when they are asked, so what is
+  /// left is by definition still open.
+  final List<ReportEntry> questions;
+
+  /// Every food ever introduced, newest first — also outside the period, and
+  /// for the same reason. «Что уже вводили и на что была реакция» is a
+  /// question about his whole life; an allergen table that silently drops the
+  /// row from March is worse than no table.
+  final List<FoodRecord> foods;
+
   /// Each section is printed only if the period actually holds it. A heading
   /// over three dashes tells a doctor nothing and costs him a glance.
   bool get hasSleep => nights > 0 || daysWithNaps > 0;
@@ -79,10 +94,12 @@ class PeriodReport {
   bool get hasTemperature => temperatureCount > 0;
   bool get hasMedicines => medicines.isNotEmpty;
   bool get hasNotes => notes.isNotEmpty;
+  bool get hasQuestions => questions.isNotEmpty;
+  bool get hasFoods => foods.isNotEmpty;
 
   bool get isEmpty =>
       !hasSleep && !hasFeeding && !hasNappies && !hasTemperature &&
-      !hasMedicines && !hasNotes;
+      !hasMedicines && !hasNotes && !hasQuestions && !hasFoods;
 }
 
 /// The last five notes are enough to jog a memory; a full diary is a different
@@ -117,6 +134,15 @@ PeriodReport buildPeriodReport(
   final napMinutesByDay = <DateTime, int>{};
   final medicines = <ReportEntry>[];
   final notes = <ReportEntry>[];
+
+  // Gathered before the window is applied, and on purpose — see
+  // [PeriodReport.questions] and [PeriodReport.foods].
+  final questions = [
+    for (final log in logs)
+      if (log.type == LogType.question && log.title.trim().isNotEmpty)
+        (at: log.date, text: log.title.trim()),
+  ]..sort((a, b) => a.at.compareTo(b.at));
+  final foods = foodsIn(logs);
 
   for (final log in logs) {
     final day = dateOnly(log.date);
@@ -202,5 +228,7 @@ PeriodReport buildPeriodReport(
     temperatureCount: temperatures,
     medicines: List.unmodifiable(medicines),
     notes: List.unmodifiable(notes.take(_noteLimit)),
+    questions: List.unmodifiable(questions),
+    foods: List.unmodifiable(foods),
   );
 }

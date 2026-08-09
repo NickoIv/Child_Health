@@ -155,11 +155,12 @@ void main() {
   testWidgets('a question for the doctor can be written down', (tester) async {
     await pumpPhone(tester);
 
-    // Only four destinations fit the bottom bar; the medical card lives
-    // behind "Ещё". Worth encoding — it is how the phone navigation works.
+    // Only four destinations fit the bottom bar; the questions live behind
+    // "Ещё", on the screen that prepares the appointment they are asked at.
+    // Worth encoding — it is how the phone navigation works.
     await tester.tap(find.text('Ещё'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Медкарта'));
+    await tester.tap(find.text('Приём врача'));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Записать').first);
@@ -173,6 +174,18 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Нормально ли срыгивание'), findsOneWidget);
+  });
+
+  testWidgets('the visit preparation fits a phone', (tester) async {
+    // The screen most likely to be read standing in a hallway with a coat
+    // on: three checklist rows, each with a date and a sentence on it, are
+    // exactly the shape that overflows at 390 px.
+    await pumpPhone(tester);
+    await openMore(tester, 'Приём врача');
+
+    expect(find.text('Подготовка к приёму'), findsOneWidget);
+    expect(find.text('Вес и рост'), findsOneWidget);
+    expect(find.text('Что было'), findsOneWidget);
   });
 
   testWidgets('the assistant fits a phone', (tester) async {

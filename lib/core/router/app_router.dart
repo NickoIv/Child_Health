@@ -16,6 +16,7 @@ import '../../features/family/family_screen.dart';
 import '../../features/growth/growth_screen.dart';
 import '../../features/illness/illness_screen.dart';
 import '../../features/medical/medical_screen.dart';
+import '../../features/medical/visit_prep_screen.dart';
 import '../../features/photos/photos_screen.dart';
 import '../../features/reminders/reminders_screen.dart';
 import '../../features/settings/settings_screen.dart';
@@ -72,6 +73,11 @@ class AppDestination {
 /// which is a row of ways to lose the conversation.
 const chatPath = '/chat';
 
+/// Preparation for an appointment. A destination like any other, but linked
+/// to from the medical card as well, because that is where a parent goes
+/// looking the evening before.
+const visitPath = '/visit';
+
 final appDestinations = <AppDestination>[
   AppDestination(
     path: '/',
@@ -127,6 +133,15 @@ final appDestinations = <AppDestination>[
     icon: Icons.medical_information_outlined,
     selectedIcon: Icons.medical_information,
     builder: MedicalScreen.new,
+  ),
+  AppDestination(
+    path: visitPath,
+    label: (l) => l.navVisit,
+    hint: (l) => l.navVisitHint,
+    group: NavGroup.health,
+    icon: Icons.event_available_outlined,
+    selectedIcon: Icons.event_available,
+    builder: VisitPrepScreen.new,
   ),
   AppDestination(
     path: '/reminders',

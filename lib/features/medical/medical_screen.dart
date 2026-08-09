@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../core/router/app_router.dart';
 import '../../core/theme/glass.dart';
 import '../../l10n/app_localizations.dart';
 import '../../core/theme/app_theme.dart';
-import '../../models/development_log.dart';
 import '../../models/medical_record.dart';
 import '../../providers.dart';
 import '../reports/export_sheet.dart';
@@ -51,7 +52,7 @@ class _MedicalScreenState extends ConsumerState<MedicalScreen> {
     return Scaffold(
       body: PageBody(
         children: [
-          _QuestionsCard(onAdd: _addQuestion),
+          const _VisitPrepCard(),
           const SizedBox(height: 16),
           _ReportCard(onExport: _openExport),
           const SizedBox(height: 16),
@@ -150,29 +151,6 @@ class _MedicalScreenState extends ConsumerState<MedicalScreen> {
     }
   }
 
-  Future<void> _addQuestion() async {
-    final child = ref.read(selectedChildProvider);
-    if (child == null) return;
-
-    final text = await showDialog<String>(
-      context: context,
-      builder: (_) => const _QuestionDialog(),
-    );
-    if (text == null || text.isEmpty) return;
-
-    await ref
-        .read(logRepositoryProvider)
-        .add(
-          DevelopmentLog(
-            id: '',
-            childId: child.id,
-            date: DateTime.now(),
-            type: LogType.question,
-            title: text,
-          ),
-        );
-  }
-
   /// Which period, then the file. The choice lives in a sheet rather than on
   /// the card: it is asked once, and a row of chips on a card a parent reads
   /// every week would be three permanent buttons for a rare decision.
@@ -183,106 +161,45 @@ class _MedicalScreenState extends ConsumerState<MedicalScreen> {
   }
 }
 
-/// Questions to raise at the next appointment.
+/// The appointment, one tap away.
 ///
-/// They come to mind at 2am and vanish the moment a doctor asks "any
-/// questions?". Written down here, they also print into the report, so the
-/// list is in hand rather than in memory.
-class _QuestionsCard extends ConsumerWidget {
-  const _QuestionsCard({required this.onAdd});
-
-  final Future<void> Function() onAdd;
+/// The card is deliberately thin: what to ask, what is due and what happened
+/// since last time is a screen of its own, and repeating any of it here would
+/// give a parent two places to keep the same list.
+class _VisitPrepCard extends ConsumerWidget {
+  const _VisitPrepCard();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final questions = ref.watch(doctorQuestionsProvider);
+    final questions = ref.watch(doctorQuestionsProvider).length;
 
     return SectionCard(
-      title: l.medicalAskDoctor,
-      icon: Icons.help_outline,
+      title: l.visitTitle,
+      icon: Icons.event_available_outlined,
       accentColor: VizPalette.slot(1, theme.brightness),
-      action: TextButton.icon(
-        onPressed: onAdd,
-        icon: const Icon(Icons.add, size: 18),
-        label: Text(l.medicalWriteDown),
-      ),
-      child: questions.isEmpty
-          ? Text(
-              l.medicalQuestionsHint,
-              style: theme.textTheme.bodyMedium?.copyWith(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l.visitCardHint, style: theme.textTheme.bodyMedium),
+          if (questions > 0) ...[
+            const SizedBox(height: 6),
+            Text(
+              l.visitQuestionsWaiting(questions),
+              style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
-            )
-          : Column(
-              children: [
-                for (final q in questions)
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: Icon(
-                      Icons.circle_outlined,
-                      size: 18,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                    title: Text(q.title),
-                    subtitle: Text(shortDate.format(q.date)),
-                    trailing: IconButton(
-                      tooltip: l.medicalAsked,
-                      icon: const Icon(Icons.check, size: 20),
-                      onPressed: () =>
-                          ref.read(logRepositoryProvider).delete(q.id),
-                    ),
-                  ),
-              ],
             ),
-    );
-  }
-}
-
-class _QuestionDialog extends StatefulWidget {
-  const _QuestionDialog();
-
-  @override
-  State<_QuestionDialog> createState() => _QuestionDialogState();
-}
-
-class _QuestionDialogState extends State<_QuestionDialog> {
-  final _controller = TextEditingController();
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context);
-    return AlertDialog(
-      title: Text(l.medicalAskDoctor),
-      content: SizedBox(
-        width: 420,
-        child: TextField(
-          controller: _controller,
-          autofocus: true,
-          maxLines: 3,
-          minLines: 1,
-          decoration: InputDecoration(hintText: l.medicalQuestionHint),
-          onSubmitted: (v) => Navigator.of(context).pop(v.trim()),
-        ),
+          ],
+          const SizedBox(height: 14),
+          FilledButton.tonalIcon(
+            onPressed: () => context.go(visitPath),
+            icon: const Icon(Icons.checklist_rtl_outlined),
+            label: Text(l.visitOpen),
+          ),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(l.commonCancel),
-        ),
-        FilledButton(
-          onPressed: () =>
-              Navigator.of(context).pop(_controller.text.trim()),
-          child: Text(l.commonSave),
-        ),
-      ],
     );
   }
 }
