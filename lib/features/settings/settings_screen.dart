@@ -8,6 +8,7 @@ import '../../core/l10n/app_locale.dart';
 import '../../core/l10n/auth_errors.dart';
 import '../../core/l10n/labels.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/night_mode.dart';
 import '../../l10n/app_localizations.dart';
 import '../../data/auth_repository.dart';
 import '../dashboard/dashboard_screen.dart';
@@ -167,6 +168,51 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
               ],
             ),
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Its own card rather than a fourth option under the theme: it is not
+        // a lighter or darker version of the app, it is the app with the blue
+        // and green taken out of it, and it is chosen for a different reason.
+        SectionCard(
+          title: l.nightModeTitle,
+          icon: Icons.nightlight_outlined,
+          accentColor: VizPalette.slot(1, theme.brightness),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l.nightModeHint,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 8),
+              RadioGroup<NightPreference>(
+                groupValue: ref.watch(nightPreferenceProvider),
+                onChanged: (v) => ref
+                    .read(nightPreferenceProvider.notifier)
+                    .set(v ?? defaultNight),
+                child: Column(
+                  children: [
+                    for (final n in NightPreference.values)
+                      RadioListTile<NightPreference>(
+                        contentPadding: EdgeInsets.zero,
+                        value: n,
+                        title: Text(switch (n) {
+                          NightPreference.off => l.nightModeOff,
+                          NightPreference.auto => l.nightModeAuto,
+                          NightPreference.on => l.nightModeOn,
+                        }),
+                        subtitle: n == NightPreference.auto
+                            ? Text(l.nightModeAutoHint)
+                            : null,
+                      ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 16),

@@ -527,6 +527,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quickSleep180 => 'Three hours';
 
   @override
+  String get nightModeTitle => 'Night mode';
+
+  @override
+  String get nightModeHint =>
+      'A deep red screen: it does not wake the baby or cost you your night vision';
+
+  @override
+  String get nightModeOff => 'Off';
+
+  @override
+  String get nightModeAuto => 'Automatic at night';
+
+  @override
+  String get nightModeOn => 'On';
+
+  @override
+  String get nightModeAutoHint => 'From 21:00 to 7:00';
+
+  @override
   String get pumpTitle => 'Pumping';
 
   @override

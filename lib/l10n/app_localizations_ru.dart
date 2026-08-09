@@ -526,6 +526,25 @@ class AppLocalizationsRu extends AppLocalizations {
   String get quickSleep180 => 'Три часа';
 
   @override
+  String get nightModeTitle => 'Ночной режим';
+
+  @override
+  String get nightModeHint =>
+      'Тёмно-красный экран: не будит ребёнка и не сбивает ночное зрение';
+
+  @override
+  String get nightModeOff => 'Выключен';
+
+  @override
+  String get nightModeAuto => 'Ночью автоматически';
+
+  @override
+  String get nightModeOn => 'Включён';
+
+  @override
+  String get nightModeAutoHint => 'С 21:00 до 7:00';
+
+  @override
   String get pumpTitle => 'Сцеживание';
 
   @override

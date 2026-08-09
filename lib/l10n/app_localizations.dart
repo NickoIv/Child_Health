@@ -1048,6 +1048,42 @@ abstract class AppLocalizations {
   /// **'Три часа'**
   String get quickSleep180;
 
+  /// No description provided for @nightModeTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ночной режим'**
+  String get nightModeTitle;
+
+  /// No description provided for @nightModeHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тёмно-красный экран: не будит ребёнка и не сбивает ночное зрение'**
+  String get nightModeHint;
+
+  /// No description provided for @nightModeOff.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выключен'**
+  String get nightModeOff;
+
+  /// No description provided for @nightModeAuto.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ночью автоматически'**
+  String get nightModeAuto;
+
+  /// No description provided for @nightModeOn.
+  ///
+  /// In ru, this message translates to:
+  /// **'Включён'**
+  String get nightModeOn;
+
+  /// No description provided for @nightModeAutoHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'С 21:00 до 7:00'**
+  String get nightModeAutoHint;
+
   /// No description provided for @pumpTitle.
   ///
   /// In ru, this message translates to:
