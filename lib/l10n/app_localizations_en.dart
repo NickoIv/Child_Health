@@ -48,6 +48,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navPhotos => 'Photos';
 
   @override
+  String get navGroupHealth => 'Health';
+
+  @override
+  String get navGroupMemory => 'Memories';
+
+  @override
+  String get navGroupProfile => 'Profile';
+
+  @override
+  String get navGrowthHint => 'Weight, height and WHO percentiles';
+
+  @override
+  String get navIllnessHint => 'Sick days and temperature';
+
+  @override
+  String get navMedicalHint => 'Vaccines, visits, a report for the doctor';
+
+  @override
+  String get navRemindersHint => 'Medicines and the vaccination calendar';
+
+  @override
+  String get navPhotosHint => 'The album and the week\'s story';
+
+  @override
+  String get navChildrenHint => 'Who is in the app';
+
+  @override
+  String get navSettingsHint => 'Language, theme, units, access';
+
+  @override
   String get photosAdd => 'Add a photo';
 
   @override

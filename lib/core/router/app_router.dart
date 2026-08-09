@@ -23,6 +23,15 @@ import '../../features/shell/app_shell.dart';
 import '../../l10n/app_localizations.dart';
 import '../../providers.dart';
 
+/// The shelf a destination sits on once it is behind «Ещё».
+///
+/// Six destinations in one flat list is six labels to read, and a parent
+/// looking for the vaccination calendar had to read all six to find out that
+/// it is called «Напоминания». Sorted onto three shelves she reads one word —
+/// the one that says which kind of thing she is after — and then two options
+/// instead of six.
+enum NavGroup { health, memory, profile }
+
 /// One destination of the primary navigation.
 class AppDestination {
   const AppDestination({
@@ -31,6 +40,8 @@ class AppDestination {
     required this.icon,
     required this.selectedIcon,
     required this.builder,
+    this.hint,
+    this.group,
   });
 
   final String path;
@@ -38,6 +49,14 @@ class AppDestination {
   /// Resolved against the chosen language rather than stored, so switching
   /// language relabels the navigation without rebuilding this list.
   final String Function(AppLocalizations) label;
+
+  /// The line under the name in the «Ещё» sheet, saying what is on the screen
+  /// rather than what it is called. Null for the four that live in the bar,
+  /// where there is no room for it and no list to scan.
+  final String Function(AppLocalizations)? hint;
+
+  /// Null for the primary four, which are not in the sheet at all.
+  final NavGroup? group;
 
   final IconData icon;
   final IconData selectedIcon;
@@ -85,6 +104,8 @@ final appDestinations = <AppDestination>[
   AppDestination(
     path: '/growth',
     label: (l) => l.navGrowth,
+    hint: (l) => l.navGrowthHint,
+    group: NavGroup.health,
     icon: Icons.show_chart_outlined,
     selectedIcon: Icons.show_chart,
     builder: GrowthScreen.new,
@@ -92,6 +113,8 @@ final appDestinations = <AppDestination>[
   AppDestination(
     path: '/illness',
     label: (l) => l.navIllness,
+    hint: (l) => l.navIllnessHint,
+    group: NavGroup.health,
     icon: Icons.thermostat_outlined,
     selectedIcon: Icons.thermostat,
     builder: IllnessScreen.new,
@@ -99,6 +122,8 @@ final appDestinations = <AppDestination>[
   AppDestination(
     path: '/medical',
     label: (l) => l.navMedical,
+    hint: (l) => l.navMedicalHint,
+    group: NavGroup.health,
     icon: Icons.medical_information_outlined,
     selectedIcon: Icons.medical_information,
     builder: MedicalScreen.new,
@@ -106,6 +131,8 @@ final appDestinations = <AppDestination>[
   AppDestination(
     path: '/reminders',
     label: (l) => l.navReminders,
+    hint: (l) => l.navRemindersHint,
+    group: NavGroup.health,
     icon: Icons.notifications_outlined,
     selectedIcon: Icons.notifications,
     builder: RemindersScreen.new,
@@ -113,6 +140,8 @@ final appDestinations = <AppDestination>[
   AppDestination(
     path: '/photos',
     label: (l) => l.navPhotos,
+    hint: (l) => l.navPhotosHint,
+    group: NavGroup.memory,
     icon: Icons.photo_library_outlined,
     selectedIcon: Icons.photo_library,
     builder: PhotosScreen.new,
@@ -120,6 +149,8 @@ final appDestinations = <AppDestination>[
   AppDestination(
     path: '/children',
     label: (l) => l.navChildren,
+    hint: (l) => l.navChildrenHint,
+    group: NavGroup.profile,
     icon: Icons.family_restroom_outlined,
     selectedIcon: Icons.family_restroom,
     builder: ChildrenScreen.new,

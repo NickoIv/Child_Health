@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../core/l10n/labels.dart';
 import '../../core/router/app_router.dart';
 import '../../l10n/app_localizations.dart';
+import '../../core/theme/app_sheet.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/theme/glass.dart';
 import '../../core/theme/motion.dart';
 import '../../core/theme/theme_mode.dart';
@@ -214,22 +216,158 @@ class _BottomBar extends StatelessWidget {
     );
   }
 
+  /// The rest of the app, sorted rather than listed.
+  ///
+  /// It used to be six [ListTile]s of equal weight in the Material default
+  /// sheet, which meant a parent looking for the vaccination calendar read all
+  /// six labels to discover it is filed under «Напоминания». Three headings
+  /// and a line under each name turn that into one word to find and two
+  /// options to choose between.
+  ///
+  /// Settings is here too, and this is the first time it has been reachable on
+  /// a phone without going through the avatar menu in the app bar — a menu
+  /// nobody opens looking for the language.
   void _showMore(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      builder: (sheetContext) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (final d in appDestinations.skip(AppShell._primaryCount))
-              ListTile(
-                leading: Icon(d.icon),
-                title: Text(d.label(AppLocalizations.of(context))),
+    showAppSheet<void>(
+      context,
+      builder: (sheetContext) => _MoreSheet(onGo: context.go),
+    );
+  }
+}
+
+class _MoreSheet extends StatelessWidget {
+  const _MoreSheet({required this.onGo});
+
+  /// The shell's own router, captured before the sheet's context replaces it:
+  /// popping the sheet and navigating from inside it are two different
+  /// navigators, and using the sheet's would close nothing and go nowhere.
+  final void Function(String) onGo;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l = AppLocalizations.of(context);
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final group in NavGroup.values) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 12, 10, 8),
+              child: Text(
+                switch (group) {
+                  NavGroup.health => l.navGroupHealth,
+                  NavGroup.memory => l.navGroupMemory,
+                  NavGroup.profile => l.navGroupProfile,
+                }.toUpperCase(),
+                style: AppTheme.microLabel(theme.brightness),
+              ),
+            ),
+            for (final d in appDestinations.where((d) => d.group == group))
+              _MoreRow(
+                icon: d.icon,
+                label: d.label(l),
+                hint: d.hint?.call(l),
                 onTap: () {
-                  Navigator.of(sheetContext).pop();
-                  context.go(d.path);
+                  Navigator.of(context).pop();
+                  onGo(d.path);
                 },
               ),
+            // Not an [AppDestination]: it has no tab and no place in the rail,
+            // and adding one for a screen opened twice a year would cost a
+            // column of chrome on every other screen.
+            if (group == NavGroup.profile)
+              _MoreRow(
+                icon: Icons.settings_outlined,
+                label: l.settingsTitle,
+                hint: l.navSettingsHint,
+                onTap: () {
+                  Navigator.of(context).pop();
+                  onGo(settingsPath);
+                },
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// One way out of the sheet: a glyph on a disc, a name, and what is on the
+/// screen it opens.
+class _MoreRow extends StatelessWidget {
+  const _MoreRow({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.hint,
+  });
+
+  final IconData icon;
+  final String label;
+  final String? hint;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Pressable(
+      borderRadius: Warm.chipRadius,
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+        child: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: Warm.soft(theme.brightness),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                size: 19,
+                color: Warm.accentOn(theme.brightness),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: Warm.onCard(theme.brightness),
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                  if (hint case final line?)
+                    Text(
+                      line,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: Warm.onCardSoft(theme.brightness),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right,
+              size: 20,
+              color: Warm.onCardSoft(theme.brightness),
+            ),
           ],
         ),
       ),

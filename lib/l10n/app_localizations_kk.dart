@@ -48,6 +48,36 @@ class AppLocalizationsKk extends AppLocalizations {
   String get navPhotos => 'Фотосуреттер';
 
   @override
+  String get navGroupHealth => 'Денсаулық';
+
+  @override
+  String get navGroupMemory => 'Естелік';
+
+  @override
+  String get navGroupProfile => 'Профиль';
+
+  @override
+  String get navGrowthHint => 'Салмақ, бой және ДДҰ перцентильдері';
+
+  @override
+  String get navIllnessHint => 'Ауырған күндер мен температура';
+
+  @override
+  String get navMedicalHint => 'Егулер, қабылдаулар, дәрігерге есеп';
+
+  @override
+  String get navRemindersHint => 'Дәрілер мен егу күнтізбесі';
+
+  @override
+  String get navPhotosHint => 'Альбом және апта тарихы';
+
+  @override
+  String get navChildrenHint => 'Қосымшада кім бар';
+
+  @override
+  String get navSettingsHint => 'Тіл, тема, өлшем бірліктері, қолжетімділік';
+
+  @override
   String get photosAdd => 'Фото қосу';
 
   @override

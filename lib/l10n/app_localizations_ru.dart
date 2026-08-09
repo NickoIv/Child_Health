@@ -48,6 +48,36 @@ class AppLocalizationsRu extends AppLocalizations {
   String get navPhotos => 'Фотографии';
 
   @override
+  String get navGroupHealth => 'Здоровье';
+
+  @override
+  String get navGroupMemory => 'Память';
+
+  @override
+  String get navGroupProfile => 'Профиль';
+
+  @override
+  String get navGrowthHint => 'Вес, рост и перцентили ВОЗ';
+
+  @override
+  String get navIllnessHint => 'Дни болезни и температура';
+
+  @override
+  String get navMedicalHint => 'Прививки, приёмы, отчёт для врача';
+
+  @override
+  String get navRemindersHint => 'Лекарства и календарь прививок';
+
+  @override
+  String get navPhotosHint => 'Альбом и недельная история';
+
+  @override
+  String get navChildrenHint => 'Кто в приложении';
+
+  @override
+  String get navSettingsHint => 'Язык, тема, единицы, доступ';
+
+  @override
   String get photosAdd => 'Добавить фото';
 
   @override

@@ -269,6 +269,61 @@ void main() {
     expect(find.text('Удалить учётную запись'), findsOneWidget);
   });
 
+  group('«Ещё»', () {
+    Future<void> openSheet(WidgetTester tester) async {
+      await pumpPhone(tester);
+      await tester.tap(find.byIcon(Icons.more_horiz));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('sorts the rest of the app onto three shelves', (tester) async {
+      await openSheet(tester);
+
+      // The headings, in the order a parent needs them: what a doctor asks
+      // about, what she is keeping, and who this is.
+      expect(find.text('ЗДОРОВЬЕ'), findsOneWidget);
+      expect(find.text('ПАМЯТЬ'), findsOneWidget);
+      expect(find.text('ПРОФИЛЬ'), findsOneWidget);
+
+      // Every destination that is not one of the four in the bar is here,
+      // exactly once.
+      for (final label in const [
+        'Развитие',
+        'Болезни',
+        'Медкарта',
+        'Напоминания',
+        'Фотографии',
+        'Дети',
+      ]) {
+        expect(find.text(label), findsOneWidget, reason: label);
+      }
+    });
+
+    testWidgets('says what is on each screen rather than only naming it', (
+      tester,
+    ) async {
+      await openSheet(tester);
+
+      // The line that turns six equal labels into six different things. The
+      // vaccination calendar is the case that made this necessary: nobody
+      // guesses it is filed under «Напоминания».
+      expect(find.text('Лекарства и календарь прививок'), findsOneWidget);
+      expect(find.text('Вес, рост и перцентили ВОЗ'), findsOneWidget);
+      expect(find.text('Альбом и недельная история'), findsOneWidget);
+    });
+
+    testWidgets('is the first way to settings that is not the avatar menu', (
+      tester,
+    ) async {
+      await openSheet(tester);
+
+      await tester.tap(find.text('Профиль и настройки'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Родитель'), findsOneWidget);
+    });
+  });
+
   testWidgets('the triage checklist fits', (tester) async {
     await pumpPhone(tester);
 

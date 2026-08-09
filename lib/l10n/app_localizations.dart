@@ -178,6 +178,66 @@ abstract class AppLocalizations {
   /// **'Фотографии'**
   String get navPhotos;
 
+  /// No description provided for @navGroupHealth.
+  ///
+  /// In ru, this message translates to:
+  /// **'Здоровье'**
+  String get navGroupHealth;
+
+  /// No description provided for @navGroupMemory.
+  ///
+  /// In ru, this message translates to:
+  /// **'Память'**
+  String get navGroupMemory;
+
+  /// No description provided for @navGroupProfile.
+  ///
+  /// In ru, this message translates to:
+  /// **'Профиль'**
+  String get navGroupProfile;
+
+  /// No description provided for @navGrowthHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вес, рост и перцентили ВОЗ'**
+  String get navGrowthHint;
+
+  /// No description provided for @navIllnessHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дни болезни и температура'**
+  String get navIllnessHint;
+
+  /// No description provided for @navMedicalHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Прививки, приёмы, отчёт для врача'**
+  String get navMedicalHint;
+
+  /// No description provided for @navRemindersHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Лекарства и календарь прививок'**
+  String get navRemindersHint;
+
+  /// No description provided for @navPhotosHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Альбом и недельная история'**
+  String get navPhotosHint;
+
+  /// No description provided for @navChildrenHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Кто в приложении'**
+  String get navChildrenHint;
+
+  /// No description provided for @navSettingsHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Язык, тема, единицы, доступ'**
+  String get navSettingsHint;
+
   /// No description provided for @photosAdd.
   ///
   /// In ru, this message translates to:
