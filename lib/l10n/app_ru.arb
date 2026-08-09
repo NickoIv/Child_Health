@@ -1282,6 +1282,53 @@
   "reportSectionQuestions": "Вопросы врачу",
   "reportQuestion": "Вопрос",
   "reportAnswer": "Ответ врача",
+  "teethTitle": "Зубы",
+  "teethCount": "Прорезалось {n} из 20",
+  "@teethCount": {
+    "placeholders": { "n": { "type": "int" } }
+  },
+  "teethNone": "Пока ни одного",
+  "teethUsual": "В этом возрасте обычно {from}–{to}",
+  "@teethUsual": {
+    "placeholders": { "from": { "type": "int" }, "to": { "type": "int" } }
+  },
+  "teethNext": "Дальше обычно — {tooth}",
+  "@teethNext": {
+    "placeholders": { "tooth": { "type": "String" } }
+  },
+  "teethHint": "Нажмите на зуб, когда он прорежется",
+  "teethWhen": "Когда прорезался?",
+  "teethToday": "Сегодня",
+  "teethYesterday": "Вчера",
+  "teethPickDate": "Другая дата",
+  "teethRemove": "Убрать отметку",
+  "teethMarked": "{tooth} — отмечен",
+  "@teethMarked": {
+    "placeholders": { "tooth": { "type": "String" } }
+  },
+  "teethAtAge": "в {months} мес.",
+  "@teethAtAge": {
+    "placeholders": { "months": { "type": "int" } }
+  },
+  "teethExpected": "Обычно {from}–{to} мес.",
+  "@teethExpected": {
+    "placeholders": { "from": { "type": "int" }, "to": { "type": "int" } }
+  },
+  "teethUpperJaw": "Верхние",
+  "teethLowerJaw": "Нижние",
+  "toothName": "{jaw} {type}, {side}",
+  "@toothName": {
+    "placeholders": { "jaw": { "type": "String" }, "type": { "type": "String" }, "side": { "type": "String" } }
+  },
+  "toothCentralIncisor": "центральный резец",
+  "toothLateralIncisor": "боковой резец",
+  "toothCanine": "клык",
+  "toothFirstMolar": "первый моляр",
+  "toothSecondMolar": "второй моляр",
+  "toothUpper": "Верхний",
+  "toothLower": "Нижний",
+  "toothLeft": "слева",
+  "toothRight": "справа",
   "visitTitle": "Подготовка к приёму",
   "visitCardHint": "Вопросы, прививки, прикорм и что было с прошлого раза — на одном экране",
   "visitOpen": "Открыть",

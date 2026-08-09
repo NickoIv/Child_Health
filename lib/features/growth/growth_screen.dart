@@ -14,6 +14,7 @@ import '../diary/diary_screen.dart';
 import '../../models/development_log.dart';
 import '../../providers.dart';
 import '../shared/widgets.dart';
+import 'teeth_card.dart';
 
 /// Anthropometry: growth curves overlaid on the WHO reference, per 2.3.
 class GrowthScreen extends ConsumerStatefulWidget {
@@ -101,6 +102,12 @@ class _GrowthScreenState extends ConsumerState<GrowthScreen> {
         ),
           const SizedBox(height: 16),
           _LatestAssessment(child: child, metric: _metric, points: points),
+          const SizedBox(height: 16),
+          // Under the curves rather than in the medical card: teething is
+          // development, it is asked about at the same appointments as the
+          // weight, and this is the screen a parent already opens to answer
+          // «а как он растёт».
+          TeethCard(child: child),
           const SizedBox(height: 16),
           _MeasurementHistory(child: child, measurements: measurements),
         ],

@@ -2460,6 +2460,98 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportAnswer => 'Doctor\'s answer';
 
   @override
+  String get teethTitle => 'Teeth';
+
+  @override
+  String teethCount(int n) {
+    return '$n of 20 through';
+  }
+
+  @override
+  String get teethNone => 'None yet';
+
+  @override
+  String teethUsual(int from, int to) {
+    return 'Usually $from–$to at this age';
+  }
+
+  @override
+  String teethNext(String tooth) {
+    return 'Next is usually the $tooth';
+  }
+
+  @override
+  String get teethHint => 'Tap a tooth when it comes through';
+
+  @override
+  String get teethWhen => 'When did it come through?';
+
+  @override
+  String get teethToday => 'Today';
+
+  @override
+  String get teethYesterday => 'Yesterday';
+
+  @override
+  String get teethPickDate => 'Another date';
+
+  @override
+  String get teethRemove => 'Remove the mark';
+
+  @override
+  String teethMarked(String tooth) {
+    return '$tooth — marked';
+  }
+
+  @override
+  String teethAtAge(int months) {
+    return 'at $months months';
+  }
+
+  @override
+  String teethExpected(int from, int to) {
+    return 'Usually $from–$to months';
+  }
+
+  @override
+  String get teethUpperJaw => 'Upper';
+
+  @override
+  String get teethLowerJaw => 'Lower';
+
+  @override
+  String toothName(String jaw, String type, String side) {
+    return '$jaw $type, $side';
+  }
+
+  @override
+  String get toothCentralIncisor => 'central incisor';
+
+  @override
+  String get toothLateralIncisor => 'lateral incisor';
+
+  @override
+  String get toothCanine => 'canine';
+
+  @override
+  String get toothFirstMolar => 'first molar';
+
+  @override
+  String get toothSecondMolar => 'second molar';
+
+  @override
+  String get toothUpper => 'Upper';
+
+  @override
+  String get toothLower => 'Lower';
+
+  @override
+  String get toothLeft => 'left';
+
+  @override
+  String get toothRight => 'right';
+
+  @override
   String get visitTitle => 'Getting ready for the visit';
 
   @override

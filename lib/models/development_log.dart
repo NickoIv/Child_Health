@@ -58,6 +58,13 @@ abstract final class LogTitles {
   /// she is.
   static const pumping = 'Сцеживание';
 
+  /// A milk tooth. Which one is in the entry's tags — see `core/care/teeth`.
+  ///
+  /// A milestone rather than a type of its own: a tooth is a thing that
+  /// happened on a day, which is what the diary already records, and putting
+  /// it on the timeline is most of why anyone writes it down.
+  static const tooth = 'Зуб';
+
   /// Something the parent saw after a food — a rash, a stomach, a refusal.
   ///
   /// A note rather than an illness: an illness day colours the heat map and

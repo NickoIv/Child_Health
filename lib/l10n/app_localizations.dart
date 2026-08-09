@@ -4372,6 +4372,162 @@ abstract class AppLocalizations {
   /// **'Ответ врача'**
   String get reportAnswer;
 
+  /// No description provided for @teethTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Зубы'**
+  String get teethTitle;
+
+  /// No description provided for @teethCount.
+  ///
+  /// In ru, this message translates to:
+  /// **'Прорезалось {n} из 20'**
+  String teethCount(int n);
+
+  /// No description provided for @teethNone.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пока ни одного'**
+  String get teethNone;
+
+  /// No description provided for @teethUsual.
+  ///
+  /// In ru, this message translates to:
+  /// **'В этом возрасте обычно {from}–{to}'**
+  String teethUsual(int from, int to);
+
+  /// No description provided for @teethNext.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дальше обычно — {tooth}'**
+  String teethNext(String tooth);
+
+  /// No description provided for @teethHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нажмите на зуб, когда он прорежется'**
+  String get teethHint;
+
+  /// No description provided for @teethWhen.
+  ///
+  /// In ru, this message translates to:
+  /// **'Когда прорезался?'**
+  String get teethWhen;
+
+  /// No description provided for @teethToday.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сегодня'**
+  String get teethToday;
+
+  /// No description provided for @teethYesterday.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вчера'**
+  String get teethYesterday;
+
+  /// No description provided for @teethPickDate.
+  ///
+  /// In ru, this message translates to:
+  /// **'Другая дата'**
+  String get teethPickDate;
+
+  /// No description provided for @teethRemove.
+  ///
+  /// In ru, this message translates to:
+  /// **'Убрать отметку'**
+  String get teethRemove;
+
+  /// No description provided for @teethMarked.
+  ///
+  /// In ru, this message translates to:
+  /// **'{tooth} — отмечен'**
+  String teethMarked(String tooth);
+
+  /// No description provided for @teethAtAge.
+  ///
+  /// In ru, this message translates to:
+  /// **'в {months} мес.'**
+  String teethAtAge(int months);
+
+  /// No description provided for @teethExpected.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обычно {from}–{to} мес.'**
+  String teethExpected(int from, int to);
+
+  /// No description provided for @teethUpperJaw.
+  ///
+  /// In ru, this message translates to:
+  /// **'Верхние'**
+  String get teethUpperJaw;
+
+  /// No description provided for @teethLowerJaw.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нижние'**
+  String get teethLowerJaw;
+
+  /// No description provided for @toothName.
+  ///
+  /// In ru, this message translates to:
+  /// **'{jaw} {type}, {side}'**
+  String toothName(String jaw, String type, String side);
+
+  /// No description provided for @toothCentralIncisor.
+  ///
+  /// In ru, this message translates to:
+  /// **'центральный резец'**
+  String get toothCentralIncisor;
+
+  /// No description provided for @toothLateralIncisor.
+  ///
+  /// In ru, this message translates to:
+  /// **'боковой резец'**
+  String get toothLateralIncisor;
+
+  /// No description provided for @toothCanine.
+  ///
+  /// In ru, this message translates to:
+  /// **'клык'**
+  String get toothCanine;
+
+  /// No description provided for @toothFirstMolar.
+  ///
+  /// In ru, this message translates to:
+  /// **'первый моляр'**
+  String get toothFirstMolar;
+
+  /// No description provided for @toothSecondMolar.
+  ///
+  /// In ru, this message translates to:
+  /// **'второй моляр'**
+  String get toothSecondMolar;
+
+  /// No description provided for @toothUpper.
+  ///
+  /// In ru, this message translates to:
+  /// **'Верхний'**
+  String get toothUpper;
+
+  /// No description provided for @toothLower.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нижний'**
+  String get toothLower;
+
+  /// No description provided for @toothLeft.
+  ///
+  /// In ru, this message translates to:
+  /// **'слева'**
+  String get toothLeft;
+
+  /// No description provided for @toothRight.
+  ///
+  /// In ru, this message translates to:
+  /// **'справа'**
+  String get toothRight;
+
   /// No description provided for @visitTitle.
   ///
   /// In ru, this message translates to:

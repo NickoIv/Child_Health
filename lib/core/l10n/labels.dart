@@ -3,6 +3,7 @@ import '../../models/app_user.dart';
 import '../../models/child.dart';
 import '../../models/development_log.dart';
 import '../../models/reminder.dart';
+import '../care/teeth.dart';
 import '../growth/who_standards.dart';
 import '../vaccination/national_calendar.dart';
 import '../photos/compression.dart';
@@ -175,6 +176,12 @@ String localizedLogTitle(AppLocalizations l, DevelopmentLog log) {
   if (title == LogTitles.medicine) return l.reminderTypeMedication;
   if (title == LogTitles.reaction) return l.logReaction;
   if (title == LogTitles.pumping) return l.pumpTitle;
+  // Named from the tag rather than from the stored title, so «Зуб» on the
+  // timeline reads as «Нижний центральный резец» in whatever language is on.
+  if (title == LogTitles.tooth) {
+    final slot = toothOf(log);
+    return slot == null ? l.teethTitle : toothName(l, slot);
+  }
   if (log.isNightSleep && title == LogType.sleep.label) {
     return l.quickNightSleep;
   }
@@ -188,6 +195,24 @@ String localizedLogTitle(AppLocalizations l, DevelopmentLog log) {
   if (title == log.type.label) return log.type.localizedLabel(l);
 
   return title;
+}
+
+/// «Нижний центральный резец, слева».
+///
+/// Assembled from three words rather than stored as twenty names: the jaw and
+/// the side are the same two words in every entry, and a translator given
+/// twenty near-identical strings will drift on at least one of them.
+String toothName(AppLocalizations l, ToothSlot slot) {
+  final type = switch (slot.type) {
+    ToothType.centralIncisor => l.toothCentralIncisor,
+    ToothType.lateralIncisor => l.toothLateralIncisor,
+    ToothType.canine => l.toothCanine,
+    ToothType.firstMolar => l.toothFirstMolar,
+    ToothType.secondMolar => l.toothSecondMolar,
+  };
+  final jaw = slot.jaw == Jaw.upper ? l.toothUpper : l.toothLower;
+  final side = slot.side == Side.left ? l.toothLeft : l.toothRight;
+  return l.toothName(jaw, type, side);
 }
 
 /// The name of a scheduled dose.

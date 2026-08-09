@@ -2480,6 +2480,98 @@ class AppLocalizationsRu extends AppLocalizations {
   String get reportAnswer => 'Ответ врача';
 
   @override
+  String get teethTitle => 'Зубы';
+
+  @override
+  String teethCount(int n) {
+    return 'Прорезалось $n из 20';
+  }
+
+  @override
+  String get teethNone => 'Пока ни одного';
+
+  @override
+  String teethUsual(int from, int to) {
+    return 'В этом возрасте обычно $from–$to';
+  }
+
+  @override
+  String teethNext(String tooth) {
+    return 'Дальше обычно — $tooth';
+  }
+
+  @override
+  String get teethHint => 'Нажмите на зуб, когда он прорежется';
+
+  @override
+  String get teethWhen => 'Когда прорезался?';
+
+  @override
+  String get teethToday => 'Сегодня';
+
+  @override
+  String get teethYesterday => 'Вчера';
+
+  @override
+  String get teethPickDate => 'Другая дата';
+
+  @override
+  String get teethRemove => 'Убрать отметку';
+
+  @override
+  String teethMarked(String tooth) {
+    return '$tooth — отмечен';
+  }
+
+  @override
+  String teethAtAge(int months) {
+    return 'в $months мес.';
+  }
+
+  @override
+  String teethExpected(int from, int to) {
+    return 'Обычно $from–$to мес.';
+  }
+
+  @override
+  String get teethUpperJaw => 'Верхние';
+
+  @override
+  String get teethLowerJaw => 'Нижние';
+
+  @override
+  String toothName(String jaw, String type, String side) {
+    return '$jaw $type, $side';
+  }
+
+  @override
+  String get toothCentralIncisor => 'центральный резец';
+
+  @override
+  String get toothLateralIncisor => 'боковой резец';
+
+  @override
+  String get toothCanine => 'клык';
+
+  @override
+  String get toothFirstMolar => 'первый моляр';
+
+  @override
+  String get toothSecondMolar => 'второй моляр';
+
+  @override
+  String get toothUpper => 'Верхний';
+
+  @override
+  String get toothLower => 'Нижний';
+
+  @override
+  String get toothLeft => 'слева';
+
+  @override
+  String get toothRight => 'справа';
+
+  @override
   String get visitTitle => 'Подготовка к приёму';
 
   @override
