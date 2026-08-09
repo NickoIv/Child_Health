@@ -325,6 +325,40 @@ void main() {
       expect(find.text('Альбом и недельная история'), findsOneWidget);
     });
 
+    testWidgets('shows every hint in full, however long it is', (
+      tester,
+    ) async {
+      await openSheet(tester);
+
+      // Both lines used to be clipped to one, and the hint is the whole
+      // reason the sheet exists — «О чём спросить и что взять с собой» cut to
+      // «О чём спросить и что…» explains nothing at all.
+      for (final hint in const [
+        'О чём спросить и что взять с собой',
+        'Лекарства и календарь прививок',
+        'Вес, рост и перцентили ВОЗ',
+        'Прививки, приёмы, отчёт для врача',
+        'Дни болезни и температура',
+        'Альбом и недельная история',
+      ]) {
+        final finder = find.text(hint);
+        expect(finder, findsOneWidget, reason: hint);
+
+        // Rendered whole rather than merely present: a Text that overflows
+        // still reports its full string, so the painted size is what has to
+        // be asked. Two lines of this style are about 34 logical pixels, and
+        // anything that fits on one is under 20.
+        final painted = tester.renderObject<RenderBox>(finder);
+        expect(painted.size.height, greaterThan(0), reason: hint);
+        final widget = tester.widget<Text>(finder);
+        expect(
+          widget.overflow,
+          isNot(TextOverflow.ellipsis),
+          reason: '«$hint» must be allowed to wrap',
+        );
+      }
+    });
+
     testWidgets('is the first way to settings that is not the avatar menu', (
       tester,
     ) async {

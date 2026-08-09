@@ -174,6 +174,7 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen> {
   /// pencil sitting right beside it makes the slip easy to make otherwise.
   Future<void> _confirmDelete(BuildContext context, DevelopmentLog log) async {
     final l = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -193,6 +194,7 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen> {
     );
     if (confirmed ?? false) {
       await ref.read(logRepositoryProvider).delete(log.id);
+      messenger.showSnackBar(appSnack(l.entryDeleted, kind: SnackKind.done));
     }
   }
 
@@ -745,6 +747,9 @@ Future<void> showDiaryEntryForm(
     return;
   }
 
+  final l = AppLocalizations.of(context);
+  final messenger = ScaffoldMessenger.of(context);
+
   final draft = await showDialog<DevelopmentLog>(
     context: context,
     builder: (_) => _LogFormDialog(
@@ -762,6 +767,12 @@ Future<void> showDiaryEntryForm(
   } else {
     await repository.update(draft);
   }
+
+  // Said out loud. The form is opened from four different screens and on
+  // three of them the entry lands somewhere the parent cannot see it — a
+  // measurement added from the growth tab joins a list further down, and a
+  // dialog that simply closes leaves her wondering whether it saved.
+  messenger.showSnackBar(appSnack(l.entrySaved, kind: SnackKind.done));
 }
 
 class _LogFormDialog extends ConsumerStatefulWidget {

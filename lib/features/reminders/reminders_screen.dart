@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/l10n/labels.dart';
 import '../../core/theme/app_snack.dart';
+import '../../core/theme/motion.dart';
 import '../../core/theme/app_theme.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/reminder.dart';
@@ -253,9 +254,12 @@ class _ReminderRow extends StatelessWidget {
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: InkWell(
+          // Pressable rather than a bare InkWell: on a row this size the
+          // ripple alone is easy to miss, and the dip is the app's own way of
+          // saying the tap landed — the same one the cards use.
+          child: Pressable(
             onTap: onOpen,
-            borderRadius: BorderRadius.circular(Warm.chipRadius),
+            borderRadius: Warm.chipRadius,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

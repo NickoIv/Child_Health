@@ -1694,6 +1694,24 @@ class AppLocalizationsRu extends AppLocalizations {
       'Запишите сюда всё, что хотите спросить. Список попадёт в отчёт для врача — не придётся вспоминать в кабинете.';
 
   @override
+  String get medicalQuestionAsked => 'Вопрос отмечен как заданный';
+
+  @override
+  String get medicalQuestionSaved => 'Вопрос записан — он попадёт в отчёт';
+
+  @override
+  String get entrySaved => 'Запись сохранена';
+
+  @override
+  String get entryDeleted => 'Запись удалена';
+
+  @override
+  String get medicalRecordSaved => 'Запись в медкарте сохранена';
+
+  @override
+  String get medicalRecordDeleted => 'Запись удалена из медкарты';
+
+  @override
   String get medicalAsked => 'Спросила';
 
   @override

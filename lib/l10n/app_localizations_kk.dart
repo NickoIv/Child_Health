@@ -1673,6 +1673,24 @@ class AppLocalizationsKk extends AppLocalizations {
       'Сұрағыңыз келген нәрсенің бәрін осында жазыңыз. Тізім дәрігерге арналған есепке кіреді — кабинетте есіңізге түсірудің қажеті болмайды.';
 
   @override
+  String get medicalQuestionAsked => 'Сұралды деп белгіленді';
+
+  @override
+  String get medicalQuestionSaved => 'Сұрақ жазылды — ол есепке кіреді';
+
+  @override
+  String get entrySaved => 'Жазба сақталды';
+
+  @override
+  String get entryDeleted => 'Жазба жойылды';
+
+  @override
+  String get medicalRecordSaved => 'Медициналық картаға сақталды';
+
+  @override
+  String get medicalRecordDeleted => 'Медициналық картадан жойылды';
+
+  @override
   String get medicalAsked => 'Сұрадым';
 
   @override

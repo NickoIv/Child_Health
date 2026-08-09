@@ -357,7 +357,7 @@ class _MoreRow extends StatelessWidget {
                 children: [
                   Text(
                     label,
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.titleMedium?.copyWith(
                       color: Warm.onCard(theme.brightness),
@@ -365,13 +365,17 @@ class _MoreRow extends StatelessWidget {
                       letterSpacing: -0.2,
                     ),
                   ),
+                  // Wrapped, not clipped. This line is the whole reason the
+                  // sheet exists — it says what is on a screen rather than
+                  // what it is called — and «О чём спросить и что взять с
+                  // собой» cut to «О чём спросить и что…» explains nothing.
+                  // The sheet scrolls; a second line costs nothing.
                   if (hint case final line?)
                     Text(
                       line,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: Warm.onCardSoft(theme.brightness),
+                        height: 1.3,
                       ),
                     ),
                 ],

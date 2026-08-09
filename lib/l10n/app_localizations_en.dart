@@ -1684,6 +1684,24 @@ class AppLocalizationsEn extends AppLocalizations {
       'Write down anything you want to ask. The list goes into the report for the doctor, so you do not have to remember it in the room.';
 
   @override
+  String get medicalQuestionAsked => 'Marked as asked';
+
+  @override
+  String get medicalQuestionSaved => 'Written down — it will be in the report';
+
+  @override
+  String get entrySaved => 'Entry saved';
+
+  @override
+  String get entryDeleted => 'Entry deleted';
+
+  @override
+  String get medicalRecordSaved => 'Saved to the medical record';
+
+  @override
+  String get medicalRecordDeleted => 'Removed from the medical record';
+
+  @override
   String get medicalAsked => 'Asked';
 
   @override

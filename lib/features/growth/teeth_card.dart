@@ -6,6 +6,7 @@ import '../../core/l10n/labels.dart';
 import '../../core/theme/app_sheet.dart';
 import '../../core/theme/app_snack.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/motion.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/child.dart';
 import '../../models/development_log.dart';
@@ -222,9 +223,9 @@ class _Tooth extends StatelessWidget {
       button: true,
       label: toothName(AppLocalizations.of(context), slot),
       selected: through,
-      child: InkWell(
+      child: Pressable(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(7),
+        borderRadius: 7,
         child: Container(
           height: tall ? 32 : 28,
           decoration: BoxDecoration(

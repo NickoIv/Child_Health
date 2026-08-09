@@ -3052,6 +3052,42 @@ abstract class AppLocalizations {
   /// **'Запишите сюда всё, что хотите спросить. Список попадёт в отчёт для врача — не придётся вспоминать в кабинете.'**
   String get medicalQuestionsHint;
 
+  /// No description provided for @medicalQuestionAsked.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вопрос отмечен как заданный'**
+  String get medicalQuestionAsked;
+
+  /// No description provided for @medicalQuestionSaved.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вопрос записан — он попадёт в отчёт'**
+  String get medicalQuestionSaved;
+
+  /// No description provided for @entrySaved.
+  ///
+  /// In ru, this message translates to:
+  /// **'Запись сохранена'**
+  String get entrySaved;
+
+  /// No description provided for @entryDeleted.
+  ///
+  /// In ru, this message translates to:
+  /// **'Запись удалена'**
+  String get entryDeleted;
+
+  /// No description provided for @medicalRecordSaved.
+  ///
+  /// In ru, this message translates to:
+  /// **'Запись в медкарте сохранена'**
+  String get medicalRecordSaved;
+
+  /// No description provided for @medicalRecordDeleted.
+  ///
+  /// In ru, this message translates to:
+  /// **'Запись удалена из медкарты'**
+  String get medicalRecordDeleted;
+
   /// No description provided for @medicalAsked.
   ///
   /// In ru, this message translates to:

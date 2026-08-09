@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/theme/app_snack.dart';
 import '../../core/theme/app_theme.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/development_log.dart';
@@ -56,8 +57,7 @@ class DoctorQuestionsCard extends ConsumerWidget {
                     trailing: IconButton(
                       tooltip: l.medicalAsked,
                       icon: const Icon(Icons.check, size: 20),
-                      onPressed: () =>
-                          ref.read(logRepositoryProvider).delete(q.id),
+                      onPressed: () => _markAsked(context, ref, q),
                     ),
                   ),
               ],
@@ -65,10 +65,49 @@ class DoctorQuestionsCard extends ConsumerWidget {
     );
   }
 
+  /// Ticked off once it has been asked — and put back if the tick was a slip.
+  ///
+  /// The row is deleted, not flagged, so without a way back a mis-tap loses a
+  /// question she thought of at three in the morning and will not think of
+  /// again. The undo writes the same words to the same date, which is as
+  /// close to "never happened" as a new document gets.
+  Future<void> _markAsked(
+    BuildContext context,
+    WidgetRef ref,
+    DevelopmentLog question,
+  ) async {
+    final l = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final repository = ref.read(logRepositoryProvider);
+
+    await repository.delete(question.id);
+
+    messenger.showSnackBar(
+      appSnack(
+        l.medicalQuestionAsked,
+        kind: SnackKind.done,
+        action: SnackBarAction(
+          label: l.commonUndo,
+          onPressed: () => repository.add(
+            DevelopmentLog(
+              id: '',
+              childId: question.childId,
+              date: question.date,
+              type: LogType.question,
+              title: question.title,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _add(BuildContext context, WidgetRef ref) async {
     final child = ref.read(selectedChildProvider);
     if (child == null) return;
 
+    final l = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
     final text = await showDialog<String>(
       context: context,
       builder: (_) => const _QuestionDialog(),
@@ -84,6 +123,12 @@ class DoctorQuestionsCard extends ConsumerWidget {
             title: text,
           ),
         );
+
+    // Said out loud, because the list it lands in may be below the fold and
+    // a question typed into a dialog that closes on silence looks lost.
+    messenger.showSnackBar(
+      appSnack(l.medicalQuestionSaved, kind: SnackKind.done),
+    );
   }
 }
 

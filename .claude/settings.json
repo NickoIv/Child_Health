@@ -25,7 +25,8 @@
       "Bash(grep *)",
       "Read(**)",
       "Edit(**)",
-      "Write(**)"
+      "Write(**)",
+      "Bash(grep -n \"logRepositoryProvider\\)\\\\s*$\\\\|logRepositoryProvider\\)\\\\.\\\\|\\\\.delete\\(\\\\|\\\\.add\\(\\\\|\\\\.update\\(\" lib/features/diary/diary_screen.dart)"
     ]
   }
 }

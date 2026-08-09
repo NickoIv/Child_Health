@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/router/app_router.dart';
+import '../../core/theme/app_snack.dart';
 import '../../core/theme/glass.dart';
 import '../../l10n/app_localizations.dart';
 import '../../core/theme/app_theme.dart';
@@ -97,6 +98,11 @@ class _MedicalScreenState extends ConsumerState<MedicalScreen> {
     final child = ref.read(selectedChildProvider);
     if (child == null) return;
 
+    // Taken before the dialog, not after: a BuildContext read across an await
+    // is a context that may no longer be in the tree.
+    final messenger = ScaffoldMessenger.of(context);
+    final l = AppLocalizations.of(context);
+
     final record = await showDialog<MedicalRecord>(
       context: context,
       builder: (_) => MedicalRecordForm(childId: child.id),
@@ -104,11 +110,17 @@ class _MedicalScreenState extends ConsumerState<MedicalScreen> {
     if (record == null) return;
 
     await ref.read(medicalRepositoryProvider).add(record);
+    messenger.showSnackBar(
+      appSnack(l.medicalRecordSaved, kind: SnackKind.done),
+    );
   }
 
   Future<void> _editRecord(MedicalRecord record) async {
     final child = ref.read(selectedChildProvider);
     if (child == null) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    final l = AppLocalizations.of(context);
 
     final updated = await showDialog<MedicalRecord>(
       context: context,
@@ -120,10 +132,14 @@ class _MedicalScreenState extends ConsumerState<MedicalScreen> {
     if (updated == null) return;
 
     await ref.read(medicalRepositoryProvider).update(updated);
+    messenger.showSnackBar(
+      appSnack(l.medicalRecordSaved, kind: SnackKind.done),
+    );
   }
 
   Future<void> _confirmDelete(MedicalRecord record) async {
     final l = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -148,6 +164,9 @@ class _MedicalScreenState extends ConsumerState<MedicalScreen> {
     );
     if (confirmed ?? false) {
       await ref.read(medicalRepositoryProvider).delete(record.id);
+      messenger.showSnackBar(
+        appSnack(l.medicalRecordDeleted, kind: SnackKind.done),
+      );
     }
   }
 

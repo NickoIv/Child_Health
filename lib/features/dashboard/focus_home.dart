@@ -408,6 +408,11 @@ class ActionCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 2),
+              // One line, and it has to stay one: the tile is a fixed-height
+              // grid cell, and a caption allowed to wrap overflows it by
+              // eleven pixels. These four captions are short by design for
+              // exactly that reason — «грудь или бутылочка» is the longest
+              // there will ever be here.
               Text(
                 caption,
                 style: TextStyle(
