@@ -25,13 +25,24 @@ Write-Host '--- secrets ---' -ForegroundColor Cyan
 # answer, and without FIREBASE_SERVICE_ACCOUNT the hourly sweep logs "not
 # configured" and sends nothing at all. Neither is visible from the app.
 $secrets = npx wrangler secret list 2>&1 | Out-String
-foreach ($name in @('GEMINI_API_KEY', 'FIREBASE_SERVICE_ACCOUNT')) {
+foreach ($name in @('GEMINI_API_KEY', 'FIREBASE_SERVICE_ACCOUNT', 'FIREBASE_API_KEY', 'BREVO_API_KEY')) {
   if ($secrets -notmatch $name) {
     Write-Host ''
     Write-Host "MISSING SECRET: $name" -ForegroundColor Yellow
     if ($name -eq 'FIREBASE_SERVICE_ACCOUNT') {
       Write-Host '  Firebase Console -> Project settings -> Service accounts'
       Write-Host '  -> Generate new private key. Paste the whole JSON file.'
+    }
+    if ($name -eq 'FIREBASE_API_KEY') {
+      Write-Host '  The web API key from lib/firebase/firebase_options.dart.'
+      Write-Host '  Public by design - it only lets the Worker ask Google who'
+      Write-Host '  an ID token belongs to.'
+    }
+    if ($name -eq 'BREVO_API_KEY') {
+      Write-Host '  https://app.brevo.com -> SMTP & API -> Generate a new key.'
+      Write-Host '  Free tier sends 300 letters a day from one verified sender.'
+      Write-Host '  Verify your own address there first, then set MAIL_FROM in'
+      Write-Host '  wrangler.toml to it.'
     }
     Write-Host "  npx wrangler secret put $name"
     Write-Host ''

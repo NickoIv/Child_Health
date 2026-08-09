@@ -417,6 +417,8 @@
   "familyInvite": "Шақыру",
   "familyInviteEmail": "Электрондық пошта",
   "familyInviteHint": "Ол кіретін мекенжай",
+  "familyInviteMailed": "Шақыру {email} мекенжайына жіберілді",
+  "familyInviteMailFailed": "Хат жіберілмеді. Шақыруды көшіріп, өзіңіз жіберіңіз",
   "familyInviteCreated": "Шақыру жасалды",
   "familyInviteExplain": "Хатты біз жібермейміз. Шақыруды көшіріп, өзіңіз жіберіңіз — ол осы поштамен кірген кезде көреді.",
   "familyCopyInvite": "Шақыруды көшіру",

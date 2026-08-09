@@ -204,11 +204,11 @@ Future<void> _attachPhoto(
       await photos.delete(previous);
     }
   } on PhotoTooLargeException catch (e) {
-    messenger?.showSnackBar(
+    messenger?.showAppSnack(
       appSnack(photoProblemText(l, e.problem), kind: SnackKind.problem),
     );
   } catch (e) {
-    messenger?.showSnackBar(
+    messenger?.showAppSnack(
       appSnack(l.photoSaveFailed('$e'), kind: SnackKind.problem),
     );
   }
@@ -416,7 +416,7 @@ class _ChildFormDialogState extends State<_ChildFormDialog> {
   void _submit() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_birthDate == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      ScaffoldMessenger.of(context).showAppSnack(
         appSnack(
           AppLocalizations.of(context).childBirthDateRequired,
           kind: SnackKind.problem,

@@ -471,8 +471,11 @@ void main() {
     /// land, and it cannot hang: settling waits for the tree to go completely
     /// quiet, which is a promise about the whole app rather than about this
     /// card.
+    /// Sixteen rather than eight: creating an invitation now also asks for an
+    /// ID token and attempts a letter, and each of those is another turn of
+    /// the loop before the confirmation strip exists.
     Future<void> pumpFrames(WidgetTester tester) async {
-      for (var i = 0; i < 8; i++) {
+      for (var i = 0; i < 16; i++) {
         await tester.pump(const Duration(milliseconds: 120));
       }
     }

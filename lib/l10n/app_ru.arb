@@ -736,6 +736,11 @@
   "familyInvite": "Пригласить",
   "familyInviteEmail": "Электронная почта",
   "familyInviteHint": "Адрес, которым он входит в приложение",
+  "familyInviteMailed": "Приглашение отправлено на {email}",
+  "@familyInviteMailed": {
+    "placeholders": { "email": { "type": "String" } }
+  },
+  "familyInviteMailFailed": "Письмо не ушло. Скопируйте приглашение и передайте сами",
   "familyInviteCreated": "Приглашение создано",
   "familyInviteExplain": "Письмо мы не отправляем. Скопируйте приглашение и передайте сами — он увидит его, когда войдёт в приложение этой почтой.",
   "familyCopyInvite": "Скопировать приглашение",

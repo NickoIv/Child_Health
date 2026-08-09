@@ -164,7 +164,7 @@ class TeethCard extends ConsumerWidget {
     }
 
     if (result.date == null) {
-      messenger.showSnackBar(
+      messenger.showAppSnack(
         appSnack(
           l.teethUnmarked,
           action: SnackBarAction(label: l.commonUndo, onPressed: restore),
@@ -185,7 +185,7 @@ class TeethCard extends ConsumerWidget {
         tags: [toothTag(slot)],
       ),
     );
-    messenger.showSnackBar(
+    messenger.showAppSnack(
       appSnack(
         l.teethMarked(toothName(l, slot)),
         kind: SnackKind.done,

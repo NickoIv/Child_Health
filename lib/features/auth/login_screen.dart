@@ -326,7 +326,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     try {
       await ref.read(authRepositoryProvider).sendPasswordReset(email);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        ScaffoldMessenger.of(context).showAppSnack(
           appSnack(
             AppLocalizations.of(context).authResetSent(email),
             kind: SnackKind.done,

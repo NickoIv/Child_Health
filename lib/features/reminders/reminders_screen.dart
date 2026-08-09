@@ -43,7 +43,7 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
     // back is its own confirmation, because the row reappears.
     if (!done) return;
 
-    messenger.showSnackBar(
+    messenger.showAppSnack(
       appSnack(
         l.reminderCompleted,
         kind: SnackKind.done,

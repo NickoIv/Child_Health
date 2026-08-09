@@ -60,6 +60,7 @@ Future<void> main() async {
         authRepositoryProvider.overrideWithValue(FirebaseAuthRepository()),
         // Reads, never prompts — see [pushTokenSyncProvider].
         pushTokenReaderProvider.overrideWithValue(currentPushToken),
+        idTokenReaderProvider.overrideWithValue(currentIdToken),
         // The *raw* repositories, deliberately. The public providers wrap
         // these in a read-only guard when the session is a viewer's, and
         // overriding those instead would hand a father a writable client.

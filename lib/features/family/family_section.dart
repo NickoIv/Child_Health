@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/family/invite_mail.dart';
 import '../../core/theme/app_snack.dart';
 import '../../core/theme/app_theme.dart';
 import '../../l10n/app_localizations.dart';
@@ -163,8 +164,8 @@ class _FamilySectionState extends ConsumerState<FamilySection> {
     final l = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
     // Where this copy of the app is actually served from, so the link works
-    // on a custom domain too.
-    final link = Uri.base.origin;
+    // on a custom domain too — see [appLink].
+    final link = appLink();
 
     await Clipboard.setData(
       ClipboardData(
@@ -172,7 +173,7 @@ class _FamilySectionState extends ConsumerState<FamilySection> {
       ),
     );
     if (!mounted) return;
-    messenger.showSnackBar(
+    messenger.showAppSnack(
       appSnack(l.familyInviteCopied, kind: SnackKind.done),
     );
   }
@@ -212,18 +213,39 @@ class _FamilySectionState extends ConsumerState<FamilySection> {
       );
       if (!mounted) return;
       _email.clear();
-      // «Создано», not «отправлено». Nothing is emailed and nothing ever was:
-      // the invitation is a document the other person meets when they sign in
-      // with that address. Saying «отправлено» sent a mother to check an inbox
-      // that was never going to have anything in it.
-      messenger.showSnackBar(
+
+      // The access exists the moment the document does. The letter is only
+      // how he finds out, so it is attempted after — and its failure never
+      // takes the invitation with it.
+      final mailed = await sendInviteMail(
+        idToken: await ref.read(idTokenReaderProvider)(),
+        childId: childId,
+        childName: childName,
+        email: email,
+        link: appLink(),
+        fromName: ref.read(userProfileProvider).value?.displayName ?? '',
+      );
+      if (!mounted) return;
+
+      // Three different truths, and the screen tells them apart. Saying
+      // «отправлено» when nothing was sent is what sent him to an inbox that
+      // was never going to have anything in it.
+      messenger.showAppSnack(
         appSnack(
-          l.familyInviteCreated,
-          kind: SnackKind.done,
-          action: SnackBarAction(
-            label: l.familyCopyInvite,
-            onPressed: () => _copyInvite(childName, email),
-          ),
+          switch (mailed) {
+            InviteMailResult.sent => l.familyInviteMailed(email),
+            InviteMailResult.notConfigured => l.familyInviteCreated,
+            InviteMailResult.failed => l.familyInviteMailFailed,
+          },
+          kind: mailed == InviteMailResult.sent
+              ? SnackKind.done
+              : SnackKind.info,
+          action: mailed == InviteMailResult.sent
+              ? null
+              : SnackBarAction(
+                  label: l.familyCopyInvite,
+                  onPressed: () => _copyInvite(childName, email),
+                ),
         ),
       );
     } catch (e) {

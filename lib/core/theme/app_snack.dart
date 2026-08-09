@@ -22,12 +22,28 @@ enum SnackKind {
   final Color tint;
 
   Duration get duration => switch (this) {
-    // Long enough to read a sentence twice, because the reader is holding a
+    // A problem still gets long enough to read twice: the reader is holding a
     // child and looked away halfway through the first time.
-    SnackKind.problem => const Duration(seconds: 6),
-    SnackKind.done => const Duration(seconds: 4),
-    SnackKind.info => const Duration(seconds: 4),
+    SnackKind.problem => const Duration(seconds: 5),
+    // Three, and no longer. A confirmation is read in a glance and then it is
+    // in the way — «три секунды и пусть исчезает».
+    SnackKind.done => const Duration(seconds: 3),
+    SnackKind.info => const Duration(seconds: 3),
   };
+}
+
+/// Shows one strip, replacing whatever is on screen.
+///
+/// The queue is what made them feel permanent: Material lines confirmations
+/// up and plays them one after another, so marking four teeth in a row put
+/// twelve seconds of strip over the screen and the last one described a tap
+/// made long before. Only the newest is ever true, so the newest is the only
+/// one shown.
+extension AppMessenger on ScaffoldMessengerState {
+  void showAppSnack(SnackBar snack) {
+    hideCurrentSnackBar(reason: SnackBarClosedReason.remove);
+    showSnackBar(snack);
+  }
 }
 
 /// The one confirmation strip, so all twenty of them look like one app.

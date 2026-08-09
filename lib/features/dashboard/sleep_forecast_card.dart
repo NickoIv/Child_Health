@@ -153,6 +153,6 @@ class SleepForecastCard extends ConsumerWidget {
     await ref
         .read(activeTimerProvider.notifier)
         .start(kind: TimerKind.sleep, childId: childId);
-    messenger.showSnackBar(appSnack(l.timerStarted, kind: SnackKind.done));
+    messenger.showAppSnack(appSnack(l.timerStarted, kind: SnackKind.done));
   }
 }

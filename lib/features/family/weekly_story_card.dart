@@ -245,7 +245,7 @@ class _ExportButtonState extends ConsumerState<_ExportButton> {
 
       if (!mounted) return;
       setState(() => _building = false);
-      messenger.showSnackBar(appSnack(l.storyPdfReady, kind: SnackKind.done));
+      messenger.showAppSnack(appSnack(l.storyPdfReady, kind: SnackKind.done));
 
       // Share sheet on a phone, downloads folder in a browser. Nothing is
       // uploaded on either.
@@ -256,7 +256,7 @@ class _ExportButtonState extends ConsumerState<_ExportButton> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _building = false);
-      messenger.showSnackBar(
+      messenger.showAppSnack(
         appSnack(friendlyError(l, e), kind: SnackKind.problem),
       );
     }

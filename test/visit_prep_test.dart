@@ -1,6 +1,7 @@
 import 'package:child_health_tracker/app.dart';
 import 'package:child_health_tracker/core/care/visit_prep.dart';
 import 'package:child_health_tracker/core/l10n/app_locale.dart';
+import 'package:child_health_tracker/features/shared/widgets.dart';
 import 'package:child_health_tracker/features/reports/period_report.dart';
 import 'package:child_health_tracker/features/reports/period_report_pdf.dart';
 import 'package:child_health_tracker/l10n/app_localizations.dart';
@@ -506,10 +507,24 @@ void main() {
     });
 
     testWidgets('says what is ready and what is not', (tester) async {
+      // Dated from the machine's own clock, not from the fixture's. The screen
+      // asks what day it is, so a log pinned to a fixed date drifts by one
+      // every midnight — this file's own fixture is at noon on 10 August and
+      // the assertion below broke the first time the date rolled over.
+      final realNow = DateTime.now();
+      final measuredAt = realNow.subtract(const Duration(days: 40));
+
       await pump(
         tester,
         logs: [
-          measurement(ago: const Duration(days: 40)),
+          DevelopmentLog(
+            id: 'm40',
+            childId: 'c1',
+            date: measuredAt,
+            type: LogType.measurement,
+            title: 'x',
+            metrics: const Metrics(weightKg: 8.4, heightCm: 70),
+          ),
           sickDay(ago: const Duration(days: 4), temperature: 38.4),
           medicine('Парацетамол', ago: const Duration(days: 4)),
         ],
@@ -522,8 +537,12 @@ void main() {
       await tester.tap(find.text(l.navVisit).last);
       await tester.pumpAndSettle();
 
-      // A month unweighed is flagged; the numbers behind it are stated.
-      expect(find.textContaining('40'), findsWidgets);
+      // A month unweighed is flagged, and the line states both the date and
+      // the gap — built here the same way the screen builds it.
+      expect(
+        find.text(l.visitMeasuredAt(shortDate.format(measuredAt), 40)),
+        findsOneWidget,
+      );
       expect(find.text(l.visitSickDays(1)), findsOneWidget);
       expect(find.text(l.visitMaxTemperature('38.4')), findsOneWidget);
       expect(find.text(l.visitMedicines(1)), findsOneWidget);

@@ -30,6 +30,7 @@ const MAX_HISTORY_TURNS = 8;
 const MAX_HISTORY_TURN_CHARS = 2000;
 
 import { runReminderSweep } from './notifications.js';
+import { handleInvite } from './invites.js';
 
 export default {
   /// Hourly cron. Sends reminders that have come due — see notifications.js.
@@ -48,6 +49,17 @@ export default {
     if (request.method === 'OPTIONS') {
       return new Response(null, { status: 204, headers: cors });
     }
+
+    // Before the Gemini gate: posting a family invitation has nothing to do
+    // with the assistant, and a build with no Gemini key must still be able
+    // to send one. See invites.js for why this cannot be used as a relay.
+    if (
+      request.method === 'POST' &&
+      new URL(request.url).pathname === '/invite'
+    ) {
+      return handleInvite(request, env, cors, json);
+    }
+
     if (!env.GEMINI_API_KEY) {
       return json({ error: 'GEMINI_API_KEY is not configured' }, 500, cors);
     }

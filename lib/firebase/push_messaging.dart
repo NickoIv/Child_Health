@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 
@@ -116,5 +117,21 @@ Future<void> unregisterFromPush() async {
     await FirebaseMessaging.instance.deleteToken();
   } catch (_) {
     // Already gone, or the browser never granted it. Nothing to undo.
+  }
+}
+
+/// The signed-in user's ID token, or empty when there is nobody signed in.
+///
+/// Lives here rather than in the auth repository because it is not part of
+/// signing in or out: it is a credential handed to our own Worker so it can
+/// check that the person asking it to send an invitation is the person who
+/// created that invitation.
+Future<String> currentIdToken() async {
+  try {
+    final user = fb.FirebaseAuth.instance.currentUser;
+    if (user == null) return '';
+    return await user.getIdToken() ?? '';
+  } catch (_) {
+    return '';
   }
 }

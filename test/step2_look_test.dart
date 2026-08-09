@@ -81,11 +81,14 @@ void main() {
 
     test('three kinds, and none of them is an alert', () {
       // An alert in this app is a red screen with a phone number on it. A
-      // strip that slides away after four seconds must never be mistaken for
+      // strip that slides away in a few seconds must never be mistaken for
       // one, so nothing here is allowed the alert red.
       for (final kind in SnackKind.values) {
         expect(kind.tint, isNot(StatusColors.alert));
-        expect(kind.duration.inSeconds, greaterThanOrEqualTo(4));
+        // Long enough to read at a glance, short enough not to sit over the
+        // screen — «три секунды и пусть исчезает».
+        expect(kind.duration.inSeconds, greaterThanOrEqualTo(3));
+        expect(kind.duration.inSeconds, lessThanOrEqualTo(5));
       }
       // A problem stays longest: it is read twice by someone holding a child.
       expect(

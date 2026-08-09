@@ -1416,6 +1416,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get familyInviteHint => 'The address they sign in with';
 
   @override
+  String familyInviteMailed(String email) {
+    return 'Invitation emailed to $email';
+  }
+
+  @override
+  String get familyInviteMailFailed =>
+      'The email did not go out. Copy the invitation and pass it on yourself';
+
+  @override
   String get familyInviteCreated => 'Invitation created';
 
   @override

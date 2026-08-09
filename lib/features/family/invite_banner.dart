@@ -110,7 +110,7 @@ class _InviteBannerState extends ConsumerState<InviteBanner> {
           .read(familyRepositoryProvider)
           .accept(invitation, ref.read(currentUidProvider));
       if (!mounted) return;
-      messenger.showSnackBar(
+      messenger.showAppSnack(
         appSnack(l.familyAcceptedToast, kind: SnackKind.done),
       );
     } finally {

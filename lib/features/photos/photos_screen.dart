@@ -500,7 +500,7 @@ class _PhotoEntrySheetState extends ConsumerState<_PhotoEntrySheet> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      messenger.showSnackBar(
+      messenger.showAppSnack(
         appSnack(friendlyError(l, e), kind: SnackKind.problem),
       );
       return;
@@ -508,7 +508,7 @@ class _PhotoEntrySheetState extends ConsumerState<_PhotoEntrySheet> {
 
     if (!mounted) return;
     navigator.pop();
-    messenger.showSnackBar(appSnack(l.photosSaved, kind: SnackKind.done));
+    messenger.showAppSnack(appSnack(l.photosSaved, kind: SnackKind.done));
   }
 
   Future<void> _delete() async {
@@ -522,7 +522,7 @@ class _PhotoEntrySheetState extends ConsumerState<_PhotoEntrySheet> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      messenger.showSnackBar(
+      messenger.showAppSnack(
         appSnack(friendlyError(l, e), kind: SnackKind.problem),
       );
       return;
@@ -530,7 +530,7 @@ class _PhotoEntrySheetState extends ConsumerState<_PhotoEntrySheet> {
 
     if (!mounted) return;
     navigator.pop();
-    messenger.showSnackBar(appSnack(l.photosDeleted, kind: SnackKind.done));
+    messenger.showAppSnack(appSnack(l.photosDeleted, kind: SnackKind.done));
   }
 }
 

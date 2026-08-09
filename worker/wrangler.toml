@@ -17,5 +17,13 @@ GEMINI_MODEL = "gemini-flash-latest"
 # spent from someone else's page. "*" is fine only while testing locally.
 ALLOWED_ORIGIN = "https://child-health-tracker-7aad1.web.app"
 
-# GEMINI_API_KEY is NOT set here — it is a secret:
+# Who family invitations are sent from. Must be an address verified in Brevo,
+# which on the free tier is any single mailbox you own — no domain to buy.
+MAIL_FROM = "nickru777@gmail.com"
+MAIL_FROM_NAME = "Дневник ребёнка"
+
+# None of the keys are set here — they are secrets:
 #   npx wrangler secret put GEMINI_API_KEY
+#   npx wrangler secret put FIREBASE_SERVICE_ACCOUNT
+#   npx wrangler secret put FIREBASE_API_KEY
+#   npx wrangler secret put BREVO_API_KEY

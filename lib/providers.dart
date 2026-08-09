@@ -346,6 +346,15 @@ Stream<List<Reminder>> _combineLatest(List<Stream<List<Reminder>>> streams) {
   return controller.stream;
 }
 
+/// The signed-in parent's Firebase ID token, or empty.
+///
+/// A hook like [dictationProvider]: the default answers "none", so the demo
+/// stack and every test stay away from Firebase. `main.dart` overrides it.
+/// Used to prove to the Worker who is asking it to send an invitation.
+final idTokenReaderProvider = Provider<Future<String> Function()>(
+  (ref) => () async => '',
+);
+
 /// Reads the push token this device currently holds, without prompting.
 ///
 /// A hook rather than a direct call, exactly like [dictationProvider]: the

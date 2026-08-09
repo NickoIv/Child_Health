@@ -1422,6 +1422,15 @@ class AppLocalizationsRu extends AppLocalizations {
   String get familyInviteHint => 'Адрес, которым он входит в приложение';
 
   @override
+  String familyInviteMailed(String email) {
+    return 'Приглашение отправлено на $email';
+  }
+
+  @override
+  String get familyInviteMailFailed =>
+      'Письмо не ушло. Скопируйте приглашение и передайте сами';
+
+  @override
   String get familyInviteCreated => 'Приглашение создано';
 
   @override

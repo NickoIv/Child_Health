@@ -29,7 +29,10 @@
       "Bash(grep -n \"logRepositoryProvider\\)\\\\s*$\\\\|logRepositoryProvider\\)\\\\.\\\\|\\\\.delete\\(\\\\|\\\\.add\\(\\\\|\\\\.update\\(\" lib/features/diary/diary_screen.dart)",
       "Read(//c/Users/Nick/AppData/Local/Pub/Cache/hosted/**)",
       "Bash(xargs grep -n \"getTooltipColor\\\\|tooltipBgColor\\\\|this.tooltipBorder\\\\|tooltipPadding\")",
-      "Bash(flutter gen-l10n *)"
+      "Bash(flutter gen-l10n *)",
+      "Bash(node --check worker/worker.js)",
+      "Bash(node --input-type=module -e \"import\\('./worker/invites.js'\\).then\\(\\(\\)=>console.log\\('invites.js parses'\\)\\).catch\\(e=>console.log\\('ERR',e.message\\)\\)\")",
+      "Bash(python -c ' *)"
     ]
   }
 }

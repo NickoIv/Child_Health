@@ -2602,6 +2602,18 @@ abstract class AppLocalizations {
   /// **'Адрес, которым он входит в приложение'**
   String get familyInviteHint;
 
+  /// No description provided for @familyInviteMailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Приглашение отправлено на {email}'**
+  String familyInviteMailed(String email);
+
+  /// No description provided for @familyInviteMailFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Письмо не ушло. Скопируйте приглашение и передайте сами'**
+  String get familyInviteMailFailed;
+
   /// No description provided for @familyInviteCreated.
   ///
   /// In ru, this message translates to:

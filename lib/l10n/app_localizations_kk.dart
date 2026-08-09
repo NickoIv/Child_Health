@@ -1410,6 +1410,15 @@ class AppLocalizationsKk extends AppLocalizations {
   String get familyInviteHint => 'Ол кіретін мекенжай';
 
   @override
+  String familyInviteMailed(String email) {
+    return 'Шақыру $email мекенжайына жіберілді';
+  }
+
+  @override
+  String get familyInviteMailFailed =>
+      'Хат жіберілмеді. Шақыруды көшіріп, өзіңіз жіберіңіз';
+
+  @override
   String get familyInviteCreated => 'Шақыру жасалды';
 
   @override

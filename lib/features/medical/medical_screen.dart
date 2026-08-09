@@ -110,7 +110,7 @@ class _MedicalScreenState extends ConsumerState<MedicalScreen> {
     if (record == null) return;
 
     await ref.read(medicalRepositoryProvider).add(record);
-    messenger.showSnackBar(
+    messenger.showAppSnack(
       appSnack(l.medicalRecordSaved, kind: SnackKind.done),
     );
   }
@@ -132,7 +132,7 @@ class _MedicalScreenState extends ConsumerState<MedicalScreen> {
     if (updated == null) return;
 
     await ref.read(medicalRepositoryProvider).update(updated);
-    messenger.showSnackBar(
+    messenger.showAppSnack(
       appSnack(l.medicalRecordSaved, kind: SnackKind.done),
     );
   }
@@ -164,7 +164,7 @@ class _MedicalScreenState extends ConsumerState<MedicalScreen> {
     );
     if (confirmed ?? false) {
       await ref.read(medicalRepositoryProvider).delete(record.id);
-      messenger.showSnackBar(
+      messenger.showAppSnack(
         appSnack(l.medicalRecordDeleted, kind: SnackKind.done),
       );
     }

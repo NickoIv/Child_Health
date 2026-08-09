@@ -194,7 +194,7 @@ class _DiaryScreenState extends ConsumerState<DiaryScreen> {
     );
     if (confirmed ?? false) {
       await ref.read(logRepositoryProvider).delete(log.id);
-      messenger.showSnackBar(appSnack(l.entryDeleted, kind: SnackKind.done));
+      messenger.showAppSnack(appSnack(l.entryDeleted, kind: SnackKind.done));
     }
   }
 
@@ -772,7 +772,7 @@ Future<void> showDiaryEntryForm(
   // three of them the entry lands somewhere the parent cannot see it — a
   // measurement added from the growth tab joins a list further down, and a
   // dialog that simply closes leaves her wondering whether it saved.
-  messenger.showSnackBar(appSnack(l.entrySaved, kind: SnackKind.done));
+  messenger.showAppSnack(appSnack(l.entrySaved, kind: SnackKind.done));
 }
 
 class _LogFormDialog extends ConsumerStatefulWidget {

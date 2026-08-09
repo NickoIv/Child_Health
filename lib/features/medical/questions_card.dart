@@ -82,7 +82,7 @@ class DoctorQuestionsCard extends ConsumerWidget {
 
     await repository.delete(question.id);
 
-    messenger.showSnackBar(
+    messenger.showAppSnack(
       appSnack(
         l.medicalQuestionAsked,
         kind: SnackKind.done,
@@ -126,7 +126,7 @@ class DoctorQuestionsCard extends ConsumerWidget {
 
     // Said out loud, because the list it lands in may be below the fold and
     // a question typed into a dialog that closes on silence looks lost.
-    messenger.showSnackBar(
+    messenger.showAppSnack(
       appSnack(l.medicalQuestionSaved, kind: SnackKind.done),
     );
   }

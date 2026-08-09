@@ -357,7 +357,7 @@ class _ReminderSheetState extends ConsumerState<_ReminderSheet> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      messenger.showSnackBar(
+      messenger.showAppSnack(
         appSnack(friendlyError(l, e), kind: SnackKind.problem),
       );
       return;
@@ -365,7 +365,7 @@ class _ReminderSheetState extends ConsumerState<_ReminderSheet> {
 
     if (!mounted) return;
     navigator.pop();
-    messenger.showSnackBar(
+    messenger.showAppSnack(
       appSnack(l.reminderSaved(when), kind: SnackKind.done),
     );
   }
@@ -404,7 +404,7 @@ class _ReminderSheetState extends ConsumerState<_ReminderSheet> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      messenger.showSnackBar(
+      messenger.showAppSnack(
         appSnack(friendlyError(l, e), kind: SnackKind.problem),
       );
       return;
@@ -412,7 +412,7 @@ class _ReminderSheetState extends ConsumerState<_ReminderSheet> {
 
     if (!mounted) return;
     navigator.pop();
-    messenger.showSnackBar(appSnack(l.reminderDeleted, kind: SnackKind.done));
+    messenger.showAppSnack(appSnack(l.reminderDeleted, kind: SnackKind.done));
   }
 }
 

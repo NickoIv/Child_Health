@@ -257,7 +257,7 @@ class _QuickLogSheetState extends ConsumerState<_QuickLogSheet> {
 
     if (!mounted) return;
     navigator.pop();
-    messenger.showSnackBar(appSnack(l.timerStarted, kind: SnackKind.done));
+    messenger.showAppSnack(appSnack(l.timerStarted, kind: SnackKind.done));
   }
 
   /// Step two: when it happened, if she chose that, then what happened.
@@ -728,7 +728,7 @@ class _QuickLogSheetState extends ConsumerState<_QuickLogSheet> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      messenger.showSnackBar(
+      messenger.showAppSnack(
         appSnack(friendlyError(l, e), kind: SnackKind.problem),
       );
       return;
@@ -737,7 +737,7 @@ class _QuickLogSheetState extends ConsumerState<_QuickLogSheet> {
     if (!mounted) return;
     Navigator.of(context).pop();
 
-    messenger.showSnackBar(
+    messenger.showAppSnack(
       // The tick draws itself in beside the sentence rather than in front of
       // it: the sheet is already gone and her hands are already back on the
       // child, so this has to be readable at a glance and gone.

@@ -96,7 +96,7 @@ class SolidsCard extends ConsumerWidget {
             food: food,
           ),
         );
-    messenger.showSnackBar(
+    messenger.showAppSnack(
       appSnack(l.quickSaved(food.toLowerCase()), kind: SnackKind.done),
     );
   }

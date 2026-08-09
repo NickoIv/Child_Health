@@ -286,7 +286,7 @@ class _MedicalRecordFormState extends ConsumerState<MedicalRecordForm> {
       if (draft.isBlank) continue;
       final parsed = draft.toResult();
       if (parsed == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        ScaffoldMessenger.of(context).showAppSnack(
           appSnack(
             AppLocalizations.of(
               context,

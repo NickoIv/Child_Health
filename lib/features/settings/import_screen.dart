@@ -139,7 +139,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
     });
 
     if (preview.isEmpty) {
-      messenger.showSnackBar(
+      messenger.showAppSnack(
         appSnack(l.importNothingFound, kind: SnackKind.problem),
       );
     }
@@ -168,7 +168,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
         _busy = false;
         _written = written;
       });
-      messenger.showSnackBar(
+      messenger.showAppSnack(
         appSnack(friendlyError(l, e), kind: SnackKind.problem),
       );
       return;
@@ -179,7 +179,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
       _busy = false;
       _written = written;
     });
-    messenger.showSnackBar(
+    messenger.showAppSnack(
       appSnack(l.importDone(written), kind: SnackKind.done),
     );
   }

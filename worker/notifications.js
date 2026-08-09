@@ -47,7 +47,7 @@ function pemToArrayBuffer(pem) {
 /// Signs a JWT with the service account key and trades it for an access
 /// token. Done per invocation: the cron runs hourly and tokens last an hour,
 /// so caching would buy nothing and add a staleness bug.
-async function getAccessToken(serviceAccount) {
+export async function getAccessToken(serviceAccount) {
   const now = Math.floor(Date.now() / 1000);
   const header = { alg: 'RS256', typ: 'JWT' };
   const claims = {
@@ -95,13 +95,13 @@ async function getAccessToken(serviceAccount) {
 
 // --- Firestore ------------------------------------------------------------
 
-function firestoreBase(projectId) {
+export function firestoreBase(projectId) {
   return `https://firestore.googleapis.com/v1/projects/${projectId}` +
     '/databases/(default)/documents';
 }
 
 /// Firestore returns typed values; this pulls out the plain one.
-function plain(value) {
+export function plain(value) {
   if (!value) return null;
   if ('stringValue' in value) return value.stringValue;
   if ('booleanValue' in value) return value.booleanValue;

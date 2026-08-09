@@ -156,7 +156,7 @@ class _ExportSheetState extends ConsumerState<_ExportSheet> {
     if (!mounted) return;
     Navigator.of(context).pop();
 
-    messenger.showSnackBar(appSnack(l.reportReady, kind: SnackKind.done));
+    messenger.showAppSnack(appSnack(l.reportReady, kind: SnackKind.done));
 
     // Straight to the share sheet on a phone, straight to the downloads
     // folder in a browser. Nothing is uploaded on either.
@@ -168,7 +168,7 @@ class _ExportSheetState extends ConsumerState<_ExportSheet> {
     } catch (_) {
       // The file exists and the sheet has gone; all that failed is the
       // handover, and there is nothing left to retry into.
-      messenger.showSnackBar(
+      messenger.showAppSnack(
         appSnack(l.reportShareFailed, kind: SnackKind.problem),
       );
     }

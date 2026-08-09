@@ -217,7 +217,7 @@ class _RunningTimerCardState extends ConsumerState<RunningTimerCard> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      messenger.showSnackBar(
+      messenger.showAppSnack(
         appSnack(friendlyError(l, e), kind: SnackKind.problem),
       );
       return;
@@ -228,7 +228,7 @@ class _RunningTimerCardState extends ConsumerState<RunningTimerCard> {
     await ref.read(activeTimerProvider.notifier).clear();
     if (!mounted) return;
     setState(() => _saving = false);
-    messenger.showSnackBar(
+    messenger.showAppSnack(
       appSnack(
         l.quickSaved(
           [
@@ -249,7 +249,7 @@ class _RunningTimerCardState extends ConsumerState<RunningTimerCard> {
     final messenger = ScaffoldMessenger.of(context);
     await ref.read(activeTimerProvider.notifier).clear();
     if (!mounted) return;
-    messenger.showSnackBar(appSnack(l.timerDiscarded));
+    messenger.showAppSnack(appSnack(l.timerDiscarded));
   }
 }
 
