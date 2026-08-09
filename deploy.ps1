@@ -73,6 +73,24 @@ if (Test-Path build\web\flutter_service_worker.js) {
   Remove-Item build\web\flutter_service_worker.js -Force
 }
 
+# Rules and indexes first, and from now on every time.
+#
+# They were a manual step documented in the README, so they drifted: the
+# family_members block was added to firestore.rules on 6 August and never
+# reached the project, which left «Пригласить» failing with permission-denied
+# for four days against rules that had no idea the collection existed. A
+# script that publishes the client but not the rules it was written against
+# ships half a system.
+#
+# Deployed before hosting on purpose: a bundle that expects new rules must
+# never be live while the old ones are, and if this step fails nothing else
+# goes out.
+Write-Host '--- deploy firestore rules and indexes ---' -ForegroundColor Cyan
+& "$env:APPDATA\npm\firebase.cmd" deploy --only firestore:rules,firestore:indexes --non-interactive
+if ($LASTEXITCODE -ne 0) {
+  throw 'firestore rules/indexes deploy failed - if it says credentials are no longer valid, run: firebase login --reauth'
+}
+
 Write-Host '--- deploy hosting ---' -ForegroundColor Cyan
 & "$env:APPDATA\npm\firebase.cmd" deploy --only hosting --non-interactive
 if ($LASTEXITCODE -ne 0) { throw 'hosting deploy failed' }
