@@ -986,6 +986,33 @@ class AppLocalizationsRu extends AppLocalizations {
       'Прививки появятся здесь сами, как только будет создан профиль ребёнка';
 
   @override
+  String get feedbackTitle => 'Обратная связь';
+
+  @override
+  String get feedbackExplain =>
+      'Если что-то работает не так или чего-то не хватает — напишите. Откроется ваша почта, письмо уйдёт только когда вы сами нажмёте «Отправить».';
+
+  @override
+  String get feedbackWrite => 'Написать разработчику';
+
+  @override
+  String get feedbackSubject => 'Дневник ребёнка — обратная связь';
+
+  @override
+  String get feedbackPlaceholder =>
+      'Напишите здесь, что случилось или чего не хватает.';
+
+  @override
+  String get feedbackNoMailApp =>
+      'Почта не открылась. Адрес скопирован — напишите с любого устройства';
+
+  @override
+  String get feedbackAddressCopied => 'Адрес скопирован';
+
+  @override
+  String get settingsLocation => 'Разработчик находится';
+
+  @override
   String get logTitle => 'Журнал ошибок';
 
   @override
@@ -2284,7 +2311,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsAbout => 'О приложении';
 
   @override
-  String get settingsAuthor => 'Автор';
+  String get settingsAuthor => 'Разработчик';
 
   @override
   String get settingsVersion => 'Версия';

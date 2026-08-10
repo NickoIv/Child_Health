@@ -981,6 +981,33 @@ class AppLocalizationsEn extends AppLocalizations {
       'Vaccinations appear here on their own once a child profile exists';
 
   @override
+  String get feedbackTitle => 'Feedback';
+
+  @override
+  String get feedbackExplain =>
+      'If something is not working or something is missing, write. Your mail app opens with the letter; it is sent only when you press send yourself.';
+
+  @override
+  String get feedbackWrite => 'Write to the developer';
+
+  @override
+  String get feedbackSubject => 'Child diary — feedback';
+
+  @override
+  String get feedbackPlaceholder =>
+      'Write here what happened or what is missing.';
+
+  @override
+  String get feedbackNoMailApp =>
+      'Mail did not open. The address is copied — write from any device';
+
+  @override
+  String get feedbackAddressCopied => 'Address copied';
+
+  @override
+  String get settingsLocation => 'Developer is based in';
+
+  @override
   String get logTitle => 'Error log';
 
   @override
@@ -2265,7 +2292,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAbout => 'About';
 
   @override
-  String get settingsAuthor => 'Author';
+  String get settingsAuthor => 'Developer';
 
   @override
   String get settingsVersion => 'Version';

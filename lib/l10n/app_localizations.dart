@@ -1804,6 +1804,54 @@ abstract class AppLocalizations {
   /// **'Прививки появятся здесь сами, как только будет создан профиль ребёнка'**
   String get upcomingEmptyHint;
 
+  /// No description provided for @feedbackTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обратная связь'**
+  String get feedbackTitle;
+
+  /// No description provided for @feedbackExplain.
+  ///
+  /// In ru, this message translates to:
+  /// **'Если что-то работает не так или чего-то не хватает — напишите. Откроется ваша почта, письмо уйдёт только когда вы сами нажмёте «Отправить».'**
+  String get feedbackExplain;
+
+  /// No description provided for @feedbackWrite.
+  ///
+  /// In ru, this message translates to:
+  /// **'Написать разработчику'**
+  String get feedbackWrite;
+
+  /// No description provided for @feedbackSubject.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дневник ребёнка — обратная связь'**
+  String get feedbackSubject;
+
+  /// No description provided for @feedbackPlaceholder.
+  ///
+  /// In ru, this message translates to:
+  /// **'Напишите здесь, что случилось или чего не хватает.'**
+  String get feedbackPlaceholder;
+
+  /// No description provided for @feedbackNoMailApp.
+  ///
+  /// In ru, this message translates to:
+  /// **'Почта не открылась. Адрес скопирован — напишите с любого устройства'**
+  String get feedbackNoMailApp;
+
+  /// No description provided for @feedbackAddressCopied.
+  ///
+  /// In ru, this message translates to:
+  /// **'Адрес скопирован'**
+  String get feedbackAddressCopied;
+
+  /// No description provided for @settingsLocation.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разработчик находится'**
+  String get settingsLocation;
+
   /// No description provided for @logTitle.
   ///
   /// In ru, this message translates to:
@@ -3979,7 +4027,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsAuthor.
   ///
   /// In ru, this message translates to:
-  /// **'Автор'**
+  /// **'Разработчик'**
   String get settingsAuthor;
 
   /// No description provided for @settingsVersion.

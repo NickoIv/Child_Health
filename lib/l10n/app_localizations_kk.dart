@@ -975,6 +975,33 @@ class AppLocalizationsKk extends AppLocalizations {
       'Бала профилі жасалған соң егулер осында өзі пайда болады';
 
   @override
+  String get feedbackTitle => 'Кері байланыс';
+
+  @override
+  String get feedbackExplain =>
+      'Бірдеңе дұрыс істемесе немесе жетіспесе — жазыңыз. Поштаңыз ашылады, хат тек өзіңіз «Жіберу» дегенде кетеді.';
+
+  @override
+  String get feedbackWrite => 'Әзірлеушіге жазу';
+
+  @override
+  String get feedbackSubject => 'Бала күнделігі — кері байланыс';
+
+  @override
+  String get feedbackPlaceholder =>
+      'Не болғанын немесе не жетіспейтінін осында жазыңыз.';
+
+  @override
+  String get feedbackNoMailApp =>
+      'Пошта ашылмады. Мекенжай көшірілді — кез келген құрылғыдан жазыңыз';
+
+  @override
+  String get feedbackAddressCopied => 'Мекенжай көшірілді';
+
+  @override
+  String get settingsLocation => 'Әзірлеуші орналасқан жері';
+
+  @override
   String get logTitle => 'Қателер журналы';
 
   @override
@@ -2249,7 +2276,7 @@ class AppLocalizationsKk extends AppLocalizations {
   String get settingsAbout => 'Қосымша туралы';
 
   @override
-  String get settingsAuthor => 'Авторы';
+  String get settingsAuthor => 'Әзірлеуші';
 
   @override
   String get settingsVersion => 'Нұсқасы';

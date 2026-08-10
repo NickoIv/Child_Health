@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/app_info.dart';
 import '../../core/diagnostics/error_log.dart';
+import '../../core/feedback/feedback_letter.dart';
+import '../../core/feedback/open_mail.dart';
 import '../../core/theme/app_snack.dart';
 import '../../core/l10n/app_locale.dart';
 import '../../core/l10n/auth_errors.dart';
@@ -384,6 +386,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         // Last card on the last screen, which is where a credit belongs: it
         // is the answer to "who made this", asked once, by someone who has
         // already gone looking for it.
+        const _FeedbackCard(),
         const _ErrorLogCard(),
         SectionCard(
           title: l.settingsAbout,
@@ -392,6 +395,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _AboutRow(label: l.settingsAuthor, value: AppInfo.author),
+              // Hidden while [AppInfo.location] is blank rather than printed
+              // empty: a city is a fact about a real person, and a guessed
+              // one on an about screen is worse than none.
+              if (AppInfo.location.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                _AboutRow(
+                  label: l.settingsLocation,
+                  value: AppInfo.location,
+                ),
+              ],
               const SizedBox(height: 10),
               _AboutRow(label: l.settingsVersion, value: AppInfo.version),
             ],
@@ -574,6 +587,86 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 }
 
 /// One fact about the app: a small-caps label and the fact itself.
+/// A way to say something back.
+///
+/// Until now the app talked and nobody could answer. A mother who finds a
+/// figure wrong, or a word that reads badly at four in the morning, had
+/// nowhere to put it — and she is the only person who will ever notice most
+/// of what is wrong with this.
+///
+/// The address is printed under the button as well, and selectable. `mailto:`
+/// is the one link a browser is allowed to refuse quietly: no mail client
+/// registered, a locked-down work machine, a PWA on iOS that hands it to
+/// nothing. If it does nothing at all she can still read the address and
+/// write from her phone.
+class _FeedbackCard extends StatelessWidget {
+  const _FeedbackCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppTheme.gap),
+      child: SectionCard(
+        title: l.feedbackTitle,
+        icon: Icons.mark_email_unread_outlined,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l.feedbackExplain,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: Warm.onCardSoft(theme.brightness),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: FilledButton.tonalIcon(
+                onPressed: () => _write(context),
+                icon: const Icon(Icons.alternate_email, size: 18),
+                label: Text(l.feedbackWrite),
+              ),
+            ),
+            const SizedBox(height: 10),
+            SelectableText(
+              AppInfo.feedbackEmail,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: Warm.onCardSoft(theme.brightness),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _write(BuildContext context) async {
+    final l = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+
+    final opened = await openMail(
+      feedbackMailto(
+        to: AppInfo.feedbackEmail,
+        subject: l.feedbackSubject,
+        body: feedbackBody(l.feedbackPlaceholder),
+      ),
+    );
+    if (opened) return;
+
+    // Never «письмо отправлено»: nothing has been sent, and the browser does
+    // not say whether a client even opened.
+    await Clipboard.setData(
+      const ClipboardData(text: AppInfo.feedbackEmail),
+    );
+    messenger.showAppSnack(
+      appSnack(l.feedbackNoMailApp, kind: SnackKind.info),
+    );
+  }
+}
+
 /// What broke, in full, on the screen — and a button that copies it.
 ///
 /// The text is shown rather than hidden behind the button on purpose. Copying
