@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/glass.dart';
+import '../../core/theme/motion.dart';
 import '../../l10n/app_localizations.dart';
 import '../../core/l10n/labels.dart';
 import '../../core/analytics/illness_stats.dart';
@@ -79,7 +80,12 @@ class IllnessScreen extends ConsumerWidget {
                   children: [
                     for (var i = 0; i < illnessLogs.length; i++) ...[
                       if (i > 0) const Divider(height: 20),
-                      _IllnessRow(log: illnessLogs[i]),
+                      // Keyed by the entry's own id: a temperature just taken
+                      // rises into the list, and the ones above it hold still.
+                      Arrival(
+                        key: ValueKey(illnessLogs[i].id),
+                        child: _IllnessRow(log: illnessLogs[i]),
+                      ),
                     ],
                   ],
                 ),

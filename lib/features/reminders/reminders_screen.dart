@@ -197,12 +197,18 @@ class _TypeSection extends StatelessWidget {
               children: [
                 for (var i = 0; i < reminders.length; i++) ...[
                   if (i > 0) const Divider(height: 16),
-                  _ReminderRow(
-                    reminder: reminders[i],
-                    onToggle: () => onToggle(reminders[i]),
-                    onOpen: onOpen == null
-                        ? null
-                        : () => onOpen!(reminders[i]),
+                  // Keyed by the reminder's own id. Ticking one off takes it
+                  // out of the list and the rest close up; a new one written
+                  // down arrives instead of being suddenly there.
+                  Arrival(
+                    key: ValueKey(reminders[i].id),
+                    child: _ReminderRow(
+                      reminder: reminders[i],
+                      onToggle: () => onToggle(reminders[i]),
+                      onOpen: onOpen == null
+                          ? null
+                          : () => onOpen!(reminders[i]),
+                    ),
                   ),
                 ],
               ],

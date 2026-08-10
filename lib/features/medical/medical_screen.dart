@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/router/app_router.dart';
 import '../../core/theme/app_snack.dart';
 import '../../core/theme/glass.dart';
+import '../../core/theme/motion.dart';
 import '../../l10n/app_localizations.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/medical_record.dart';
@@ -74,10 +75,15 @@ class _MedicalScreenState extends ConsumerState<MedicalScreen> {
             )
           else
             for (final r in records) ...[
-              _RecordCard(
-                record: r,
-                onEdit: () => _editRecord(r),
-                onDelete: () => _confirmDelete(r),
+              // Keyed by the record's own id, so a scan saved a moment ago
+              // rises into the folder and the ones already in it sit still.
+              Arrival(
+                key: ValueKey(r.id),
+                child: _RecordCard(
+                  record: r,
+                  onEdit: () => _editRecord(r),
+                  onDelete: () => _confirmDelete(r),
+                ),
               ),
               const SizedBox(height: 16),
             ],
