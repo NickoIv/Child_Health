@@ -975,6 +975,38 @@ class AppLocalizationsKk extends AppLocalizations {
       'Бала профилі жасалған соң егулер осында өзі пайда болады';
 
   @override
+  String get logTitle => 'Қателер журналы';
+
+  @override
+  String get logEmpty => 'Әзірге ештеңе бұзылған жоқ.';
+
+  @override
+  String get logExplain =>
+      'Тек осы телефонда сақталады, еш жерге жіберілмейді. Қолданба қатып қалса немесе жабылса — көшіріп, әзірлеушіге жіберіңіз.';
+
+  @override
+  String get logCopy => 'Көшіру';
+
+  @override
+  String get logCopied => 'Журнал көшірілді';
+
+  @override
+  String get logClear => 'Тазалау';
+
+  @override
+  String get logCleared => 'Журнал тазаланды';
+
+  @override
+  String logCount(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n жазба',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get milestonesUsualTitle => 'Осы жаста әдетте';
 
   @override

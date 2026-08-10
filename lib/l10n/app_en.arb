@@ -284,6 +284,19 @@
   "milestonesEmptyHint": "First smile, first tooth, first word — add them in the diary as a milestone",
   "recentEmpty": "No entries yet",
   "upcomingEmptyHint": "Vaccinations appear here on their own once a child profile exists",
+  "logTitle": "Error log",
+  "logEmpty": "Nothing has broken yet.",
+  "logExplain": "Kept on this phone only and never sent anywhere. If the app froze or closed itself, copy this and send it to the developer.",
+  "logCopy": "Copy",
+  "logCopied": "Log copied",
+  "logClear": "Clear",
+  "logCleared": "Log cleared",
+  "logCount": "{n, plural, one{{n} entry} other{{n} entries}}",
+  "@logCount": {
+    "placeholders": {
+      "n": { "type": "int" }
+    }
+  },
   "milestonesUsualTitle": "Usual around this age",
   "milestonesSpread": "Not a deadline but a window: for most children it appears somewhere inside these months. Later is often ordinary too.",
   "milestonesNoted": "written down",

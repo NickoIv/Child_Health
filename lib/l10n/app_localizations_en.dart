@@ -981,6 +981,39 @@ class AppLocalizationsEn extends AppLocalizations {
       'Vaccinations appear here on their own once a child profile exists';
 
   @override
+  String get logTitle => 'Error log';
+
+  @override
+  String get logEmpty => 'Nothing has broken yet.';
+
+  @override
+  String get logExplain =>
+      'Kept on this phone only and never sent anywhere. If the app froze or closed itself, copy this and send it to the developer.';
+
+  @override
+  String get logCopy => 'Copy';
+
+  @override
+  String get logCopied => 'Log copied';
+
+  @override
+  String get logClear => 'Clear';
+
+  @override
+  String get logCleared => 'Log cleared';
+
+  @override
+  String logCount(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n entries',
+      one: '$n entry',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get milestonesUsualTitle => 'Usual around this age';
 
   @override

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/app_info.dart';
+import '../../core/diagnostics/error_log.dart';
 import '../../core/theme/app_snack.dart';
 import '../../core/l10n/app_locale.dart';
 import '../../core/l10n/auth_errors.dart';
@@ -382,6 +384,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         // Last card on the last screen, which is where a credit belongs: it
         // is the answer to "who made this", asked once, by someone who has
         // already gone looking for it.
+        const _ErrorLogCard(),
         SectionCard(
           title: l.settingsAbout,
           icon: Icons.info_outline,
@@ -571,6 +574,112 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 }
 
 /// One fact about the app: a small-caps label and the fact itself.
+/// What broke, in full, on the screen — and a button that copies it.
+///
+/// The text is shown rather than hidden behind the button on purpose. Copying
+/// is the moment this leaves her phone, and she is entitled to read every
+/// character of what she is about to send first. That is the whole advantage
+/// of a log over a crash reporter, and hiding it would give it away.
+class _ErrorLogCard extends ConsumerWidget {
+  const _ErrorLogCard();
+
+  /// Tall enough to read a couple of entries, short enough that a bad week
+  /// does not turn settings into a wall of stack traces.
+  static const maxHeight = 200.0;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final entries = ref.watch(errorLogProvider);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppTheme.gap),
+      child: SectionCard(
+        title: l.logTitle,
+        icon: Icons.bug_report_outlined,
+        action: entries.isEmpty
+            ? null
+            : Text(
+                l.logCount(entries.length),
+                style: theme.textTheme.bodySmall,
+              ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l.logExplain,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: Warm.onCardSoft(theme.brightness),
+              ),
+            ),
+            const SizedBox(height: 12),
+            if (entries.isEmpty)
+              Text(
+                l.logEmpty,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: Warm.onCardSoft(theme.brightness),
+                ),
+              )
+            else ...[
+              Container(
+                width: double.infinity,
+                constraints: const BoxConstraints(maxHeight: maxHeight),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Warm.soft(theme.brightness),
+                  borderRadius: BorderRadius.circular(Warm.chipRadius),
+                ),
+                child: SingleChildScrollView(
+                  child: SelectableText(
+                    ref.read(errorLogProvider.notifier).asText(),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontFamily: 'monospace',
+                      fontFamilyFallback: const ['Courier New', 'monospace'],
+                      color: Warm.onCard(theme.brightness),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  FilledButton.tonalIcon(
+                    onPressed: () => _copy(context, ref),
+                    icon: const Icon(Icons.copy_all_outlined, size: 18),
+                    label: Text(l.logCopy),
+                  ),
+                  const SizedBox(width: 8),
+                  TextButton(
+                    onPressed: () => _clear(context, ref),
+                    child: Text(l.logClear),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _copy(BuildContext context, WidgetRef ref) async {
+    final l = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    await Clipboard.setData(
+      ClipboardData(text: ref.read(errorLogProvider.notifier).asText()),
+    );
+    messenger.showAppSnack(appSnack(l.logCopied, kind: SnackKind.done));
+  }
+
+  Future<void> _clear(BuildContext context, WidgetRef ref) async {
+    final l = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    await ref.read(errorLogProvider.notifier).clear();
+    messenger.showAppSnack(appSnack(l.logCleared, kind: SnackKind.done));
+  }
+}
+
 class _AboutRow extends StatelessWidget {
   const _AboutRow({required this.label, required this.value});
 

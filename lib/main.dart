@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'app.dart';
+import 'core/diagnostics/error_log.dart';
 import 'core/l10n/app_locale.dart';
 import 'core/notifications/notification_service.dart';
 import 'core/theme/theme_mode.dart';
@@ -46,8 +47,11 @@ Future<void> main() async {
   );
   await notifications.init();
 
-  runApp(
-    ProviderScope(
+  // Built here rather than by [ProviderScope] so the error log exists before
+  // the first widget does: the errors most worth having are the ones thrown
+  // while the app is still starting, and a handler installed from inside the
+  // tree misses every one of them.
+  final container = ProviderContainer(
       // This list is the entire difference between the offline demo stack the
       // tests run on and the real backend.
       overrides: [
@@ -105,6 +109,16 @@ Future<void> main() async {
           (ref) => FirestoreUserRepository(FirebaseFirestore.instance),
         ),
       ],
+  );
+
+  // Both of Flutter's error channels, pointed at local storage and nowhere
+  // else. Nothing is uploaded: the settings screen shows the log in full and
+  // she copies it herself if she chooses to.
+  installErrorLogging(container.read(errorLogProvider.notifier));
+
+  runApp(
+    UncontrolledProviderScope(
+      container: container,
       child: const ChildHealthApp(),
     ),
   );

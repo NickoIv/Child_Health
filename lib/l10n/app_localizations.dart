@@ -1804,6 +1804,54 @@ abstract class AppLocalizations {
   /// **'Прививки появятся здесь сами, как только будет создан профиль ребёнка'**
   String get upcomingEmptyHint;
 
+  /// No description provided for @logTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Журнал ошибок'**
+  String get logTitle;
+
+  /// No description provided for @logEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пока ничего не сломалось.'**
+  String get logEmpty;
+
+  /// No description provided for @logExplain.
+  ///
+  /// In ru, this message translates to:
+  /// **'Записывается только на этом телефоне и никуда не отправляется. Если приложение подвисло или закрылось — скопируйте и пришлите разработчику.'**
+  String get logExplain;
+
+  /// No description provided for @logCopy.
+  ///
+  /// In ru, this message translates to:
+  /// **'Скопировать'**
+  String get logCopy;
+
+  /// No description provided for @logCopied.
+  ///
+  /// In ru, this message translates to:
+  /// **'Журнал скопирован'**
+  String get logCopied;
+
+  /// No description provided for @logClear.
+  ///
+  /// In ru, this message translates to:
+  /// **'Очистить'**
+  String get logClear;
+
+  /// No description provided for @logCleared.
+  ///
+  /// In ru, this message translates to:
+  /// **'Журнал очищен'**
+  String get logCleared;
+
+  /// No description provided for @logCount.
+  ///
+  /// In ru, this message translates to:
+  /// **'{n, plural, one{{n} запись} few{{n} записи} many{{n} записей} other{{n} записи}}'**
+  String logCount(int n);
+
   /// No description provided for @milestonesUsualTitle.
   ///
   /// In ru, this message translates to:

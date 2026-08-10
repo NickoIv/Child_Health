@@ -986,6 +986,41 @@ class AppLocalizationsRu extends AppLocalizations {
       'Прививки появятся здесь сами, как только будет создан профиль ребёнка';
 
   @override
+  String get logTitle => 'Журнал ошибок';
+
+  @override
+  String get logEmpty => 'Пока ничего не сломалось.';
+
+  @override
+  String get logExplain =>
+      'Записывается только на этом телефоне и никуда не отправляется. Если приложение подвисло или закрылось — скопируйте и пришлите разработчику.';
+
+  @override
+  String get logCopy => 'Скопировать';
+
+  @override
+  String get logCopied => 'Журнал скопирован';
+
+  @override
+  String get logClear => 'Очистить';
+
+  @override
+  String get logCleared => 'Журнал очищен';
+
+  @override
+  String logCount(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n записи',
+      many: '$n записей',
+      few: '$n записи',
+      one: '$n запись',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get milestonesUsualTitle => 'Обычно в этом возрасте';
 
   @override
