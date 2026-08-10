@@ -205,6 +205,27 @@ async function getUser(token, projectId, uid) {
   return fields;
 }
 
+/// The child's own name, for the one sentence that reaches her outside the app.
+///
+/// Null on anything that goes wrong. A notification that says «Прививка» is
+/// worse than one that says «Прививка у Миши» and far better than none at all,
+/// so nothing here is allowed to stop a reminder going out.
+async function getChildName(token, projectId, childId) {
+  if (!childId) return null;
+  try {
+    const response = await fetch(
+      `${firestoreBase(projectId)}/children/${childId}`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    if (!response.ok) return null;
+    const doc = await response.json();
+    const name = plain(doc.fields?.name);
+    return typeof name === 'string' && name.trim() ? name.trim() : null;
+  } catch {
+    return null;
+  }
+}
+
 async function markNotified(token, projectId, documentName, when) {
   await fetch(
     `https://firestore.googleapis.com/v1/${documentName}` +
@@ -224,7 +245,7 @@ async function markNotified(token, projectId, documentName, when) {
 
 // --- Sending --------------------------------------------------------------
 
-async function sendPush(token, projectId, deviceToken, reminder) {
+async function sendPush(token, projectId, deviceToken, reminder, childName) {
   const response = await fetch(
     `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`,
     {
@@ -237,7 +258,7 @@ async function sendPush(token, projectId, deviceToken, reminder) {
         message: {
           token: deviceToken,
           notification: {
-            title: titleFor(reminder.fields.type),
+            title: titleFor(reminder.fields.type, childName),
             body: reminder.fields.title || 'Напоминание',
           },
           data: {
@@ -257,14 +278,28 @@ async function sendPush(token, projectId, deviceToken, reminder) {
   return { ok: response.ok, status: response.status };
 }
 
-function titleFor(type) {
+/// What the phone says on the lock screen.
+///
+/// Two rules, both learned from what was here before.
+///
+/// **It names the child.** «Пора на прививку» is a line from a clinic's
+/// queueing system. «Сегодня прививка у Миши» is the same fact said by
+/// something that knows whose morning this is, and that difference is the
+/// whole of what a notification can do to feel like it belongs to this family.
+///
+/// **It does not give orders.** «Пора» tells a mother she is late for
+/// something; the app has no idea whether she is. It states the day and stops,
+/// and the reminder's own title — her words, where she wrote any — is the body
+/// underneath. She knows what to do about a vaccination.
+function titleFor(type, childName) {
+  const whose = childName ? ` у ${childName}` : '';
   switch (type) {
     case 'vaccination':
-      return 'Пора на прививку';
+      return `Сегодня прививка${whose}`;
     case 'medication':
-      return 'Приём лекарства';
+      return childName ? `Лекарство для ${childName}` : 'Лекарство по времени';
     default:
-      return 'Визит к врачу';
+      return `Сегодня визит к врачу${whose}`;
   }
 }
 
@@ -286,6 +321,8 @@ export async function runReminderSweep(env, now = new Date()) {
   // One profile read per parent, not per reminder: a newborn's schedule can
   // put several doses on the same morning.
   const profiles = new Map();
+  // And one name read per child, for the same reason.
+  const childNames = new Map();
   let sent = 0;
   let skipped = 0;
 
@@ -311,9 +348,23 @@ export async function runReminderSweep(env, now = new Date()) {
       continue;
     }
 
+    // Read after the checks above, so a parent with notifications switched
+    // off costs no lookup at all.
+    const childId = reminder.fields.child_id || '';
+    if (!childNames.has(childId)) {
+      childNames.set(childId, await getChildName(token, projectId, childId));
+    }
+    const childName = childNames.get(childId);
+
     let delivered = false;
     for (const deviceToken of deviceTokens) {
-      const result = await sendPush(token, projectId, deviceToken, reminder);
+      const result = await sendPush(
+        token,
+        projectId,
+        deviceToken,
+        reminder,
+        childName,
+      );
       if (result.ok) delivered = true;
     }
 
