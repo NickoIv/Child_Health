@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/care/greeting.dart';
 import '../../core/l10n/labels.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/motion.dart';
-import '../../core/theme/theme_mode.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/child.dart';
 import '../../models/development_log.dart';
@@ -181,14 +181,6 @@ class _HeaderFigure extends StatelessWidget {
       ],
     );
   }
-}
-
-/// Morning, day, evening or night, by the clock.
-String greetingFor(AppLocalizations l, DateTime now) {
-  if (isNightAt(now)) return l.greetingNight;
-  if (now.hour < 12) return l.greetingMorning;
-  if (now.hour < 18) return l.greetingAfternoon;
-  return l.greetingEvening;
 }
 
 /// The icon a diary entry carries, so the preview and the timeline agree.

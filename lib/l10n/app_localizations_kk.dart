@@ -975,6 +975,31 @@ class AppLocalizationsKk extends AppLocalizations {
       'Бала профилі жасалған соң егулер осында өзі пайда болады';
 
   @override
+  String greetingNamed(String greeting, String name) {
+    return '$greeting, $name';
+  }
+
+  @override
+  String noticedRoundAge(String name, num months) {
+    final intl.NumberFormat monthsNumberFormat = intl.NumberFormat.compact(
+      locale: localeName,
+    );
+    final String monthsString = monthsNumberFormat.format(months);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      months,
+      locale: localeName,
+      other: '$monthsString айлық',
+    );
+    return 'Бүгін $name нақты $_temp0 болды';
+  }
+
+  @override
+  String noticedLongestNight(String duration) {
+    return 'Айдағы ең ұзақ түн — $duration';
+  }
+
+  @override
   String get greetingNight => 'Қайырлы түн';
 
   @override

@@ -512,6 +512,26 @@
   "milestonesEmptyHint": "Первая улыбка, первый зуб, первое слово — добавьте их в дневнике как «Веха развития»",
   "recentEmpty": "Записей пока нет",
   "upcomingEmptyHint": "Прививки появятся здесь сами, как только будет создан профиль ребёнка",
+  "greetingNamed": "{greeting}, {name}",
+  "@greetingNamed": {
+    "placeholders": {
+      "greeting": { "type": "String" },
+      "name": { "type": "String" }
+    }
+  },
+  "noticedRoundAge": "Сегодня {name} ровно {months, plural, one{{months} месяц} few{{months} месяца} many{{months} месяцев} other{{months} месяца}}",
+  "@noticedRoundAge": {
+    "placeholders": {
+      "name": { "type": "String" },
+      "months": { "type": "num", "format": "compact" }
+    }
+  },
+  "noticedLongestNight": "Самая длинная ночь за месяц — {duration}",
+  "@noticedLongestNight": {
+    "placeholders": {
+      "duration": { "type": "String" }
+    }
+  },
   "greetingNight": "Доброй ночи",
   "greetingMorning": "Доброе утро",
   "greetingAfternoon": "Добрый день",

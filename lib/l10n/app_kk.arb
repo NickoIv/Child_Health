@@ -284,6 +284,26 @@
   "milestonesEmptyHint": "Алғашқы күлкі, алғашқы тіс, алғашқы сөз — оларды күнделікке «Даму кезеңі» ретінде қосыңыз",
   "recentEmpty": "Әзірге жазба жоқ",
   "upcomingEmptyHint": "Бала профилі жасалған соң егулер осында өзі пайда болады",
+  "greetingNamed": "{greeting}, {name}",
+  "@greetingNamed": {
+    "placeholders": {
+      "greeting": { "type": "String" },
+      "name": { "type": "String" }
+    }
+  },
+  "noticedRoundAge": "Бүгін {name} нақты {months, plural, other{{months} айлық}} болды",
+  "@noticedRoundAge": {
+    "placeholders": {
+      "name": { "type": "String" },
+      "months": { "type": "num", "format": "compact" }
+    }
+  },
+  "noticedLongestNight": "Айдағы ең ұзақ түн — {duration}",
+  "@noticedLongestNight": {
+    "placeholders": {
+      "duration": { "type": "String" }
+    }
+  },
   "greetingNight": "Қайырлы түн",
   "greetingMorning": "Қайырлы таң",
   "greetingAfternoon": "Қайырлы күн",

@@ -284,6 +284,26 @@
   "milestonesEmptyHint": "First smile, first tooth, first word — add them in the diary as a milestone",
   "recentEmpty": "No entries yet",
   "upcomingEmptyHint": "Vaccinations appear here on their own once a child profile exists",
+  "greetingNamed": "{greeting}, {name}",
+  "@greetingNamed": {
+    "placeholders": {
+      "greeting": { "type": "String" },
+      "name": { "type": "String" }
+    }
+  },
+  "noticedRoundAge": "{name} is exactly {months, plural, one{{months} month} other{{months} months}} old today",
+  "@noticedRoundAge": {
+    "placeholders": {
+      "name": { "type": "String" },
+      "months": { "type": "num", "format": "compact" }
+    }
+  },
+  "noticedLongestNight": "The longest night in a month — {duration}",
+  "@noticedLongestNight": {
+    "placeholders": {
+      "duration": { "type": "String" }
+    }
+  },
   "greetingNight": "Good night",
   "greetingMorning": "Good morning",
   "greetingAfternoon": "Good afternoon",

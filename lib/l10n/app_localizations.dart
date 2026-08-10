@@ -1804,6 +1804,24 @@ abstract class AppLocalizations {
   /// **'Прививки появятся здесь сами, как только будет создан профиль ребёнка'**
   String get upcomingEmptyHint;
 
+  /// No description provided for @greetingNamed.
+  ///
+  /// In ru, this message translates to:
+  /// **'{greeting}, {name}'**
+  String greetingNamed(String greeting, String name);
+
+  /// No description provided for @noticedRoundAge.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сегодня {name} ровно {months, plural, one{{months} месяц} few{{months} месяца} many{{months} месяцев} other{{months} месяца}}'**
+  String noticedRoundAge(String name, num months);
+
+  /// No description provided for @noticedLongestNight.
+  ///
+  /// In ru, this message translates to:
+  /// **'Самая длинная ночь за месяц — {duration}'**
+  String noticedLongestNight(String duration);
+
   /// No description provided for @greetingNight.
   ///
   /// In ru, this message translates to:

@@ -981,6 +981,32 @@ class AppLocalizationsEn extends AppLocalizations {
       'Vaccinations appear here on their own once a child profile exists';
 
   @override
+  String greetingNamed(String greeting, String name) {
+    return '$greeting, $name';
+  }
+
+  @override
+  String noticedRoundAge(String name, num months) {
+    final intl.NumberFormat monthsNumberFormat = intl.NumberFormat.compact(
+      locale: localeName,
+    );
+    final String monthsString = monthsNumberFormat.format(months);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      months,
+      locale: localeName,
+      other: '$monthsString months',
+      one: '$monthsString month',
+    );
+    return '$name is exactly $_temp0 old today';
+  }
+
+  @override
+  String noticedLongestNight(String duration) {
+    return 'The longest night in a month — $duration';
+  }
+
+  @override
   String get greetingNight => 'Good night';
 
   @override

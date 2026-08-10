@@ -3,9 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/analytics/daily_care.dart';
+import '../../core/care/greeting.dart';
+import '../../core/care/noticing.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/motion.dart';
-import '../../core/theme/theme_mode.dart';
 import '../../l10n/app_localizations.dart';
 import '../../core/l10n/labels.dart';
 import '../../models/child.dart';
@@ -80,7 +81,18 @@ class NowCard extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _greeting(l, now),
+                            // By name where she gave one. The rest of this
+                            // card is about the child; this is the one line
+                            // on it addressed to the person reading it.
+                            greetingFor(
+                              l,
+                              now,
+                              name: ref
+                                      .watch(userProfileProvider)
+                                      .value
+                                      ?.displayName ??
+                                  '',
+                            ),
                             style: theme.textTheme.labelSmall?.copyWith(
                               color: onGradient.withValues(alpha: 0.75),
                               fontWeight: FontWeight.w600,
@@ -114,7 +126,12 @@ class NowCard extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 14),
-                _PhraseOfDay(now: now, ink: onGradient),
+                _PhraseOfDay(
+                  now: now,
+                  ink: onGradient,
+                  noticed: noticedFor(child, logs, now),
+                  childName: child.name,
+                ),
                 const SizedBox(height: 14),
                 // The two questions she is asked all day, by everyone, and
                 // the two she cannot answer from memory at four in the
@@ -214,12 +231,6 @@ class NowCard extends ConsumerWidget {
     return null;
   }
 
-  static String _greeting(AppLocalizations l, DateTime now) {
-    if (isNightAt(now)) return l.greetingNight;
-    if (now.hour < 12) return l.greetingMorning;
-    if (now.hour < 18) return l.greetingAfternoon;
-    return l.greetingEvening;
-  }
 }
 
 /// The age, as a chip rather than a line of text.
@@ -284,10 +295,21 @@ int phraseOfDayIndex(DateTime day, int count) =>
     count;
 
 class _PhraseOfDay extends StatelessWidget {
-  const _PhraseOfDay({required this.now, required this.ink});
+  const _PhraseOfDay({
+    required this.now,
+    required this.ink,
+    required this.noticed,
+    required this.childName,
+  });
 
   final DateTime now;
   final Color ink;
+
+  /// Something true about today, where there was something. It always wins:
+  /// a fact about this child beats a sentence written for every child.
+  final Noticed? noticed;
+
+  final String childName;
 
   @override
   Widget build(BuildContext context) {
@@ -295,17 +317,36 @@ class _PhraseOfDay extends StatelessWidget {
     final phrases = phrasesOfDay(l);
     final index = phraseOfDayIndex(now, phrases.length);
 
+    final text = switch (noticed) {
+      null => phrases[index],
+      final n when n.kind == NoticedKind.roundAge => l.noticedRoundAge(
+        childName,
+        n.months,
+      ),
+      final n => l.noticedLongestNight(localizedDuration(l, n.minutes)),
+    };
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(Icons.spa_outlined, size: 15, color: ink.withValues(alpha: 0.55)),
+        Icon(
+          // A different glyph for a different kind of sentence. The leaf is
+          // the phrase of the day being gentle at nobody in particular; a
+          // fact about this child gets the mark the app uses for a fact.
+          noticed == null ? Icons.spa_outlined : Icons.auto_awesome_outlined,
+          size: 15,
+          color: ink.withValues(alpha: 0.55),
+        ),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
-            phrases[index],
+            text,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: ink.withValues(alpha: 0.85),
-              fontStyle: FontStyle.italic,
+              // Upright when it is a fact. The italic is the voice of the
+              // phrase of the day — a fact leaning over reads as a quotation.
+              fontStyle: noticed == null ? FontStyle.italic : FontStyle.normal,
+              fontWeight: noticed == null ? null : FontWeight.w600,
             ),
           ),
         ),

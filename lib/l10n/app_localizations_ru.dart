@@ -986,6 +986,34 @@ class AppLocalizationsRu extends AppLocalizations {
       'Прививки появятся здесь сами, как только будет создан профиль ребёнка';
 
   @override
+  String greetingNamed(String greeting, String name) {
+    return '$greeting, $name';
+  }
+
+  @override
+  String noticedRoundAge(String name, num months) {
+    final intl.NumberFormat monthsNumberFormat = intl.NumberFormat.compact(
+      locale: localeName,
+    );
+    final String monthsString = monthsNumberFormat.format(months);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      months,
+      locale: localeName,
+      other: '$monthsString месяца',
+      many: '$monthsString месяцев',
+      few: '$monthsString месяца',
+      one: '$monthsString месяц',
+    );
+    return 'Сегодня $name ровно $_temp0';
+  }
+
+  @override
+  String noticedLongestNight(String duration) {
+    return 'Самая длинная ночь за месяц — $duration';
+  }
+
+  @override
   String get greetingNight => 'Доброй ночи';
 
   @override
