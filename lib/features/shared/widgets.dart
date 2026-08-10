@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/motion.dart';
 import '../../l10n/app_localizations.dart';
 import '../children/children_screen.dart';
 
@@ -115,42 +116,49 @@ class ChoicePill extends StatelessWidget {
     final brightness = Theme.of(context).brightness;
     final foreground = ink(brightness, selected: selected);
 
-    return Material(
-      color: fill(brightness, selected: selected),
-      borderRadius: BorderRadius.circular(Warm.chipRadius),
-      child: InkWell(
-        onTap: onTap,
+    // The dip goes outside the [Material], not inside the [InkWell]: the fill
+    // is painted by the Material, so scaling only the ink layer would shrink
+    // the label inside a pill that never moved. The ripple still says where,
+    // the dip says that it landed — which on a 40px chip the ripple alone does
+    // not, because the finger is covering it.
+    return PressScale(
+      child: Material(
+        color: fill(brightness, selected: selected),
         borderRadius: BorderRadius.circular(Warm.chipRadius),
-        child: Container(
-          height: height,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          alignment: Alignment.center,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (icon case final glyph?) ...[
-                Icon(glyph, size: 16, color: foreground),
-                const SizedBox(width: 6),
-              ],
-              // Flexible, so the same pill works in a scrolling row where it
-              // sizes to its label and in an [Expanded] where it is handed a
-              // width. Unconstrained this changes nothing; constrained it is
-              // the difference between an ellipsis and a layout error.
-              Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  softWrap: false,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontFamily: AppTheme.fontFamily,
-                    fontSize: 13,
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
-                    color: foreground,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(Warm.chipRadius),
+          child: Container(
+            height: height,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            alignment: Alignment.center,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (icon case final glyph?) ...[
+                  Icon(glyph, size: 16, color: foreground),
+                  const SizedBox(width: 6),
+                ],
+                // Flexible, so the same pill works in a scrolling row where it
+                // sizes to its label and in an [Expanded] where it is handed a
+                // width. Unconstrained this changes nothing; constrained it is
+                // the difference between an ellipsis and a layout error.
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    softWrap: false,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: AppTheme.fontFamily,
+                      fontSize: 13,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                      color: foreground,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

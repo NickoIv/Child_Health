@@ -84,6 +84,58 @@ class _PressableState extends State<Pressable> {
   }
 }
 
+/// The same dip, for something that already handles its own taps.
+///
+/// [Pressable] builds the [InkWell] itself, which is right for a bare card and
+/// wrong for anything that arrives with a gesture handler and an ink layer of
+/// its own — a filled button, a [Material] with a painted fill. Scaling only
+/// the inner [InkWell] there shrinks the label inside a pill that stays put.
+///
+/// This wraps the whole control instead and reads the pointer directly, so it
+/// keeps its ripple and its disabled state and the surface still gives under
+/// the finger. Same three percent, same hundred and ten milliseconds: one
+/// animation applied twice, not a second one.
+class PressScale extends StatefulWidget {
+  const PressScale({required this.child, this.enabled = true, super.key});
+
+  final Widget child;
+
+  /// False on a control that cannot be pressed. A disabled button that dips
+  /// says the tap landed, and it did not.
+  final bool enabled;
+
+  @override
+  State<PressScale> createState() => _PressScaleState();
+}
+
+class _PressScaleState extends State<PressScale> {
+  bool _down = false;
+
+  void _set(bool down) {
+    if (_down != down) setState(() => _down = down);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedScale(
+      scale: _down ? Pressable.pressedScale : 1.0,
+      duration: Pressable.duration,
+      curve: Motion.curve,
+      child: Listener(
+        // A Listener, not a GestureDetector: this watches the pointer and
+        // never enters the arena, so the control underneath still wins the
+        // tap, and a scroll that starts on it still scrolls.
+        onPointerDown: (_) {
+          if (widget.enabled) _set(true);
+        },
+        onPointerUp: (_) => _set(false),
+        onPointerCancel: (_) => _set(false),
+        child: widget.child,
+      ),
+    );
+  }
+}
+
 /// A new entry arrives rather than appearing.
 ///
 /// Keyed by the record's own id where it is used, so this runs once when a
@@ -92,6 +144,7 @@ class _PressableState extends State<Pressable> {
 /// never animates at all.
 class Arrival extends StatelessWidget {
   const Arrival({required this.child, super.key});
+
 
   static const duration = Duration(milliseconds: 260);
 

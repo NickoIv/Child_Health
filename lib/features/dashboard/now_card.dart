@@ -484,16 +484,16 @@ class _TodayCounts extends ConsumerWidget {
           runSpacing: 12,
           children: [
             _Count(
-              value: '${care.feedings}',
+              countTo: care.feedings,
               label: l.countFeedings,
               status: feedStatus,
             ),
             _Count(
-              value: '${care.wetNappies}',
+              countTo: care.wetNappies,
               label: l.countWet,
               status: nappyStatus,
             ),
-            _Count(value: '${care.dirtyNappies}', label: l.countDirty),
+            _Count(countTo: care.dirtyNappies, label: l.countDirty),
             if (care.sleepMinutes > 0)
               _Count(
                 value: localizedDuration(l, care.sleepMinutes),
@@ -508,12 +508,24 @@ class _TodayCounts extends ConsumerWidget {
 
 class _Count extends StatelessWidget {
   const _Count({
-    required this.value,
     required this.label,
+    this.value,
+    this.countTo,
     this.status = CareStatus.unknown,
-  });
+  }) : assert(value != null || countTo != null);
 
-  final String value;
+  /// A reading, printed as it is. The hours of sleep come through here: a
+  /// duration that counts is a figure moving while it is being read.
+  final String? value;
+
+  /// A tally, which runs to itself instead of jumping.
+  ///
+  /// Deliberately unkeyed. The one this is for is the moment a feed is
+  /// written down and the seven on the home screen becomes an eight — it
+  /// ticks over from where it was, and only the first draw of the day counts
+  /// up from nothing.
+  final int? countTo;
+
   final String label;
   final CareStatus status;
 
@@ -525,6 +537,7 @@ class _Count extends StatelessWidget {
       CareStatus.watch => StatusColors.warning,
       CareStatus.unknown => null,
     };
+    final style = theme.textTheme.titleLarge?.copyWith(color: color);
 
     // Sized by its content, not by a flex factor: it lives in a Wrap now.
     return IntrinsicWidth(
@@ -534,10 +547,13 @@ class _Count extends StatelessWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                value,
-                style: theme.textTheme.titleLarge?.copyWith(color: color),
-              ),
+              if (countTo case final target?)
+                CountUp(
+                  value: target,
+                  builder: (context, shown) => Text('$shown', style: style),
+                )
+              else
+                Text(value!, style: style),
               if (status != CareStatus.unknown) ...[
                 const SizedBox(width: 4),
                 Icon(

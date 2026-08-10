@@ -823,7 +823,7 @@ class _LastFeedLine extends ConsumerWidget {
 
 /// Every button in the sheet is this one: same height, same radius, same
 /// full-bleed width, whether it picks a time or records a feed.
-class _BigButton extends StatefulWidget {
+class _BigButton extends StatelessWidget {
   const _BigButton({
     required this.icon,
     required this.label,
@@ -840,57 +840,34 @@ class _BigButton extends StatefulWidget {
   final bool filled;
 
   @override
-  State<_BigButton> createState() => _BigButtonState();
-}
-
-class _BigButtonState extends State<_BigButton> {
-  bool _down = false;
-
-  void _set(bool down) {
-    if (_down != down) setState(() => _down = down);
-  }
-
-  @override
   Widget build(BuildContext context) {
     final style = FilledButton.styleFrom(
-      minimumSize: const Size.fromHeight(_BigButton.height),
+      minimumSize: const Size.fromHeight(height),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(_BigButton.radius),
+        borderRadius: BorderRadius.circular(radius),
       ),
-    ).copyWith(
-      // The scale is driven from the button's own pressed state rather than
-      // from a wrapper, so a disabled button — one already saving — does not
-      // dip under a second tap.
-      elevation: const WidgetStatePropertyAll(0),
-    );
+    ).copyWith(elevation: const WidgetStatePropertyAll(0));
 
-    final icon = Icon(widget.icon);
-    final label = Text(widget.label);
+    final glyph = Icon(icon);
+    final text = Text(label);
 
-    return AnimatedScale(
-      scale: _down ? Pressable.pressedScale : 1.0,
-      duration: Pressable.duration,
-      curve: Curves.easeOut,
-      child: Listener(
-        onPointerDown: (_) {
-          if (widget.onPressed != null) _set(true);
-        },
-        onPointerUp: (_) => _set(false),
-        onPointerCancel: (_) => _set(false),
-        child: widget.filled
-            ? FilledButton.icon(
-                onPressed: widget.onPressed,
-                icon: icon,
-                label: label,
-                style: style,
-              )
-            : FilledButton.tonalIcon(
-                onPressed: widget.onPressed,
-                icon: icon,
-                label: label,
-                style: style,
-              ),
-      ),
+    // Gated on [onPressed], so a button already saving does not dip under a
+    // second tap and promise a second record.
+    return PressScale(
+      enabled: onPressed != null,
+      child: filled
+          ? FilledButton.icon(
+              onPressed: onPressed,
+              icon: glyph,
+              label: text,
+              style: style,
+            )
+          : FilledButton.tonalIcon(
+              onPressed: onPressed,
+              icon: glyph,
+              label: text,
+              style: style,
+            ),
     );
   }
 }
