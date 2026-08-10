@@ -84,21 +84,24 @@ void main() {
       );
       expect(name.style?.fontSize, AppTheme.headerSize);
 
-      // The question the screen exists to answer, printed as a caps label
-      // with a figure under it rather than as a grey sentence.
-      expect(
-        find.descendant(
-          of: header,
-          matching: find.text(l.nowLastFeeding.toUpperCase()),
-        ),
-        findsOneWidget,
-      );
+      // Nothing has been fed today in this fixture, so the greeting stands on
+      // its own — and the caps label is *not* drawn over it. It used to be,
+      // and «ПОСЛЕДНЕЕ КОРМЛЕНИЕ» above «Добрый день, Аня» is the app filing
+      // a greeting as an answer to a question nobody asked. That is what he
+      // saw as «кучно и грустно».
       expect(
         find.descendant(
           of: header,
           matching: find.text(greetingFor(l, DateTime.now())),
         ),
         findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: header,
+          matching: find.text(l.nowLastFeeding.toUpperCase()),
+        ),
+        findsNothing,
       );
     });
 

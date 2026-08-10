@@ -109,35 +109,46 @@ class WarmHeader extends ConsumerWidget {
           // The two figures. Before this they were a sentence in 13pt grey
           // under the name — the answer to the only question anyone asks at
           // four in the morning, set at the size of a footnote.
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: _HeaderFigure(
-                  label: l.nowLastFeeding,
-                  value: sinceFeeding == null
-                      // Nothing to count from yet, so the slot carries the
-                      // greeting — and it is the one line on this card
-                      // addressed to the person holding the phone, so it uses
-                      // her name.
-                      ? greetingFor(l, moment, name: myName)
-                      : localizedDuration(l, sinceFeeding),
-                  // The greeting is a sentence, the duration is a number.
-                  // Only one of the two is worth 24 points.
-                  large: sinceFeeding != null,
-                ),
+          if (sinceFeeding == null)
+            // The greeting on its own, and not filed under a caps label that
+            // says «ПОСЛЕДНЕЕ КОРМЛЕНИЕ» — there has not been one today, and
+            // a greeting standing under that heading is the app answering a
+            // question nobody asked. It also read as a footnote at sixteen
+            // points; it is the only sentence on this card addressed to the
+            // person holding the phone, and it is set like one now.
+            Text(
+              greetingFor(l, moment, name: myName),
+              style: TextStyle(
+                fontFamily: AppTheme.fontFamily,
+                fontSize: 21,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.4,
+                height: 1.15,
+                color: Warm.onCard(theme.brightness),
               ),
-              if (care.feedings > 0) ...[
-                const SizedBox(width: 12),
-                _HeaderFigure(
-                  label: l.digestFeedings,
-                  value: '${care.feedings}',
-                  large: true,
-                  alignEnd: true,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            )
+          else
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: _HeaderFigure(
+                    label: l.nowLastFeeding,
+                    value: localizedDuration(l, sinceFeeding),
+                  ),
                 ),
+                if (care.feedings > 0) ...[
+                  const SizedBox(width: 12),
+                  _HeaderFigure(
+                    label: l.digestFeedings,
+                    value: '${care.feedings}',
+                    alignEnd: true,
+                  ),
+                ],
               ],
-            ],
-          ),
+            ),
           if (noticed != null) ...[
             const SizedBox(height: 12),
             // Facts only here, never the rotation — see [DayLine
@@ -166,13 +177,11 @@ class _HeaderFigure extends StatelessWidget {
   const _HeaderFigure({
     required this.label,
     required this.value,
-    this.large = true,
     this.alignEnd = false,
   });
 
   final String label;
   final String value;
-  final bool large;
   final bool alignEnd;
 
   @override
@@ -194,9 +203,9 @@ class _HeaderFigure extends StatelessWidget {
           value,
           style: TextStyle(
             fontFamily: AppTheme.fontFamily,
-            fontSize: large ? 24 : 16,
-            fontWeight: large ? FontWeight.w800 : FontWeight.w600,
-            letterSpacing: large ? -0.7 : -0.1,
+            fontSize: 24,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.7,
             height: 1.05,
             color: Warm.onCard(theme.brightness),
             fontFeatures: AppTheme.tabular,

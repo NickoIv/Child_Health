@@ -118,43 +118,78 @@ class DayLine extends StatelessWidget {
         ? phrasesOfDay(l)[phraseOfDayIndex(now, phrasesOfDay(l).length)]
         : noticedText(l, fact, childName);
 
+    // A round month is the one thing on this card worth celebrating, and it
+    // happens twelve times a year — rare enough that dressing it up cannot
+    // become wallpaper. It gets a warm band of its own: on a white card the
+    // plain line was the same weight as everything around it and disappeared
+    // into the page, which is exactly what a birthday should not do.
+    final festive = fact?.kind == NoticedKind.roundAge;
+
+    final accent = Warm.accentOn(theme.brightness);
     final glyphColor = ink != null
         ? ink!.withValues(alpha: 0.55)
-        : (fact == null
-              ? Warm.onCardSoft(theme.brightness)
-              : Warm.accentOn(theme.brightness));
-
+        : (fact == null ? Warm.onCardSoft(theme.brightness) : accent);
     final textColor = ink != null
-        ? ink!.withValues(alpha: 0.85)
-        : (fact == null
-              ? Warm.onCardSoft(theme.brightness)
-              : Warm.onCard(theme.brightness));
+        ? ink!.withValues(alpha: 0.9)
+        : (fact == null ? Warm.onCardSoft(theme.brightness) : accent);
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    final line = Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Icon(
-          // A different glyph for a different kind of sentence. The leaf is
-          // the phrase of the day being gentle at nobody in particular; a
-          // fact about this child gets the mark the app uses for a fact.
-          fact == null ? Icons.spa_outlined : Icons.auto_awesome_outlined,
-          size: 15,
-          color: glyphColor,
-        ),
-        const SizedBox(width: 8),
+        if (_emoji(fact) case final emoji?)
+          // An emoji rather than a glyph, and only on the two lines that are
+          // good news. These render everywhere — unlike a flag, whose
+          // regional-indicator pair Windows has no font for.
+          Text(emoji, style: TextStyle(fontSize: festive ? 17 : 14))
+        else
+          Icon(
+            // The leaf is the phrase of the day being gentle at nobody in
+            // particular; a fact about this child gets the app's own mark.
+            fact == null ? Icons.spa_outlined : Icons.auto_awesome_outlined,
+            size: 15,
+            color: glyphColor,
+          ),
+        const SizedBox(width: 9),
         Expanded(
           child: Text(
             text,
             style: theme.textTheme.bodySmall?.copyWith(
               color: textColor,
+              fontSize: festive ? 14.5 : null,
               // Upright when it is a fact. The italic is the voice of the
               // phrase of the day — a fact leaning over reads as a quotation.
               fontStyle: fact == null ? FontStyle.italic : FontStyle.normal,
-              fontWeight: fact == null ? null : FontWeight.w700,
+              fontWeight: fact == null ? null : FontWeight.w800,
+              letterSpacing: festive ? -0.2 : null,
             ),
           ),
         ),
       ],
     );
+
+    if (!festive) return line;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        // A wash of the accent, not the accent: a filled orange bar on a
+        // cream card shouts, and the sentence under it is a quiet good thing,
+        // not an alert.
+        color: Warm.accent.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(Warm.chipRadius),
+      ),
+      child: line,
+    );
   }
+
+  /// The mark for a line worth being pleased about, or null.
+  ///
+  /// Two of the three get one. Yesterday's tally is the app catching her up
+  /// after midnight cleared the counters — useful, and nothing to cheer.
+  static String? _emoji(Noticed? noticed) => switch (noticed?.kind) {
+    NoticedKind.roundAge => '🎉',
+    NoticedKind.longestNight => '🌙',
+    _ => null,
+  };
 }
