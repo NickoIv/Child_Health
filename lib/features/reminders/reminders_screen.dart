@@ -200,8 +200,17 @@ class _TypeSection extends StatelessWidget {
                   // Keyed by the reminder's own id. Ticking one off takes it
                   // out of the list and the rest close up; a new one written
                   // down arrives instead of being suddenly there.
+                  //
+                  // The position is the fallback because the national
+                  // calendar's reminders are derived rather than stored and
+                  // every one of them carries an empty id — keyed on that
+                  // alone, a schedule of nine vaccinations is nine widgets
+                  // claiming the same key, which is an assertion, not an
+                  // animation.
                   Arrival(
-                    key: ValueKey(reminders[i].id),
+                    key: ValueKey(
+                      reminders[i].id.isEmpty ? 'slot-$i' : reminders[i].id,
+                    ),
                     child: _ReminderRow(
                       reminder: reminders[i],
                       onToggle: () => onToggle(reminders[i]),

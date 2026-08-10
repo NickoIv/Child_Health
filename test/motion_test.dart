@@ -45,6 +45,27 @@ void main() {
       expect(find.text('12'), findsOneWidget);
     });
 
+    testWidgets('carries on from where it was, unkeyed', (tester) async {
+      // What the home tallies depend on. A feed written down turns a seven
+      // into an eight; if the counter restarted at nothing every time the
+      // figure changed, the confirmation would read as the day resetting.
+      Widget app(int value) => MaterialApp(
+        home: CountUp(value: value, builder: (context, v) => Text('$v')),
+      );
+
+      await tester.pumpWidget(app(7));
+      await tester.pumpAndSettle();
+      expect(find.text('7'), findsOneWidget);
+
+      await tester.pumpWidget(app(8));
+      await tester.pump(const Duration(milliseconds: 16));
+      // Never passes through zero on its way to eight.
+      expect(find.text('0'), findsNothing);
+
+      await tester.pumpAndSettle();
+      expect(find.text('8'), findsOneWidget);
+    });
+
     testWidgets('settles, so nothing is left running', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
@@ -55,6 +76,68 @@ void main() {
       // time out on anything that repeats.
       await tester.pumpAndSettle();
       expect(find.text('4'), findsOneWidget);
+    });
+  });
+
+  group('the dip on a control that owns its own taps', () {
+    double scaleNow(WidgetTester tester) =>
+        tester.widget<AnimatedScale>(find.byType(AnimatedScale)).scale;
+
+    testWidgets('gives under the finger and comes back', (tester) async {
+      var taps = 0;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: PressScale(
+                child: FilledButton(
+                  onPressed: () => taps++,
+                  child: const Text('покормила'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(scaleNow(tester), 1.0);
+
+      final press = await tester.startGesture(
+        tester.getCenter(find.text('покормила')),
+      );
+      await tester.pump();
+      expect(scaleNow(tester), Pressable.pressedScale);
+
+      await press.up();
+      await tester.pumpAndSettle();
+      expect(scaleNow(tester), 1.0);
+
+      // And the button underneath still got the tap: a Listener watches the
+      // pointer, it does not compete for it.
+      expect(taps, 1);
+    });
+
+    testWidgets('stays still when the control is disabled', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: PressScale(
+                enabled: false,
+                child: FilledButton(onPressed: null, child: Text('сохраняю')),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final press = await tester.startGesture(
+        tester.getCenter(find.text('сохраняю')),
+      );
+      await tester.pump();
+      // A button already saving must not promise that a second tap landed.
+      expect(scaleNow(tester), 1.0);
+      await press.up();
     });
   });
 
