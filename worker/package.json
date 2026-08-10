@@ -2,8 +2,10 @@
   "name": "child-health-ai-worker",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "description": "Gemini proxy for the Child Health Tracker app. Keeps the API key off the public web bundle.",
   "scripts": {
+    "test": "node --test",
     "login": "wrangler login",
     "secret": "wrangler secret put GEMINI_API_KEY",
     "deploy": "wrangler deploy",

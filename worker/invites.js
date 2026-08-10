@@ -58,7 +58,7 @@ async function invitationFor(token, projectId, childId, email) {
   );
 }
 
-function escapeHtml(text) {
+export function escapeHtml(text) {
   return String(text)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -71,7 +71,7 @@ function escapeHtml(text) {
 /// Plain and short on purpose. It is read on a phone by somebody who was told
 /// to expect it, and everything it has to do is name the child, name the
 /// address to sign in with, and carry one link.
-function letter({ childName, email, link, fromName }) {
+export function letter({ childName, email, link, fromName }) {
   const child = escapeHtml(childName);
   const who = escapeHtml(fromName || '');
   const address = escapeHtml(email);

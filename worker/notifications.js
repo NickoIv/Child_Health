@@ -278,6 +278,37 @@ async function sendPush(token, projectId, deviceToken, reminder, childName) {
   return { ok: response.ok, status: response.status };
 }
 
+/// What a push status means for whether it is worth trying again.
+///
+/// The distinction this draws is the whole of the bug it was written for. A
+/// dead subscription and a five-hundred from FCM used to be the same thing to
+/// this code — both simply "not delivered" — and the reminder was marked
+/// notified either way, so one bad minute at Google's end lost a vaccination
+/// reminder permanently and silently.
+///
+/// `dead` is the browser having dropped the subscription: retrying cannot fix
+/// it and the reminder is finished with. `retry` is everything transient, and
+/// the hourly sweep will come back to it — bounded, because the query floor is
+/// twenty-four hours and a reminder older than that stops being due at all.
+export function pushOutcome(status) {
+  if (status >= 200 && status < 300) return 'ok';
+  // 400 covers UNREGISTERED and a malformed token; 403 and 404 are a token
+  // that no longer belongs to anyone. None of the three improve with time.
+  if (status === 400 || status === 403 || status === 404) return 'dead';
+  return 'retry';
+}
+
+/// Whether the reminder can be marked notified after the sends were attempted.
+///
+/// True when something arrived, and true when nothing that happened could go
+/// differently next hour. False only while there is a real chance left, which
+/// is what keeps the reminder in tomorrow morning's sweep.
+export function settledAfter(outcomes) {
+  if (outcomes.length === 0) return true;
+  if (outcomes.includes('ok')) return true;
+  return !outcomes.includes('retry');
+}
+
 /// What the phone says on the lock screen.
 ///
 /// Two rules, both learned from what was here before.
@@ -291,16 +322,28 @@ async function sendPush(token, projectId, deviceToken, reminder, childName) {
 /// something; the app has no idea whether she is. It states the day and stops,
 /// and the reminder's own title — her words, where she wrote any — is the body
 /// underneath. She knows what to do about a vaccination.
-function titleFor(type, childName) {
-  const whose = childName ? ` у ${childName}` : '';
-  switch (type) {
-    case 'vaccination':
-      return `Сегодня прививка${whose}`;
-    case 'medication':
-      return childName ? `Лекарство для ${childName}` : 'Лекарство по времени';
-    default:
-      return `Сегодня визит к врачу${whose}`;
-  }
+export function titleFor(type, childName) {
+  const what = (() => {
+    switch (type) {
+      case 'vaccination':
+        return 'сегодня прививка';
+      case 'medication':
+        return 'лекарство по времени';
+      default:
+        return 'сегодня визит к врачу';
+    }
+  })();
+
+  // The name in front, untouched, and the sentence built so that no case
+  // ending is ever needed. «У Миши» is correct and «у Айжан» is not, and the
+  // list of names this app will meet — Russian, Kazakh, anything a parent
+  // types — is not one any amount of declension code wins against. The first
+  // attempt at this shipped «Сегодня прививка у Миша» and a test caught it.
+  //
+  // Name first is also the better lock screen: with two children she sees
+  // whose it is before she has read the rest.
+  if (!childName) return what.charAt(0).toUpperCase() + what.slice(1);
+  return `${childName}: ${what}`;
 }
 
 // --- Entry point ----------------------------------------------------------
@@ -325,6 +368,8 @@ export async function runReminderSweep(env, now = new Date()) {
   const childNames = new Map();
   let sent = 0;
   let skipped = 0;
+  /// Left unmarked on purpose, for the next hour to pick up.
+  let retrying = 0;
 
   for (const reminder of reminders) {
     const uid = reminder.fields.parent_uid;
@@ -356,22 +401,39 @@ export async function runReminderSweep(env, now = new Date()) {
     }
     const childName = childNames.get(childId);
 
-    let delivered = false;
+    const outcomes = [];
     for (const deviceToken of deviceTokens) {
-      const result = await sendPush(
-        token,
-        projectId,
-        deviceToken,
-        reminder,
-        childName,
-      );
-      if (result.ok) delivered = true;
+      try {
+        const result = await sendPush(
+          token,
+          projectId,
+          deviceToken,
+          reminder,
+          childName,
+        );
+        outcomes.push(pushOutcome(result.status));
+      } catch (error) {
+        // A throw here is the network, not FCM's answer. Unguarded it took
+        // the whole sweep down with it, and every reminder behind this one in
+        // the list went unsent without being marked or reported.
+        console.error('push threw', error?.message || error);
+        outcomes.push('retry');
+      }
     }
 
-    await markNotified(token, projectId, reminder.name, now.toISOString());
+    const delivered = outcomes.includes('ok');
+    // Only when there is nothing left that could go differently in an hour.
+    // Marking it regardless was how a single 500 from FCM lost a vaccination
+    // reminder for good.
+    if (settledAfter(outcomes)) {
+      await markNotified(token, projectId, reminder.name, now.toISOString());
+    } else {
+      retrying++;
+    }
+
     if (delivered) sent++;
     else skipped++;
   }
 
-  return { sent, skipped, considered: reminders.length };
+  return { sent, skipped, retrying, considered: reminders.length };
 }
