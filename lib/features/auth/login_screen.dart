@@ -7,6 +7,7 @@ import '../../core/theme/app_snack.dart';
 import '../../core/l10n/auth_errors.dart';
 import '../../data/auth_repository.dart';
 import '../../l10n/app_localizations.dart';
+import '../shared/widgets.dart';
 import '../../providers.dart';
 
 enum _Mode { signIn, register }
@@ -55,7 +56,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           padding: const EdgeInsets.all(24),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 420),
-            child: Card(
+            child: AppCard(
               child: Padding(
                 padding: const EdgeInsets.all(28),
                 child: Form(

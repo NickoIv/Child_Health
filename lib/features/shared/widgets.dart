@@ -203,6 +203,62 @@ class SectionLabel extends StatelessWidget {
   }
 }
 
+/// A raised surface, with the app's own shadow on it.
+///
+/// Use this and never a bare [Card]. The card theme has to keep `elevation: 0`
+/// and a transparent shadow colour, because Material's elevation shadow on a
+/// large radius draws a hard grey ring rather than a lift — it was tried, and
+/// on a cream page it read as a border round every card in the app. What gives
+/// a white card its edge here is [Warm.shadow]: two layers, a tight one for
+/// the edge and a wide one for the lift, tuned against this exact page colour.
+///
+/// The consequence was that every `Card(` in the project drew nothing at all
+/// and the screens they built were white rectangles on a nearly white page. A
+/// test in `card_shadow_test.dart` keeps `Card(` out of the feature code so it
+/// cannot come back.
+class AppCard extends StatelessWidget {
+  const AppCard({
+    required this.child,
+    this.color,
+    this.clipBehavior = Clip.none,
+    super.key,
+  });
+
+  final Widget child;
+
+  /// A tinted surface where the card carries a status — an alert wash, a
+  /// quoted source. Null is the ordinary white card.
+  final Color? color;
+
+  final Clip clipBehavior;
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    final radius = BorderRadius.circular(Warm.cardRadius);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: color ?? Warm.card(brightness),
+        borderRadius: radius,
+        boxShadow: Warm.shadow(brightness),
+      ),
+      // A [Material] inside, and it is not optional. [Card] supplies one, and
+      // dropping to a bare Container took it away: a [ListTile] or an
+      // [InkWell] paints its background and its ripple on the nearest Material
+      // ancestor, so without this every tap inside a card lost its ripple and
+      // Flutter asserted on thirty-four screens at once. Transparent, so the
+      // colour and the shadow above still belong to the Container.
+      child: Material(
+        type: MaterialType.transparency,
+        borderRadius: radius,
+        clipBehavior: clipBehavior,
+        child: child,
+      ),
+    );
+  }
+}
+
 class SectionCard extends StatelessWidget {
   const SectionCard({
     required this.title,
@@ -226,7 +282,17 @@ class SectionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final accent = accentColor ?? theme.colorScheme.primary;
-    return Card(
+    // A Container with the app's own shadow, not a bare [Card].
+    //
+    // The card theme sets `elevation: 0` and `shadowColor: transparent`, so a
+    // Material Card in this app draws no shadow at all — and [Warm.shadow],
+    // two layers tuned specifically to give a white card an edge on a cream
+    // page, was reaching only the handful of surfaces that build their own
+    // Container. Everything made of a SectionCard — which is most of the app
+    // — was a white rectangle on a nearly white page with nothing whatever
+    // between them. «Блоки сливаются, не видно границ» was exactly right, and
+    // the palette was never the problem.
+    return AppCard(
       child: Padding(
         padding: const EdgeInsets.all(Warm.majorGap),
         child: Column(

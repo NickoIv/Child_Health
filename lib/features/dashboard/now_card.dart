@@ -53,7 +53,7 @@ class NowCard extends ConsumerWidget {
 
     final onGradient = AppTheme.onWelcome(theme.brightness);
 
-    return Card(
+    return AppCard(
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [

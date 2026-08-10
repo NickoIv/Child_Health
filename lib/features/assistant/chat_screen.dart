@@ -374,7 +374,7 @@ class _RecordCardState extends ConsumerState<_RecordCard> {
     final theme = Theme.of(context);
     final written = widget.written;
 
-    return Card(
+    return AppCard(
       color: Warm.soft(theme.brightness),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(18, 14, 12, 14),
@@ -592,7 +592,7 @@ class _EmergencyCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    return Card(
+    return AppCard(
       color: StatusColors.alert.withValues(alpha: 0.12),
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -680,7 +680,7 @@ class _AnswerCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    return Card(
+    return AppCard(
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -754,7 +754,7 @@ class _UnavailableCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    return Card(
+    return AppCard(
       color: Warm.soft(theme.brightness),
       child: Padding(
         padding: const EdgeInsets.all(20),

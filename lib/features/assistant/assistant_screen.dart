@@ -323,7 +323,7 @@ class _RedFlagCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    return Card(
+    return AppCard(
       color: StatusColors.alert.withValues(alpha: 0.10),
       child: InkWell(
         onTap: () => context.go('/assistant/triage'),
@@ -383,7 +383,7 @@ class _AskCard extends ConsumerWidget {
     final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final configured = ref.watch(assistantServiceProvider).isConfigured;
-    return Card(
+    return AppCard(
       child: InkWell(
         onTap: () => context.go('/assistant/chat'),
         borderRadius: BorderRadius.circular(16),

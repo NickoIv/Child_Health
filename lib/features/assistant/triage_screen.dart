@@ -181,7 +181,7 @@ class _ResultCard extends StatelessWidget {
       TriageLevel.home => Icons.home_outlined,
     };
 
-    return Card(
+    return AppCard(
       color: color.withValues(alpha: 0.12),
       child: Padding(
         padding: const EdgeInsets.all(20),

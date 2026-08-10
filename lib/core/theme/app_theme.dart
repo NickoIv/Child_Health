@@ -281,6 +281,22 @@ abstract final class AppTheme {
       // The hairline this replaces was the last grey line in the app, and
       // grey on cream is what makes a warm palette look accidental.
       cardTheme: CardThemeData(
+        // Not zero, and not transparent. Both were, which meant every bare
+        // [Card] in the app — the chat bubbles, the article tiles, the triage
+        // card, nine of them — drew a white rectangle on a nearly white page
+        // with nothing between the two. [Warm.shadow] was reaching only the
+        // surfaces that build their own Container.
+        //
+        // [SectionCard] paints the tuned two-layer shadow itself; this is what
+        // everything else gets, and it is deliberately the same weight. In the
+        // dark there is no shadow at all — a shadow under a dark card on a
+        // darker page is invisible, and the card colour does the separating.
+        // Zero, and it has to stay zero. Material's elevation shadow on a
+        // 22px radius draws a hard grey ring rather than a lift — tried at
+        // three and at seven, and both read as a border round every card on a
+        // cream page. What raises a surface here is [AppCard], which paints
+        // [Warm.shadow] itself; a bare [Card] draws nothing, which is why the
+        // feature code no longer contains one and a test keeps it that way.
         elevation: 0,
         color: Warm.card(brightness),
         surfaceTintColor: Colors.transparent,

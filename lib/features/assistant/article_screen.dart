@@ -188,7 +188,7 @@ class _Block extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Card(
+    return AppCard(
       color: emphasised ? color.withValues(alpha: 0.10) : null,
       child: Padding(
         padding: const EdgeInsets.all(20),
