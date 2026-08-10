@@ -143,6 +143,95 @@ void main() {
       expect(block, contains('≈8 в день'));
     });
 
+    group('what the child has eaten', () {
+      DevelopmentLog spoon(String food, {required Duration ago}) =>
+          DevelopmentLog(
+            id: 'solid$food$ago',
+            childId: 'demo',
+            date: now.subtract(ago),
+            type: LogType.feeding,
+            title: 'x',
+            feedingSide: FeedingSide.solid,
+            food: food,
+          );
+
+      DevelopmentLog reaction(
+        String food,
+        String what, {
+        required Duration ago,
+      }) => DevelopmentLog(
+        id: 'reaction$food$ago',
+        childId: 'demo',
+        date: now.subtract(ago),
+        type: LogType.note,
+        title: LogTitles.reaction,
+        description: what,
+        food: food,
+      );
+
+      test('names the last few foods, newest first', () {
+        // The assistant was answering «его обсыпало, это от чего?» with no
+        // idea what he had eaten, off a screen where the courgette was two
+        // taps away.
+        final block = childSnapshot(
+          child: child,
+          logs: [
+            spoon('кабачок', ago: const Duration(days: 1)),
+            spoon('гречка', ago: const Duration(days: 4)),
+            spoon('тыква', ago: const Duration(days: 8)),
+            spoon('яблоко', ago: const Duration(days: 30)),
+          ],
+          now: now,
+        );
+
+        expect(block, contains('Прикорм: введено 4'));
+        expect(block, contains('кабачок'));
+        // Oldest of the four falls off: the question is about the last thing
+        // tried, and the rest is in the medical card.
+        expect(block, isNot(contains('яблоко')));
+      });
+
+      test('says which food is still inside its three days', () {
+        final block = childSnapshot(
+          child: child,
+          logs: [
+            spoon('кабачок', ago: const Duration(days: 1)),
+            spoon('гречка', ago: const Duration(days: 9)),
+          ],
+          now: now,
+        );
+
+        expect(block, contains('Под наблюдением'));
+        expect(block, contains('кабачок'));
+      });
+
+      test('carries the reaction in her own words', () {
+        // Without this the model has to guess which food a rash belongs to,
+        // and it will guess. With it the guess is already hers.
+        final block = childSnapshot(
+          child: child,
+          logs: [
+            spoon('клубника', ago: const Duration(days: 3)),
+            reaction(
+              'клубника',
+              'щёки покраснели к вечеру',
+              ago: const Duration(days: 2),
+            ),
+          ],
+          now: now,
+        );
+
+        expect(block, contains('Была реакция'));
+        expect(block, contains('клубника'));
+        expect(block, contains('щёки покраснели к вечеру'));
+      });
+
+      test('says nothing at all before the first spoon', () {
+        final block = childSnapshot(child: child, logs: [], now: now);
+        expect(block, isNot(contains('Прикорм')));
+      });
+    });
+
     test('counts sick days and names the last one', () {
       final block = childSnapshot(
         child: child,

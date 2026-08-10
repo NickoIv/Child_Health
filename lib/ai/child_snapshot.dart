@@ -1,5 +1,6 @@
 import '../core/analytics/daily_care.dart';
 import '../core/care/sleep_forecast.dart';
+import '../core/care/solids.dart';
 import '../core/analytics/illness_stats.dart';
 import '../core/growth/who_standards.dart';
 import '../core/vaccination/national_calendar.dart';
@@ -31,6 +32,14 @@ const snapshotWeekDays = 7;
 /// And how far back sick days are counted.
 const snapshotIllnessDays = 30;
 
+/// How many recently introduced foods are named.
+///
+/// Three. The question a parent asks about food is almost always about the
+/// last thing tried — «его обсыпало, это от чего?» — and the answer to that is
+/// in the last few days, not in the porridge from March. Everything older is
+/// still in the medical card, where a doctor reads it.
+const snapshotFoodCount = 3;
+
 /// Longest the block is allowed to get. A guard, not a target: it is normally
 /// a third of this.
 const snapshotMaxChars = 1800;
@@ -59,6 +68,7 @@ String childSnapshot({
   lines.addAll(_sleepWindowLines(child, logs, moment));
   lines.addAll(_weekLines(logs, moment));
   lines.addAll(_illnessLines(logs, moment));
+  lines.addAll(_solidsLines(logs, moment));
   lines.addAll(_reminderLines(reminders, moment));
 
   if (lines.length == 1) {
@@ -292,6 +302,52 @@ List<String> _illnessLines(List<DevelopmentLog> logs, DateTime now) {
         '${countIllnessEpisodes(byDay.keys.toSet())} эпизод(ов), '
         'последний ${_date(last)} (${byDay[last]!.label.toLowerCase()})',
   ];
+}
+
+// --- Solids ---------------------------------------------------------------
+
+/// What has been introduced lately, what is still being watched, and what
+/// there was a reaction to.
+///
+/// This block was missing entirely, and it is the one a parent asks about by
+/// name: «его обсыпало», «он это раньше не ел». The assistant was answering
+/// those with no idea what the child had eaten, off a screen where the
+/// courgette from Tuesday was written down two taps away.
+///
+/// The reactions line is the important one. Without it the model is left to
+/// guess which food a rash belongs to, and it will guess — with it, the guess
+/// is already made, by the parent, and the answer can be about what to do.
+List<String> _solidsLines(List<DevelopmentLog> logs, DateTime now) {
+  final foods = foodsIn(logs);
+  if (foods.isEmpty) return const [];
+
+  final lines = <String>[];
+
+  final recent = foods
+      .take(snapshotFoodCount)
+      .map((f) => '${f.name} (${_date(f.firstAt)})')
+      .join(', ');
+  lines.add('Прикорм: введено ${foods.length}, последние — $recent');
+
+  final watched = foods.where((f) => f.isUnderWatchAt(now)).toList();
+  if (watched.isNotEmpty) {
+    lines.add(
+      'Под наблюдением ($newFoodWatchDays дн. после первой ложки): '
+      '${watched.map((f) => f.name).join(', ')}',
+    );
+  }
+
+  // Her own words, not a severity: what she wrote is the observation, and
+  // paraphrasing it into a category would lose the only detail that matters.
+  final reacted = foods.where((f) => f.hadReaction).toList();
+  if (reacted.isNotEmpty) {
+    lines.add(
+      'Была реакция: '
+      '${reacted.map((f) => '${f.name} — ${f.reactions.first.description.trim()}').join('; ')}',
+    );
+  }
+
+  return lines;
 }
 
 // --- What is coming -------------------------------------------------------
