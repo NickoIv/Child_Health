@@ -232,6 +232,28 @@ void main() {
       });
     });
 
+    test('is cut at a line, never mid-number', () {
+      // A block trimmed by character count used to be able to end «последняя
+      // температура 37.» — a fact that is not true, and one with nothing
+      // about it that looks broken.
+      final block = childSnapshot(
+        child: child,
+        logs: [
+          for (var i = 0; i < 400; i++)
+            log(LogType.feeding, ago: Duration(minutes: i)),
+        ],
+        now: now,
+      );
+
+      expect(block.length, lessThanOrEqualTo(snapshotMaxChars));
+      for (final line in block.split('\n')) {
+        expect(line.trim(), isNotEmpty);
+        expect(line, isNot(endsWith('.')));
+      }
+      // Whoever the child is survives any trimming: it is the first line.
+      expect(block, contains('Айгерим'));
+    });
+
     test('counts sick days and names the last one', () {
       final block = childSnapshot(
         child: child,

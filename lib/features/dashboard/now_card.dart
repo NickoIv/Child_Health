@@ -7,7 +7,6 @@ import '../../core/care/greeting.dart';
 import '../../core/care/noticing.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/motion.dart';
-import '../../core/theme/theme_mode.dart';
 import '../../l10n/app_localizations.dart';
 import '../../core/l10n/labels.dart';
 import '../../models/child.dart';
@@ -18,7 +17,7 @@ import '../../providers.dart';
 import '../family/invite_banner.dart';
 import '../shared/photo_widgets.dart';
 import '../shared/widgets.dart';
-import 'focus_home.dart';
+import 'day_line.dart';
 import 'night_sleep_sheet.dart';
 import 'quick_log_sheet.dart';
 
@@ -128,7 +127,7 @@ class NowCard extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 14),
-                _PhraseOfDay(
+                DayLine(
                   now: now,
                   ink: onGradient,
                   noticed: noticedFor(child, logs, now),
@@ -265,93 +264,6 @@ class _AgeChip extends StatelessWidget {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
-    );
-  }
-}
-
-/// One sentence, and it changes tomorrow.
-///
-/// Six of them, picked by the date rather than by a random number: a phrase
-/// that changed on every rebuild would flicker as the day's entries came in,
-/// and one that changed on every scroll would read as a slot machine. Picked
-/// by the day, it is the same all day and different in the morning — which is
-/// what "phrase of the day" has to mean to be worth having.
-///
-/// There is no model behind it and there never will be. These say one thing —
-/// that whoever is holding the phone is doing all right — and a sentence
-/// generated fresh each morning would eventually say something else.
-/// The six, in the order they rotate.
-List<String> phrasesOfDay(AppLocalizations l) => [
-  l.phraseOfDay1,
-  l.phraseOfDay2,
-  l.phraseOfDay3,
-  l.phraseOfDay4,
-  l.phraseOfDay5,
-  l.phraseOfDay6,
-];
-
-/// Which one today gets. Days since a fixed date, so it advances once a
-/// night, is the same all day, and never repeats two days running.
-int phraseOfDayIndex(DateTime day, int count) =>
-    DateTime(day.year, day.month, day.day).difference(DateTime(2020)).inDays %
-    count;
-
-class _PhraseOfDay extends StatelessWidget {
-  const _PhraseOfDay({
-    required this.now,
-    required this.ink,
-    required this.noticed,
-    required this.childName,
-  });
-
-  final DateTime now;
-  final Color ink;
-
-  /// Something true about today, where there was something. It always wins:
-  /// a fact about this child beats a sentence written for every child.
-  final Noticed? noticed;
-
-  final String childName;
-
-  @override
-  Widget build(BuildContext context) {
-    // Silent at night, like everything else that is only pleasant to read.
-    // [noticedFor] already refuses after nine; the rotation has to be told.
-    if (isNightAt(now)) return const SizedBox.shrink();
-
-    final l = AppLocalizations.of(context);
-    final phrases = phrasesOfDay(l);
-    final index = phraseOfDayIndex(now, phrases.length);
-
-    final text = noticed == null
-        ? phrases[index]
-        : noticedText(l, noticed!, childName);
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(
-          // A different glyph for a different kind of sentence. The leaf is
-          // the phrase of the day being gentle at nobody in particular; a
-          // fact about this child gets the mark the app uses for a fact.
-          noticed == null ? Icons.spa_outlined : Icons.auto_awesome_outlined,
-          size: 15,
-          color: ink.withValues(alpha: 0.55),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            text,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: ink.withValues(alpha: 0.85),
-              // Upright when it is a fact. The italic is the voice of the
-              // phrase of the day — a fact leaning over reads as a quotation.
-              fontStyle: noticed == null ? FontStyle.italic : FontStyle.normal,
-              fontWeight: noticed == null ? null : FontWeight.w600,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

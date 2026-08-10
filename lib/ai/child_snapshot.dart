@@ -75,10 +75,33 @@ String childSnapshot({
     lines.add('Записей о кормлениях, сне и измерениях пока нет.');
   }
 
-  final block = lines.join('\n');
-  return block.length <= snapshotMaxChars
-      ? block
-      : '${block.substring(0, snapshotMaxChars)}…';
+  return _withinBudget(lines);
+}
+
+/// The block, cut at a line boundary if it has to be cut at all.
+///
+/// It used to be `substring(0, snapshotMaxChars)`, which cuts wherever the
+/// character count lands — mid-word, mid-number. A model handed «последняя
+/// температура 37.» reads a fact that is not true, and half a figure is worse
+/// than no figure, because there is nothing about it that looks broken.
+///
+/// Whole lines only, from the end: what comes first here is who the child is
+/// and what happened today, and what comes last is the furthest from the
+/// question being asked.
+String _withinBudget(List<String> lines) {
+  final buffer = StringBuffer();
+  var used = 0;
+
+  for (final line in lines) {
+    // The newline this line would bring with it, except for the first.
+    final cost = line.length + (used == 0 ? 0 : 1);
+    if (used + cost > snapshotMaxChars) break;
+    if (used > 0) buffer.write('\n');
+    buffer.write(line);
+    used += cost;
+  }
+
+  return buffer.toString();
 }
 
 String _gender(Child child) =>

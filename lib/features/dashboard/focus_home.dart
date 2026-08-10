@@ -15,6 +15,7 @@ import '../family/invite_banner.dart';
 import '../shared/photo_widgets.dart';
 import '../reminders/reminder_sheet.dart';
 import '../shared/widgets.dart';
+import 'day_line.dart';
 import 'night_sleep_sheet.dart';
 import 'quick_log_sheet.dart';
 
@@ -139,76 +140,19 @@ class WarmHeader extends ConsumerWidget {
           ),
           if (noticed != null) ...[
             const SizedBox(height: 12),
-            _NoticedLine(noticed: noticed, childName: child.name),
+            // Facts only here, never the rotation — see [DayLine
+            // .phraseWhenNothing]. This header is deliberately the emptiest
+            // thing in the app, and a line it earns on twelve mornings a year
+            // is worth more than one it prints every day.
+            DayLine(
+              now: moment,
+              noticed: noticed,
+              childName: child.name,
+              phraseWhenNothing: false,
+            ),
           ],
         ],
       ),
-    );
-  }
-}
-
-/// A [Noticed] as the sentence it is shown as.
-///
-/// Here rather than in `core/care` because it is wording, and here rather than
-/// in either widget because both the header and the block version of the card
-/// draw the same line and had already drifted apart once.
-String noticedText(AppLocalizations l, Noticed noticed, String childName) {
-  switch (noticed.kind) {
-    case NoticedKind.roundAge:
-      return l.noticedRoundAge(childName, noticed.months);
-    case NoticedKind.longestNight:
-      return l.noticedLongestNight(localizedDuration(l, noticed.minutes));
-    case NoticedKind.yesterday:
-      final feedings = l.reflectionFeedingsCount(noticed.feedings);
-      return noticed.minutes == 0
-          ? l.noticedYesterdayNoSleep(feedings)
-          : l.noticedYesterday(
-              feedings,
-              localizedDuration(l, noticed.minutes),
-            );
-  }
-}
-
-/// The one true thing about today, on the days there is one.
-///
-/// Deliberately a line and not a card. A card has to be dismissed, and the
-/// last thing this should become is another thing to put away — it is here
-/// today because a date arrived or a night went well, and it is gone tomorrow
-/// without anybody touching it.
-class _NoticedLine extends StatelessWidget {
-  const _NoticedLine({required this.noticed, required this.childName});
-
-  final Noticed noticed;
-  final String childName;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final l = AppLocalizations.of(context);
-
-    final text = noticedText(l, noticed, childName);
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(
-          Icons.auto_awesome_outlined,
-          size: 15,
-          // The accent that carries text, not the one that carries fills —
-          // this sits on a white card and has to be read, not noticed.
-          color: Warm.accentOn(theme.brightness),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            text,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: Warm.onCard(theme.brightness),
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

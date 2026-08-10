@@ -5,7 +5,7 @@ import 'package:child_health_tracker/features/dashboard/focus_home.dart';
 import 'package:child_health_tracker/core/l10n/app_locale.dart';
 import 'package:child_health_tracker/core/theme/app_theme.dart';
 import 'package:child_health_tracker/core/theme/motion.dart';
-import 'package:child_health_tracker/features/dashboard/now_card.dart';
+import 'package:child_health_tracker/features/dashboard/day_line.dart';
 import 'package:child_health_tracker/features/shared/photo_widgets.dart';
 import 'package:child_health_tracker/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
