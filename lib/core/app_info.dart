@@ -17,11 +17,10 @@ abstract final class AppInfo {
   /// person rather than to a service.
   static const feedbackEmail = 'Nickru777@gmail.com';
 
-  /// Where the developer is, for the about card.
+  /// Where the developer is, for the about card. His own words.
   ///
-  /// Empty until he says: a city is a fact about a real person and guessing
-  /// one — even from the fact that the app is written for Kazakhstan — would
-  /// be inventing it. The row is hidden while this is blank, so filling it in
-  /// is a one-line change and nothing ships wrong in the meantime.
-  static const location = '';
+  /// The row is hidden while this is blank — it shipped blank for a day
+  /// rather than carrying a guessed city, because where a real person lives
+  /// is not something to infer from which country an app was written for.
+  static const location = 'Алматы, Казахстан';
 }

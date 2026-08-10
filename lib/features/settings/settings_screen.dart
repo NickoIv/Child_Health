@@ -20,6 +20,7 @@ import '../../core/theme/theme_mode.dart';
 import '../../firebase/push_messaging.dart';
 import '../../models/app_user.dart';
 import '../../providers.dart';
+import '../shared/kazakhstan_flag.dart';
 import '../shared/widgets.dart';
 import 'import_screen.dart';
 
@@ -403,6 +404,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 _AboutRow(
                   label: l.settingsLocation,
                   value: AppInfo.location,
+                  leading: const KazakhstanFlag(),
                 ),
               ],
               const SizedBox(height: 10),
@@ -774,10 +776,17 @@ class _ErrorLogCard extends ConsumerWidget {
 }
 
 class _AboutRow extends StatelessWidget {
-  const _AboutRow({required this.label, required this.value});
+  const _AboutRow({
+    required this.label,
+    required this.value,
+    this.leading,
+  });
 
   final String label;
   final String value;
+
+  /// A mark before the value — the flag, on the row that names a country.
+  final Widget? leading;
 
   @override
   Widget build(BuildContext context) {
@@ -793,6 +802,14 @@ class _AboutRow extends StatelessWidget {
             style: AppTheme.microLabel(theme.brightness),
           ),
         ),
+        if (leading case final mark?) ...[
+          // Nudged down off the alphabetic baseline this Row aligns on: a
+          // rectangle sitting exactly on it reads as hanging above the text.
+          Padding(
+            padding: const EdgeInsets.only(right: 7, top: 1),
+            child: mark,
+          ),
+        ],
         Expanded(
           child: Text(
             value,
