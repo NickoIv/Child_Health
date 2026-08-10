@@ -1419,14 +1419,15 @@ class AppLocalizationsRu extends AppLocalizations {
   String get familyInviteEmail => 'Электронная почта';
 
   @override
-  String get familyInviteHint => 'Адрес, которым он входит в приложение';
+  String get familyInviteHint =>
+      'Адрес, которым он входит в приложение — по нему и открывается доступ';
 
   @override
   String get familyInvitePhone => 'Телефон в WhatsApp';
 
   @override
   String get familyInvitePhoneHint =>
-      'Необязательно. Если указать — приглашение придёт в WhatsApp, туда его точно увидят';
+      'Куда отправить приглашение. Без телефона его придётся передать самому — приложение сразу предложит скопировать';
 
   @override
   String get familyPhoneInvalid => 'Проверьте номер';
@@ -1441,14 +1442,15 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get familyInviteMailFailed =>
-      'Письмо не ушло. Скопируйте приглашение и передайте сами';
+      'Отправить не удалось. Скопируйте приглашение и передайте сами';
 
   @override
-  String get familyInviteCreated => 'Приглашение создано';
+  String get familyInviteCreated =>
+      'Доступ уже открыт — осталось передать приглашение';
 
   @override
   String get familyInviteExplain =>
-      'Письмо мы не отправляем. Скопируйте приглашение и передайте сами — он увидит его, когда войдёт в приложение этой почтой.';
+      'Письма приложение не отправляет. Укажите телефон — приглашение придёт в WhatsApp; иначе скопируйте его и передайте сами.';
 
   @override
   String get familyCopyInvite => 'Скопировать приглашение';

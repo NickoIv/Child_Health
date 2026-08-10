@@ -212,13 +212,21 @@ export async function handleInvite(request, env, cors, json) {
   const mail = letter({ childName, email, link, fromName });
   const channels = [];
 
+  // Whether anything was even tried. Without a mail key an invitation with no
+  // phone number reaches this point with nothing to attempt, and reporting
+  // that as a failed send made the app say «письмо не ушло» about a letter it
+  // was never going to write.
+  let attempted = false;
+
   // WhatsApp first: it is the one that gets read, and if it lands there is
   // no reason to make anyone check an inbox as well.
   if (canWhatsApp && phone) {
+    attempted = true;
     if (await sendWhatsApp(env, phone, mail.text)) channels.push('whatsapp');
   }
 
   if (canMail && channels.length === 0) {
+    attempted = true;
     const response = await fetch(BREVO_URL, {
       method: 'POST',
       headers: {
@@ -243,6 +251,14 @@ export async function handleInvite(request, env, cors, json) {
     }
   }
 
-  if (channels.length === 0) return json({ error: 'send failed' }, 502, cors);
+  if (channels.length === 0) {
+    // 501 and 502 are different sentences on the screen: one is "there was no
+    // way to deliver this", which is the ordinary state of an install with no
+    // mail key and no phone number typed, and the other is "a provider we do
+    // have refused us", which is worth the word «не удалось».
+    return attempted
+      ? json({ error: 'send failed' }, 502, cors)
+      : json({ error: 'no channel for this invitation' }, 501, cors);
+  }
   return json({ sent: true, channels }, 200, cors);
 }

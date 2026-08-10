@@ -2599,7 +2599,7 @@ abstract class AppLocalizations {
   /// No description provided for @familyInviteHint.
   ///
   /// In ru, this message translates to:
-  /// **'Адрес, которым он входит в приложение'**
+  /// **'Адрес, которым он входит в приложение — по нему и открывается доступ'**
   String get familyInviteHint;
 
   /// No description provided for @familyInvitePhone.
@@ -2611,7 +2611,7 @@ abstract class AppLocalizations {
   /// No description provided for @familyInvitePhoneHint.
   ///
   /// In ru, this message translates to:
-  /// **'Необязательно. Если указать — приглашение придёт в WhatsApp, туда его точно увидят'**
+  /// **'Куда отправить приглашение. Без телефона его придётся передать самому — приложение сразу предложит скопировать'**
   String get familyInvitePhoneHint;
 
   /// No description provided for @familyPhoneInvalid.
@@ -2635,19 +2635,19 @@ abstract class AppLocalizations {
   /// No description provided for @familyInviteMailFailed.
   ///
   /// In ru, this message translates to:
-  /// **'Письмо не ушло. Скопируйте приглашение и передайте сами'**
+  /// **'Отправить не удалось. Скопируйте приглашение и передайте сами'**
   String get familyInviteMailFailed;
 
   /// No description provided for @familyInviteCreated.
   ///
   /// In ru, this message translates to:
-  /// **'Приглашение создано'**
+  /// **'Доступ уже открыт — осталось передать приглашение'**
   String get familyInviteCreated;
 
   /// No description provided for @familyInviteExplain.
   ///
   /// In ru, this message translates to:
-  /// **'Письмо мы не отправляем. Скопируйте приглашение и передайте сами — он увидит его, когда войдёт в приложение этой почтой.'**
+  /// **'Письма приложение не отправляет. Укажите телефон — приглашение придёт в WhatsApp; иначе скопируйте его и передайте сами.'**
   String get familyInviteExplain;
 
   /// No description provided for @familyCopyInvite.

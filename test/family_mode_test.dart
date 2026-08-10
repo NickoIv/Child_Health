@@ -546,6 +546,10 @@ void main() {
         expect(l.familyInviteCreated.toLowerCase(), isNot(contains('sent')));
         // And the field says up front what will and will not happen.
         expect(l.familyInviteExplain.trim(), isNotEmpty);
+        // Including the channel that does work. This line spent a release
+        // saying no message is ever sent, months after WhatsApp started
+        // sending them — the wording outlived the thing it described.
+        expect(l.familyInviteExplain, contains('WhatsApp'));
       }
     });
 

@@ -1407,14 +1407,15 @@ class AppLocalizationsKk extends AppLocalizations {
   String get familyInviteEmail => 'Электрондық пошта';
 
   @override
-  String get familyInviteHint => 'Ол кіретін мекенжай';
+  String get familyInviteHint =>
+      'Ол кіретін мекенжай — қолжетімділік соған ашылады';
 
   @override
   String get familyInvitePhone => 'WhatsApp нөірі';
 
   @override
   String get familyInvitePhoneHint =>
-      'Міндетті емес. Көрсетсеңіз — шақыру WhatsApp-қа келеді, оны міндетті түрде көреді';
+      'Шақыру қайда жіберіледі. Нөмірсіз шақыруды өзіңіз жеткізесіз — қолданба бірден көшіруді ұсынады';
 
   @override
   String get familyPhoneInvalid => 'Нөмірді тексеріңіз';
@@ -1429,14 +1430,15 @@ class AppLocalizationsKk extends AppLocalizations {
 
   @override
   String get familyInviteMailFailed =>
-      'Хат жіберілмеді. Шақыруды көшіріп, өзіңіз жіберіңіз';
+      'Жіберу мүмкін болмады. Шақыруды көшіріп, өзіңіз жіберіңіз';
 
   @override
-  String get familyInviteCreated => 'Шақыру жасалды';
+  String get familyInviteCreated =>
+      'Қолжетімділік ашылды — шақыруды жеткізу ғана қалды';
 
   @override
   String get familyInviteExplain =>
-      'Хатты біз жібермейміз. Шақыруды көшіріп, өзіңіз жіберіңіз — ол осы поштамен кірген кезде көреді.';
+      'Қолданба хат жібермейді. Телефон көрсетсеңіз — шақыру WhatsApp-қа келеді; әйтпесе оны көшіріп, өзіңіз жіберіңіз.';
 
   @override
   String get familyCopyInvite => 'Шақыруды көшіру';

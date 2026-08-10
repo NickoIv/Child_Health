@@ -1413,14 +1413,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get familyInviteEmail => 'Email';
 
   @override
-  String get familyInviteHint => 'The address they sign in with';
+  String get familyInviteHint =>
+      'The address they sign in with — it is what the access is granted to';
 
   @override
   String get familyInvitePhone => 'WhatsApp number';
 
   @override
   String get familyInvitePhoneHint =>
-      'Optional. Give one and the invitation goes to WhatsApp, where it will actually be seen';
+      'Where the invitation is sent. Without it you pass the invitation on yourself, and the app offers to copy it straight away';
 
   @override
   String get familyPhoneInvalid => 'Check the number';
@@ -1435,14 +1436,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get familyInviteMailFailed =>
-      'The email did not go out. Copy the invitation and pass it on yourself';
+      'It could not be sent. Copy the invitation and pass it on yourself';
 
   @override
-  String get familyInviteCreated => 'Invitation created';
+  String get familyInviteCreated =>
+      'The access is already granted — the invitation is yours to pass on';
 
   @override
   String get familyInviteExplain =>
-      'We do not send the email. Copy the invitation and pass it on yourself — they will see it when they sign in with that address.';
+      'The app does not send email. Give a phone number and the invitation goes to WhatsApp; otherwise copy it and pass it on yourself.';
 
   @override
   String get familyCopyInvite => 'Copy the invitation';
