@@ -1002,6 +1002,16 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String noticedYesterday(String feedings, String sleep) {
+    return 'Yesterday — $feedings and $sleep of sleep';
+  }
+
+  @override
+  String noticedYesterdayNoSleep(String feedings) {
+    return 'Yesterday — $feedings';
+  }
+
+  @override
   String noticedLongestNight(String duration) {
     return 'The longest night in a month — $duration';
   }

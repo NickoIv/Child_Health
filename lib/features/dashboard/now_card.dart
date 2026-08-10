@@ -7,6 +7,7 @@ import '../../core/care/greeting.dart';
 import '../../core/care/noticing.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/motion.dart';
+import '../../core/theme/theme_mode.dart';
 import '../../l10n/app_localizations.dart';
 import '../../core/l10n/labels.dart';
 import '../../models/child.dart';
@@ -17,6 +18,7 @@ import '../../providers.dart';
 import '../family/invite_banner.dart';
 import '../shared/photo_widgets.dart';
 import '../shared/widgets.dart';
+import 'focus_home.dart';
 import 'night_sleep_sheet.dart';
 import 'quick_log_sheet.dart';
 
@@ -313,18 +315,17 @@ class _PhraseOfDay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Silent at night, like everything else that is only pleasant to read.
+    // [noticedFor] already refuses after nine; the rotation has to be told.
+    if (isNightAt(now)) return const SizedBox.shrink();
+
     final l = AppLocalizations.of(context);
     final phrases = phrasesOfDay(l);
     final index = phraseOfDayIndex(now, phrases.length);
 
-    final text = switch (noticed) {
-      null => phrases[index],
-      final n when n.kind == NoticedKind.roundAge => l.noticedRoundAge(
-        childName,
-        n.months,
-      ),
-      final n => l.noticedLongestNight(localizedDuration(l, n.minutes)),
-    };
+    final text = noticed == null
+        ? phrases[index]
+        : noticedText(l, noticed!, childName);
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,

@@ -1816,6 +1816,18 @@ abstract class AppLocalizations {
   /// **'Сегодня {name} ровно {months, plural, one{{months} месяц} few{{months} месяца} many{{months} месяцев} other{{months} месяца}}'**
   String noticedRoundAge(String name, num months);
 
+  /// No description provided for @noticedYesterday.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вчера — {feedings} и {sleep} сна'**
+  String noticedYesterday(String feedings, String sleep);
+
+  /// No description provided for @noticedYesterdayNoSleep.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вчера — {feedings}'**
+  String noticedYesterdayNoSleep(String feedings);
+
   /// No description provided for @noticedLongestNight.
   ///
   /// In ru, this message translates to:

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/care/greeting.dart';
+import '../../core/care/noticing.dart';
 import '../../core/l10n/labels.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/motion.dart';
@@ -46,6 +47,13 @@ class WarmHeader extends ConsumerWidget {
     final moment = now ?? DateTime.now();
     final care = ref.watch(dailyCareProvider);
     final sinceFeeding = care.minutesSinceFeeding(moment);
+    final logs = ref.watch(logsProvider).value ?? const <DevelopmentLog>[];
+
+    // The line that only exists on the days it is true — an exact age, a night
+    // that beat the month. Null on most days and always at night, which is
+    // what keeps this header the mostly-empty thing it was built to be.
+    final noticed = noticedFor(child, logs, moment);
+    final myName = ref.watch(userProfileProvider).value?.displayName ?? '';
 
     return Container(
       width: double.infinity,
@@ -107,7 +115,11 @@ class WarmHeader extends ConsumerWidget {
                 child: _HeaderFigure(
                   label: l.nowLastFeeding,
                   value: sinceFeeding == null
-                      ? greetingFor(l, moment)
+                      // Nothing to count from yet, so the slot carries the
+                      // greeting — and it is the one line on this card
+                      // addressed to the person holding the phone, so it uses
+                      // her name.
+                      ? greetingFor(l, moment, name: myName)
                       : localizedDuration(l, sinceFeeding),
                   // The greeting is a sentence, the duration is a number.
                   // Only one of the two is worth 24 points.
@@ -125,8 +137,78 @@ class WarmHeader extends ConsumerWidget {
               ],
             ],
           ),
+          if (noticed != null) ...[
+            const SizedBox(height: 12),
+            _NoticedLine(noticed: noticed, childName: child.name),
+          ],
         ],
       ),
+    );
+  }
+}
+
+/// A [Noticed] as the sentence it is shown as.
+///
+/// Here rather than in `core/care` because it is wording, and here rather than
+/// in either widget because both the header and the block version of the card
+/// draw the same line and had already drifted apart once.
+String noticedText(AppLocalizations l, Noticed noticed, String childName) {
+  switch (noticed.kind) {
+    case NoticedKind.roundAge:
+      return l.noticedRoundAge(childName, noticed.months);
+    case NoticedKind.longestNight:
+      return l.noticedLongestNight(localizedDuration(l, noticed.minutes));
+    case NoticedKind.yesterday:
+      final feedings = l.reflectionFeedingsCount(noticed.feedings);
+      return noticed.minutes == 0
+          ? l.noticedYesterdayNoSleep(feedings)
+          : l.noticedYesterday(
+              feedings,
+              localizedDuration(l, noticed.minutes),
+            );
+  }
+}
+
+/// The one true thing about today, on the days there is one.
+///
+/// Deliberately a line and not a card. A card has to be dismissed, and the
+/// last thing this should become is another thing to put away — it is here
+/// today because a date arrived or a night went well, and it is gone tomorrow
+/// without anybody touching it.
+class _NoticedLine extends StatelessWidget {
+  const _NoticedLine({required this.noticed, required this.childName});
+
+  final Noticed noticed;
+  final String childName;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l = AppLocalizations.of(context);
+
+    final text = noticedText(l, noticed, childName);
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          Icons.auto_awesome_outlined,
+          size: 15,
+          // The accent that carries text, not the one that carries fills —
+          // this sits on a white card and has to be read, not noticed.
+          color: Warm.accentOn(theme.brightness),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: Warm.onCard(theme.brightness),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -1,6 +1,7 @@
 import '../../models/child.dart';
 import '../../models/development_log.dart';
 import '../../models/json.dart';
+import '../theme/theme_mode.dart';
 
 /// Something true about today, or nothing at all.
 ///
@@ -29,18 +30,30 @@ enum NoticedKind {
 
   /// Last night was the longest in a month.
   longestNight,
+
+  /// What yesterday came to, while today is still empty.
+  yesterday,
 }
 
 class Noticed {
-  const Noticed._(this.kind, {this.months = 0, this.minutes = 0});
+  const Noticed._(
+    this.kind, {
+    this.months = 0,
+    this.minutes = 0,
+    this.feedings = 0,
+  });
 
   final NoticedKind kind;
 
   /// Whole months, for [NoticedKind.roundAge].
   final int months;
 
-  /// How long the night ran, for [NoticedKind.longestNight].
+  /// How long the night ran, for [NoticedKind.longestNight]; how much sleep
+  /// yesterday held, for [NoticedKind.yesterday].
   final int minutes;
+
+  /// Feeds yesterday, for [NoticedKind.yesterday].
+  final int feedings;
 }
 
 /// A night has to beat this many other nights before it is worth a sentence.
@@ -66,6 +79,13 @@ const _nightMarginMinutes = 20;
 /// testable and so the sentence changes at midnight rather than whenever the
 /// widget happens to rebuild.
 Noticed? noticedFor(Child child, List<DevelopmentLog> logs, DateTime now) {
+  // Nothing at night. Between nine in the evening and seven in the morning the
+  // app is being held one-handed over a cot, and everything it says then is
+  // read by someone who wants to put the phone down. Caring at three in the
+  // morning is fewer words, not warmer ones — the screen already goes red for
+  // the same reason.
+  if (isNightAt(now)) return null;
+
   // The date first: it comes round twelve times a year, it cannot be inferred
   // from anything else on the screen, and it is the one a mother tells other
   // people about.
@@ -77,7 +97,46 @@ Noticed? noticedFor(Child child, List<DevelopmentLog> logs, DateTime now) {
     return Noticed._(NoticedKind.longestNight, minutes: minutes);
   }
 
-  return null;
+  return _yesterdayWhileTodayIsEmpty(logs, now);
+}
+
+/// What yesterday came to, for as long as today has nothing in it.
+///
+/// This is the app opening on a new day. Midnight takes the counters back to
+/// zero, and on the first morning screen there is nothing at all where eleven
+/// feeds were six hours ago — which reads less like a new day than like the
+/// record having been lost.
+///
+/// It needs no memory of whether it has been shown. It is true exactly while
+/// today is empty, so the first thing she writes down clears it, and there is
+/// no stored "seen on" day to go stale, no card to dismiss and no way for it
+/// to appear twice.
+Noticed? _yesterdayWhileTodayIsEmpty(List<DevelopmentLog> logs, DateTime now) {
+  final today = dateOnly(now);
+  final yesterday = today.subtract(const Duration(days: 1));
+
+  var feedings = 0;
+  var minutes = 0;
+
+  for (final log in logs) {
+    final on = dateOnly(log.date);
+    // Anything at all written down today, and this stops being true.
+    if (on == today) return null;
+    if (on != yesterday) continue;
+
+    if (log.type == LogType.feeding) feedings++;
+    if (log.type == LogType.sleep) minutes += log.durationMinutes ?? 0;
+  }
+
+  // A day with no feeds in it is a day she was not using the app, and
+  // reporting a nought back to her is not news, it is a scoreboard.
+  if (feedings == 0) return null;
+
+  return Noticed._(
+    NoticedKind.yesterday,
+    feedings: feedings,
+    minutes: minutes,
+  );
 }
 
 /// Whole months old today, or null on any other day.

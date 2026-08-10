@@ -298,6 +298,19 @@
       "months": { "type": "num", "format": "compact" }
     }
   },
+  "noticedYesterday": "Кеше — {feedings} және {sleep} ұйқы",
+  "@noticedYesterday": {
+    "placeholders": {
+      "feedings": { "type": "String" },
+      "sleep": { "type": "String" }
+    }
+  },
+  "noticedYesterdayNoSleep": "Кеше — {feedings}",
+  "@noticedYesterdayNoSleep": {
+    "placeholders": {
+      "feedings": { "type": "String" }
+    }
+  },
   "noticedLongestNight": "Айдағы ең ұзақ түн — {duration}",
   "@noticedLongestNight": {
     "placeholders": {

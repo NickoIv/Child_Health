@@ -61,11 +61,11 @@ void main() {
       expect(noticedFor(child, const [], DateTime(2026, 2, 14, 9)), isNull);
     });
 
-    test('is not said in the evening of a day it was already true', () {
-      // It is a date, so it stands all day — unlike the night, which stops
-      // being this morning's news by lunchtime.
+    test('stands all day, up to the hour the app goes quiet', () {
+      // It is a date, so unlike the night — which stops being this morning's
+      // news by lunchtime — it holds until nine, when everything stops.
       final child = childBornOn(DateTime(2026, 2, 14));
-      final evening = noticedFor(child, const [], DateTime(2026, 6, 14, 21));
+      final evening = noticedFor(child, const [], DateTime(2026, 6, 14, 20));
       expect(evening?.kind, NoticedKind.roundAge);
     });
   });
@@ -128,6 +128,74 @@ void main() {
       // is not competing with one every morning.
       final child = childBornOn(DateTime(2026, 1, 5));
       expect(noticedFor(child, const [], DateTime(2026, 6, 20, 9)), isNull);
+    });
+  });
+
+  group('at night', () {
+    test('nothing is said at all, however true it is', () {
+      // Nine in the evening to seven in the morning. She is holding the phone
+      // over a cot and wants to put it down; the screen already goes red for
+      // the same reason.
+      final child = childBornOn(DateTime(2026, 2, 14));
+      expect(noticedFor(child, const [], DateTime(2026, 6, 14, 23)), isNull);
+      expect(noticedFor(child, const [], DateTime(2026, 6, 14, 4)), isNull);
+      // And the same fact, in daylight, is said.
+      expect(
+        noticedFor(child, const [], DateTime(2026, 6, 14, 10))?.kind,
+        NoticedKind.roundAge,
+      );
+    });
+  });
+
+  group('yesterday, while today is still empty', () {
+    final child = childBornOn(DateTime(2026, 1, 5));
+    final morning = DateTime(2026, 6, 20, 9);
+
+    DevelopmentLog feed(DateTime at) => DevelopmentLog(
+      id: 'f${at.millisecondsSinceEpoch}',
+      childId: 'c1',
+      date: at,
+      type: LogType.feeding,
+      title: 'Кормление',
+    );
+
+    test('is what the app opens on when midnight cleared the counters', () {
+      final logs = [
+        for (var i = 0; i < 8; i++)
+          feed(DateTime(2026, 6, 19, 7 + i)),
+        night(DateTime(2026, 6, 19, 21), 420),
+      ];
+
+      final noticed = noticedFor(child, logs, morning);
+      expect(noticed?.kind, NoticedKind.yesterday);
+      expect(noticed?.feedings, 8);
+      expect(noticed?.minutes, 420);
+    });
+
+    test('is gone the moment anything is written down today', () {
+      // No stored "already shown" day, and so nothing to go stale: it is true
+      // exactly while today is empty, and the first feed ends it.
+      final logs = [
+        for (var i = 0; i < 8; i++)
+          feed(DateTime(2026, 6, 19, 7 + i)),
+        feed(DateTime(2026, 6, 20, 8)),
+      ];
+      expect(noticedFor(child, logs, morning), isNull);
+    });
+
+    test('says nothing about a yesterday that had no feeds in it', () {
+      // A day she was not using the app. Handing a nought back is a
+      // scoreboard, not news.
+      expect(noticedFor(child, [night(DateTime(2026, 6, 19, 21), 400)],
+          morning), isNull);
+    });
+
+    test('loses to a real observation', () {
+      // The age and the night are about the child; yesterday's tally is the
+      // app catching her up. Only one line shows, and it is not this one.
+      final birthday = childBornOn(DateTime(2026, 2, 20));
+      final logs = [for (var i = 0; i < 8; i++) feed(DateTime(2026, 6, 19, 7 + i))];
+      expect(noticedFor(birthday, logs, morning)?.kind, NoticedKind.roundAge);
     });
   });
 

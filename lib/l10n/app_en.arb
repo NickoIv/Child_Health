@@ -298,6 +298,19 @@
       "months": { "type": "num", "format": "compact" }
     }
   },
+  "noticedYesterday": "Yesterday — {feedings} and {sleep} of sleep",
+  "@noticedYesterday": {
+    "placeholders": {
+      "feedings": { "type": "String" },
+      "sleep": { "type": "String" }
+    }
+  },
+  "noticedYesterdayNoSleep": "Yesterday — {feedings}",
+  "@noticedYesterdayNoSleep": {
+    "placeholders": {
+      "feedings": { "type": "String" }
+    }
+  },
   "noticedLongestNight": "The longest night in a month — {duration}",
   "@noticedLongestNight": {
     "placeholders": {

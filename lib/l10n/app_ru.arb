@@ -526,6 +526,19 @@
       "months": { "type": "num", "format": "compact" }
     }
   },
+  "noticedYesterday": "Вчера — {feedings} и {sleep} сна",
+  "@noticedYesterday": {
+    "placeholders": {
+      "feedings": { "type": "String" },
+      "sleep": { "type": "String" }
+    }
+  },
+  "noticedYesterdayNoSleep": "Вчера — {feedings}",
+  "@noticedYesterdayNoSleep": {
+    "placeholders": {
+      "feedings": { "type": "String" }
+    }
+  },
   "noticedLongestNight": "Самая длинная ночь за месяц — {duration}",
   "@noticedLongestNight": {
     "placeholders": {

@@ -995,6 +995,16 @@ class AppLocalizationsKk extends AppLocalizations {
   }
 
   @override
+  String noticedYesterday(String feedings, String sleep) {
+    return 'Кеше — $feedings және $sleep ұйқы';
+  }
+
+  @override
+  String noticedYesterdayNoSleep(String feedings) {
+    return 'Кеше — $feedings';
+  }
+
+  @override
   String noticedLongestNight(String duration) {
     return 'Айдағы ең ұзақ түн — $duration';
   }
