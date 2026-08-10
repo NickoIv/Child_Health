@@ -284,6 +284,18 @@
   "milestonesEmptyHint": "Алғашқы күлкі, алғашқы тіс, алғашқы сөз — оларды күнделікке «Даму кезеңі» ретінде қосыңыз",
   "recentEmpty": "Әзірге жазба жоқ",
   "upcomingEmptyHint": "Бала профилі жасалған соң егулер осында өзі пайда болады",
+  "milestonesUsualTitle": "Осы жаста әдетте",
+  "milestonesSpread": "Бұл мерзім емес, аралық: көп балада осы айлардың ішінде пайда болады. Кейінірек болуы да қалыпты жағдай.",
+  "milestonesNoted": "жазылған",
+  "milestonesSoon": "Жақында",
+  "milestonesRange": "{from}–{to} ай",
+  "@milestonesRange": {
+    "placeholders": {
+      "from": { "type": "int" },
+      "to": { "type": "int" }
+    }
+  },
+  "milestonesAsk": "Дәрігерге сұрақ жазып қою",
   "greetingNamed": "{greeting}, {name}",
   "@greetingNamed": {
     "placeholders": {

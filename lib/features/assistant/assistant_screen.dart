@@ -6,6 +6,8 @@ import '../../l10n/app_localizations.dart';
 import '../../core/theme/app_theme.dart';
 import '../../knowledge/article.dart';
 import '../../knowledge/knowledge_base.dart';
+import '../../knowledge/milestones.dart';
+import '../../models/development_log.dart';
 import '../../providers.dart';
 import '../dashboard/dashboard_screen.dart';
 import '../dashboard/pattern_card.dart';
@@ -102,6 +104,8 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
             const SizedBox(height: Warm.majorGap),
             if (ageMonths != null) ...[
               _ForAgeCard(ageMonths: ageMonths, childName: child!.name),
+              const SizedBox(height: Warm.majorGap),
+              _UsuallyNowCard(ageMonths: ageMonths),
               const SizedBox(height: Warm.majorGap),
             ],
             const _SectionsCard(),
@@ -455,6 +459,135 @@ class _ForAgeCard extends StatelessWidget {
       ),
       child: Column(
         children: [for (final a in relevant) _ArticleTile(article: a)],
+      ),
+    );
+  }
+}
+
+/// What usually appears around now — and never what has not appeared.
+///
+/// The rules this widget exists to keep are stated in full in
+/// `knowledge/milestones.dart`. The two that show on screen: nothing here is
+/// tappable, so the list can never become a score she is keeping; and the line
+/// about the width of normal is printed at the top in ordinary type, not
+/// tucked underneath in grey, because it is the most important sentence on the
+/// card.
+class _UsuallyNowCard extends ConsumerWidget {
+  const _UsuallyNowCard({required this.ageMonths});
+
+  final int ageMonths;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+
+    final usual = milestonesUsualAt(ageMonths);
+    final soon = milestonesSoonAfter(ageMonths).take(3).toList();
+    if (usual.isEmpty && soon.isEmpty) return const SizedBox.shrink();
+
+    final noted = milestonesNotedIn(
+      ref.watch(logsProvider).value ?? const <DevelopmentLog>[],
+    );
+
+    return SectionCard(
+      title: l.milestonesUsualTitle,
+      icon: Icons.child_care_outlined,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l.milestonesSpread,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: Warm.onCardSoft(theme.brightness),
+            ),
+          ),
+          const SizedBox(height: 14),
+          for (final m in usual)
+            _MilestoneRow(milestone: m, noted: noted.contains(m.id)),
+          if (soon.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(
+              l.milestonesSoon,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: Warm.onCardSoft(theme.brightness),
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.6,
+              ),
+            ),
+            const SizedBox(height: 8),
+            for (final m in soon)
+              _MilestoneRow(milestone: m, noted: noted.contains(m.id)),
+          ],
+          const SizedBox(height: 4),
+          // The one thing to do with a worry, and it is not a checkbox: it
+          // goes to the doctor, in her own words, on the page that already
+          // collects questions for the appointment.
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              onPressed: () => context.go('/medical'),
+              child: Text(l.milestonesAsk),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MilestoneRow extends StatelessWidget {
+  const _MilestoneRow({required this.milestone, required this.noted});
+
+  final Milestone milestone;
+
+  /// She has already written it in the diary. A quiet mark, never a tick in a
+  /// box — the box is what would turn the empty ones into a reproach.
+  final bool noted;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l = AppLocalizations.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            noted ? Icons.check_circle : Icons.circle_outlined,
+            size: 15,
+            color: noted
+                ? Warm.accentOn(theme.brightness)
+                : Warm.onCardSoft(theme.brightness).withValues(alpha: 0.4),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  milestone.title,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: Warm.onCard(theme.brightness),
+                    fontWeight: noted ? FontWeight.w700 : FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  noted
+                      ? '${milestone.area.title} · ${l.milestonesNoted}'
+                      : '${milestone.area.title} · '
+                            '${l.milestonesRange(milestone.fromMonths, milestone.toMonths)}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: Warm.onCardSoft(theme.brightness),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -284,6 +284,18 @@
   "milestonesEmptyHint": "First smile, first tooth, first word — add them in the diary as a milestone",
   "recentEmpty": "No entries yet",
   "upcomingEmptyHint": "Vaccinations appear here on their own once a child profile exists",
+  "milestonesUsualTitle": "Usual around this age",
+  "milestonesSpread": "Not a deadline but a window: for most children it appears somewhere inside these months. Later is often ordinary too.",
+  "milestonesNoted": "written down",
+  "milestonesSoon": "Coming up",
+  "milestonesRange": "{from}–{to} mo.",
+  "@milestonesRange": {
+    "placeholders": {
+      "from": { "type": "int" },
+      "to": { "type": "int" }
+    }
+  },
+  "milestonesAsk": "Write a question for the doctor",
   "greetingNamed": "{greeting}, {name}",
   "@greetingNamed": {
     "placeholders": {

@@ -975,6 +975,27 @@ class AppLocalizationsKk extends AppLocalizations {
       'Бала профилі жасалған соң егулер осында өзі пайда болады';
 
   @override
+  String get milestonesUsualTitle => 'Осы жаста әдетте';
+
+  @override
+  String get milestonesSpread =>
+      'Бұл мерзім емес, аралық: көп балада осы айлардың ішінде пайда болады. Кейінірек болуы да қалыпты жағдай.';
+
+  @override
+  String get milestonesNoted => 'жазылған';
+
+  @override
+  String get milestonesSoon => 'Жақында';
+
+  @override
+  String milestonesRange(int from, int to) {
+    return '$from–$to ай';
+  }
+
+  @override
+  String get milestonesAsk => 'Дәрігерге сұрақ жазып қою';
+
+  @override
   String greetingNamed(String greeting, String name) {
     return '$greeting, $name';
   }

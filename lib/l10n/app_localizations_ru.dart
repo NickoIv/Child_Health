@@ -986,6 +986,27 @@ class AppLocalizationsRu extends AppLocalizations {
       'Прививки появятся здесь сами, как только будет создан профиль ребёнка';
 
   @override
+  String get milestonesUsualTitle => 'Обычно в этом возрасте';
+
+  @override
+  String get milestonesSpread =>
+      'Это не срок, а окно: у большинства детей появляется где-то внутри этих месяцев. Позже — тоже бывает норма.';
+
+  @override
+  String get milestonesNoted => 'записано';
+
+  @override
+  String get milestonesSoon => 'Скоро';
+
+  @override
+  String milestonesRange(int from, int to) {
+    return '$from–$to мес.';
+  }
+
+  @override
+  String get milestonesAsk => 'Записать вопрос врачу';
+
+  @override
   String greetingNamed(String greeting, String name) {
     return '$greeting, $name';
   }

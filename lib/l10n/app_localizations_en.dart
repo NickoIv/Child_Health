@@ -981,6 +981,27 @@ class AppLocalizationsEn extends AppLocalizations {
       'Vaccinations appear here on their own once a child profile exists';
 
   @override
+  String get milestonesUsualTitle => 'Usual around this age';
+
+  @override
+  String get milestonesSpread =>
+      'Not a deadline but a window: for most children it appears somewhere inside these months. Later is often ordinary too.';
+
+  @override
+  String get milestonesNoted => 'written down';
+
+  @override
+  String get milestonesSoon => 'Coming up';
+
+  @override
+  String milestonesRange(int from, int to) {
+    return '$from–$to mo.';
+  }
+
+  @override
+  String get milestonesAsk => 'Write a question for the doctor';
+
+  @override
   String greetingNamed(String greeting, String name) {
     return '$greeting, $name';
   }

@@ -1804,6 +1804,42 @@ abstract class AppLocalizations {
   /// **'Прививки появятся здесь сами, как только будет создан профиль ребёнка'**
   String get upcomingEmptyHint;
 
+  /// No description provided for @milestonesUsualTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обычно в этом возрасте'**
+  String get milestonesUsualTitle;
+
+  /// No description provided for @milestonesSpread.
+  ///
+  /// In ru, this message translates to:
+  /// **'Это не срок, а окно: у большинства детей появляется где-то внутри этих месяцев. Позже — тоже бывает норма.'**
+  String get milestonesSpread;
+
+  /// No description provided for @milestonesNoted.
+  ///
+  /// In ru, this message translates to:
+  /// **'записано'**
+  String get milestonesNoted;
+
+  /// No description provided for @milestonesSoon.
+  ///
+  /// In ru, this message translates to:
+  /// **'Скоро'**
+  String get milestonesSoon;
+
+  /// No description provided for @milestonesRange.
+  ///
+  /// In ru, this message translates to:
+  /// **'{from}–{to} мес.'**
+  String milestonesRange(int from, int to);
+
+  /// No description provided for @milestonesAsk.
+  ///
+  /// In ru, this message translates to:
+  /// **'Записать вопрос врачу'**
+  String get milestonesAsk;
+
   /// No description provided for @greetingNamed.
   ///
   /// In ru, this message translates to:

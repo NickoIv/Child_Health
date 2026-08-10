@@ -512,6 +512,18 @@
   "milestonesEmptyHint": "Первая улыбка, первый зуб, первое слово — добавьте их в дневнике как «Веха развития»",
   "recentEmpty": "Записей пока нет",
   "upcomingEmptyHint": "Прививки появятся здесь сами, как только будет создан профиль ребёнка",
+  "milestonesUsualTitle": "Обычно в этом возрасте",
+  "milestonesSpread": "Это не срок, а окно: у большинства детей появляется где-то внутри этих месяцев. Позже — тоже бывает норма.",
+  "milestonesNoted": "записано",
+  "milestonesSoon": "Скоро",
+  "milestonesRange": "{from}–{to} мес.",
+  "@milestonesRange": {
+    "placeholders": {
+      "from": { "type": "int" },
+      "to": { "type": "int" }
+    }
+  },
+  "milestonesAsk": "Записать вопрос врачу",
   "greetingNamed": "{greeting}, {name}",
   "@greetingNamed": {
     "placeholders": {
