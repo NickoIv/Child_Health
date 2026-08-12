@@ -147,6 +147,44 @@ async function sendWhatsApp(env, phone, text) {
   return Boolean(body.idMessage);
 }
 
+/// Whether WhatsApp can actually deliver anything right now.
+///
+/// GREEN-API pairs an instance with one phone by QR code, and the pairing
+/// lapses — the phone logs out of WhatsApp Web, or the free instance is idle
+/// too long. An unauthorised instance does not error: `sendMessage` answers
+/// 200 with no `idMessage`, so a caller that only checks the status code
+/// reports every invitation as sent and none of them arrive. That is what
+/// «в ватсап ничего не приходит» is, seen from this end.
+///
+/// Never returns the id or the token, only the verdict — this is a public URL.
+export async function whatsAppState(env) {
+  if (!env.GREEN_API_ID || !env.GREEN_API_TOKEN) {
+    return { configured: false, authorized: false, state: 'no credentials' };
+  }
+  const base = env.GREEN_API_URL || GREEN_API_URL;
+  const url =
+    `${base}/waInstance${env.GREEN_API_ID}` +
+    `/getStateInstance/${env.GREEN_API_TOKEN}`;
+
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      return {
+        configured: true,
+        authorized: false,
+        state: `http ${response.status}`,
+      };
+    }
+    const body = await response.json();
+    // 'authorized' is the only state that sends. The others — 'notAuthorized',
+    // 'blocked', 'sleepMode', 'starting' — all deliver nothing.
+    const state = String(body.stateInstance || 'unknown');
+    return { configured: true, authorized: state === 'authorized', state };
+  } catch (error) {
+    return { configured: true, authorized: false, state: `unreachable` };
+  }
+}
+
 /// Handles POST /invite.
 ///
 /// Returns 501 rather than 500 when there is no mail key: that is the Worker

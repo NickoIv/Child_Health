@@ -70,6 +70,14 @@ class _FamilySectionState extends ConsumerState<FamilySection> {
   /// Stays until the next one replaces it.
   _Handoff? _handoff;
 
+  /// So the answer can be brought to her rather than waited for.
+  ///
+  /// The family card sits a long way down the settings page, and the panel
+  /// appears *below* the button that was just pressed — on a phone that is
+  /// under the fold. «У меня не высвечивается отправлено или нет» was partly
+  /// this: it was on the screen, one scroll away, which is the same as not.
+  final _panelKey = GlobalKey();
+
   @override
   void dispose() {
     _email.dispose();
@@ -233,6 +241,7 @@ class _FamilySectionState extends ConsumerState<FamilySection> {
             if (_handoff case final handoff?) ...[
               const SizedBox(height: 14),
               _HandoffPanel(
+                key: _panelKey,
                 handoff: handoff,
                 onCopy: () => _copyInvite(handoff.childName, handoff.email),
                 onWhatsApp: () => _openWhatsApp(handoff),
@@ -395,6 +404,23 @@ class _FamilySectionState extends ConsumerState<FamilySection> {
         result: mailed,
       );
     });
+    _showPanel();
+  }
+
+  /// Brings the answer to her. See [_panelKey].
+  void _showPanel() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final target = _panelKey.currentContext;
+      // No Scrollable above it in a test that pumps the card on its own, and
+      // nothing to scroll when it is already in view. Neither is a problem.
+      if (target == null || !mounted) return;
+      Scrollable.ensureVisible(
+        target,
+        duration: const Duration(milliseconds: 320),
+        curve: Curves.easeOutCubic,
+        alignment: 0.5,
+      );
+    });
   }
 }
 
@@ -410,6 +436,7 @@ class _HandoffPanel extends StatelessWidget {
     required this.handoff,
     required this.onCopy,
     required this.onWhatsApp,
+    super.key,
   });
 
   final _Handoff handoff;

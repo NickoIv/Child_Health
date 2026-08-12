@@ -30,7 +30,7 @@ const MAX_HISTORY_TURNS = 8;
 const MAX_HISTORY_TURN_CHARS = 2000;
 
 import { runReminderSweep } from './notifications.js';
-import { handleInvite } from './invites.js';
+import { handleInvite, whatsAppState } from './invites.js';
 
 export default {
   /// Hourly cron. Sends reminders that have come due — see notifications.js.
@@ -58,6 +58,21 @@ export default {
       new URL(request.url).pathname === '/invite'
     ) {
       return handleInvite(request, env, cors, json);
+    }
+
+    // Diagnostic, and the same idea as /models below: an invitation that is
+    // reported sent and never arrives is indistinguishable from one that was
+    // never sent, and the difference lives inside an account nobody here can
+    // see. A GREEN-API instance stops being authorised the moment the phone
+    // it was paired with logs out of WhatsApp Web, and it goes on answering
+    // requests politely afterwards. This says which it is.
+    //
+    // No credentials in the answer — only the verdict.
+    if (
+      request.method === 'GET' &&
+      new URL(request.url).pathname === '/whatsapp'
+    ) {
+      return json(await whatsAppState(env), 200, cors);
     }
 
     if (!env.GEMINI_API_KEY) {
