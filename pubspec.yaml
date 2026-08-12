@@ -59,16 +59,13 @@ dependencies:
   timezone: ^0.11.1
   flutter_timezone: ^5.1.0
   shared_preferences: ^2.5.5
-  speech_to_text: ^7.4.0
-  # Used directly on the web, underneath speech_to_text's own wrapper. The
-  # wrapper filters out every result a browser produces — see the note in
-  # dictation.dart — so the browser path talks to the platform interface the
-  # wrapper itself sits on.
-  speech_to_text_platform_interface: ^2.4.0
-  # Browser APIs the framework does not wrap. Used only by cues_web.dart, for
-  # the sound and the buzz that mark the two ends of a recording — neither of
-  # which the platform channels behind HapticFeedback and SystemSound answer
-  # on the web.
+  # No speech recognition package. There was one, and the Web Speech API it
+  # reached is the wrong tool here: late to open, single-use per page, and
+  # absent from an iPhone's home-screen app entirely. Dictation is the
+  # keyboard's own microphone now — see features/dashboard/ask_button.dart.
+  #
+  # Browser APIs the framework does not wrap: window.open for a link, the
+  # storage-persistence request, the file picker and the file download.
   web: ^1.1.0
 dev_dependencies:
   flutter_test:

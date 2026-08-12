@@ -67,6 +67,40 @@ void main() {
     });
   });
 
+  group('the WhatsApp handoff', () {
+    // The delivery that does not depend on anything staying configured. The
+    // Worker's own send needs a GREEN-API account that can lapse and a mail
+    // key this build does not have; this needs a phone with WhatsApp on it.
+    test('addresses the chat with the normalised number', () {
+      final link = whatsAppLink(phone: '8 700 123 45 67', message: 'привет');
+      expect(link, startsWith('https://wa.me/77001234567?text='));
+    });
+
+    test('opens WhatsApp with no recipient when there is no number', () {
+      // She invited by email only. WhatsApp opens on the chat list with the
+      // message ready, and she picks who it goes to.
+      final link = whatsAppLink(phone: '', message: 'привет');
+      expect(link, startsWith('https://wa.me/?text='));
+    });
+
+    test('carries the message intact, spaces and Cyrillic and all', () {
+      const message =
+          'Я открыл доступ к дневнику ребёнка (Маус). Войди почтой a@b.kz: '
+          'https://child-health-tracker-7aad1.web.app';
+      final link = whatsAppLink(phone: '77001234567', message: message);
+
+      // A space written as `+` is a space only to something that knows it is
+      // reading a query parameter. WhatsApp shows this to a person.
+      expect(link, isNot(contains('+')));
+      expect(link, contains('%20'));
+      expect(
+        Uri.decodeComponent(link.split('?text=').last),
+        message,
+        reason: 'what she sends is what was written',
+      );
+    });
+  });
+
   group('the link the invitation carries', () {
     test('never throws off the web, where Uri.base is a file path', () {
       // `Uri.base.origin` throws for any scheme that is not http, and in a

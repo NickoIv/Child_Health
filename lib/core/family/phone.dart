@@ -35,3 +35,25 @@ bool looksLikePhone(String raw) {
   final digits = normalizePhone(raw);
   return digits.length >= 10 && digits.length <= 15;
 }
+
+/// The invitation as a WhatsApp chat that is already open and already typed.
+///
+/// This is the delivery that cannot fail. The Worker's own send needs an API
+/// account that has to stay authorised, and a letter needs a mail provider
+/// this build does not have — both of them can quietly deliver nothing. A
+/// `wa.me` link needs neither: it opens WhatsApp on her own phone with the
+/// message written out, and she presses send. If it went nowhere she can see
+/// that it went nowhere, which is the part that was missing.
+///
+/// [phone] may be empty — then it opens WhatsApp with the text and no
+/// recipient, and she picks the chat herself.
+String whatsAppLink({required String phone, required String message}) {
+  final digits = normalizePhone(phone);
+  // `encodeComponent` rather than `encodeQueryComponent`: the latter writes a
+  // space as `+`, which is only a space to a reader who knows the string is a
+  // query parameter. WhatsApp shows the message to a person.
+  final text = Uri.encodeComponent(message);
+  return digits.isEmpty
+      ? 'https://wa.me/?text=$text'
+      : 'https://wa.me/$digits?text=$text';
+}

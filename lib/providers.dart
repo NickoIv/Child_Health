@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'ai/ai_config.dart';
@@ -12,7 +11,6 @@ import 'core/analytics/illness_stats.dart';
 import 'core/analytics/shared_moments.dart';
 import 'core/analytics/weekly_story.dart';
 import 'core/notifications/notification_service.dart';
-import 'core/voice/dictation.dart';
 import 'data/auth_repository.dart';
 import 'data/family_repository.dart';
 import 'data/memory_repository.dart';
@@ -190,32 +188,6 @@ final unitSystemProvider = Provider<UnitSystem>((ref) {
       UnitSystem.metric;
 });
 
-/// The microphone behind the note field.
-///
-/// Unavailable by default, exactly like the repositories above: a widget test
-/// gets a recogniser that politely declines and the button hides itself,
-/// rather than a platform channel that is not there. `main.dart` overrides
-/// this with the real one.
-final dictationProvider = Provider<Dictation>(
-  (ref) => const UnavailableDictation(),
-);
-
-/// Whether the microphone hands the job to the keyboard.
-///
-/// True in a browser, which is where the app actually runs. The Web Speech
-/// API opens a microphone two seconds late, refuses to start twice, hides
-/// its results behind a plugin that discards them, and is absent altogether
-/// when the app is opened from an iPhone's home screen. The dictation on the
-/// keyboard has none of those problems, is the recogniser Apple and Google
-/// tuned for these languages, and is one tap away from any focused field.
-///
-/// False on a phone build, where `speech_to_text` talks to the same system
-/// recogniser directly and the hold-to-talk button works as designed.
-///
-/// A provider rather than a `kIsWeb` check in the widget, so a test can look
-/// at both.
-final keyboardDictationProvider = Provider<bool>((ref) => kIsWeb);
-
 /// One photo, fetched on demand.
 ///
 /// A photo never changes after it is written, so this is a plain future
@@ -348,7 +320,7 @@ Stream<List<Reminder>> _combineLatest(List<Stream<List<Reminder>>> streams) {
 
 /// The signed-in parent's Firebase ID token, or empty.
 ///
-/// A hook like [dictationProvider]: the default answers "none", so the demo
+/// A hook rather than a direct call: the default answers "none", so the demo
 /// stack and every test stay away from Firebase. `main.dart` overrides it.
 /// Used to prove to the Worker who is asking it to send an invitation.
 final idTokenReaderProvider = Provider<Future<String> Function()>(
@@ -357,7 +329,7 @@ final idTokenReaderProvider = Provider<Future<String> Function()>(
 
 /// Reads the push token this device currently holds, without prompting.
 ///
-/// A hook rather than a direct call, exactly like [dictationProvider]: the
+/// A hook rather than a direct call, exactly like [idTokenReaderProvider]: the
 /// default answers "none", so a test and the offline demo stack never reach
 /// for Firebase Messaging. `main.dart` overrides it with the real one.
 final pushTokenReaderProvider = Provider<Future<String?> Function()>(

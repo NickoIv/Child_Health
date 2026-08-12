@@ -19,7 +19,7 @@ import 'now_card.dart';
 import 'smart_card.dart';
 import 'quick_log_sheet.dart';
 import 'repeat_last_feed.dart';
-import 'speak_button.dart';
+import 'ask_button.dart';
 import 'timer_card.dart';
 import '../family/digest_card.dart';
 import '../family/invite_banner.dart';
@@ -106,7 +106,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         // Under the four cards, not over them: it is the faster way in for
         // the sentence that has two things in it, and the slower one for
         // «покормила» on its own.
-        const SpeakButton(),
+        const AskButton(),
         RepeatLastFeed(child: child),
         NightSleepLink(childId: child.id),
         const SizedBox(height: 20),

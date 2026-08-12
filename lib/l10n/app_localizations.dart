@@ -2755,7 +2755,7 @@ abstract class AppLocalizations {
   /// No description provided for @homeSpeak.
   ///
   /// In ru, this message translates to:
-  /// **'Сказать голосом'**
+  /// **'Написать или продиктовать'**
   String get homeSpeak;
 
   /// No description provided for @homeRepeat.
@@ -2839,7 +2839,7 @@ abstract class AppLocalizations {
   /// No description provided for @familyInvitePhoneHint.
   ///
   /// In ru, this message translates to:
-  /// **'Куда отправить приглашение. Без телефона его придётся передать самому — приложение сразу предложит скопировать'**
+  /// **'Необязательно. Номер подставится в WhatsApp, чтобы не искать его в списке'**
   String get familyInvitePhoneHint;
 
   /// No description provided for @familyPhoneInvalid.
@@ -2872,10 +2872,34 @@ abstract class AppLocalizations {
   /// **'Доступ уже открыт — осталось передать приглашение'**
   String get familyInviteCreated;
 
+  /// No description provided for @familyInviteSending.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отправляю…'**
+  String get familyInviteSending;
+
+  /// No description provided for @familyInviteHandoff.
+  ///
+  /// In ru, this message translates to:
+  /// **'Передайте приглашение сами — так вы увидите, что оно дошло:'**
+  String get familyInviteHandoff;
+
+  /// No description provided for @familyOpenWhatsApp.
+  ///
+  /// In ru, this message translates to:
+  /// **'Открыть WhatsApp'**
+  String get familyOpenWhatsApp;
+
+  /// No description provided for @familyWhatsAppNotOpened.
+  ///
+  /// In ru, this message translates to:
+  /// **'WhatsApp не открылся — скопируйте приглашение'**
+  String get familyWhatsAppNotOpened;
+
   /// No description provided for @familyInviteExplain.
   ///
   /// In ru, this message translates to:
-  /// **'Письма приложение не отправляет. Укажите телефон — приглашение придёт в WhatsApp; иначе скопируйте его и передайте сами.'**
+  /// **'Письма приложение не отправляет. Приглашение появится здесь же — его можно сразу открыть в WhatsApp или скопировать.'**
   String get familyInviteExplain;
 
   /// No description provided for @familyCopyInvite.
@@ -2997,42 +3021,6 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Это ваш собственный адрес'**
   String get familySelfInvite;
-
-  /// No description provided for @voiceListening.
-  ///
-  /// In ru, this message translates to:
-  /// **'Слушаю…'**
-  String get voiceListening;
-
-  /// No description provided for @voiceSpeakNow.
-  ///
-  /// In ru, this message translates to:
-  /// **'Говорите'**
-  String get voiceSpeakNow;
-
-  /// No description provided for @voiceFailed.
-  ///
-  /// In ru, this message translates to:
-  /// **'Не удалось распознать речь'**
-  String get voiceFailed;
-
-  /// No description provided for @voiceUnavailable.
-  ///
-  /// In ru, this message translates to:
-  /// **'Микрофон недоступен — заметку можно написать'**
-  String get voiceUnavailable;
-
-  /// No description provided for @voiceDictate.
-  ///
-  /// In ru, this message translates to:
-  /// **'Продиктовать заметку'**
-  String get voiceDictate;
-
-  /// No description provided for @voiceStop.
-  ///
-  /// In ru, this message translates to:
-  /// **'Остановить запись'**
-  String get voiceStop;
 
   /// No description provided for @quickFeedHint.
   ///

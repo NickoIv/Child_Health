@@ -1525,7 +1525,7 @@ class AppLocalizationsKk extends AppLocalizations {
   String get homeQuickLog => 'Жылдам жазба';
 
   @override
-  String get homeSpeak => 'Дауыспен айту';
+  String get homeSpeak => 'Жазыңыз немесе айтып жаздырыңыз';
 
   @override
   String get homeRepeat => 'Өткендегідей';
@@ -1569,7 +1569,7 @@ class AppLocalizationsKk extends AppLocalizations {
 
   @override
   String get familyInvitePhoneHint =>
-      'Шақыру қайда жіберіледі. Нөмірсіз шақыруды өзіңіз жеткізесіз — қолданба бірден көшіруді ұсынады';
+      'Міндетті емес. Нөмір WhatsApp-та автоматты қойылады, чатты іздеудің қажеті жоқ';
 
   @override
   String get familyPhoneInvalid => 'Нөмірді тексеріңіз';
@@ -1591,8 +1591,22 @@ class AppLocalizationsKk extends AppLocalizations {
       'Қолжетімділік ашылды — шақыруды жеткізу ғана қалды';
 
   @override
+  String get familyInviteSending => 'Жіберілуде…';
+
+  @override
+  String get familyInviteHandoff =>
+      'Шақыруды өзіңіз жіберіңіз — сонда жеткенін көресіз:';
+
+  @override
+  String get familyOpenWhatsApp => 'WhatsApp ашу';
+
+  @override
+  String get familyWhatsAppNotOpened =>
+      'WhatsApp ашылмады — шақыруды көшіріңіз';
+
+  @override
   String get familyInviteExplain =>
-      'Қолданба хат жібермейді. Телефон көрсетсеңіз — шақыру WhatsApp-қа келеді; әйтпесе оны көшіріп, өзіңіз жіберіңіз.';
+      'Қолданба хат жібермейді. Шақыру осында пайда болады — оны WhatsApp-та ашуға немесе көшіруге болады.';
 
   @override
   String get familyCopyInvite => 'Шақыруды көшіру';
@@ -1657,24 +1671,6 @@ class AppLocalizationsKk extends AppLocalizations {
 
   @override
   String get familySelfInvite => 'Бұл сіздің өз мекенжайыңыз';
-
-  @override
-  String get voiceListening => 'Тыңдап тұрмын…';
-
-  @override
-  String get voiceSpeakNow => 'Сөйлей беріңіз';
-
-  @override
-  String get voiceFailed => 'Сөйлеуді тану мүмкін болмады';
-
-  @override
-  String get voiceUnavailable => 'Микрофон қолжетімсіз — жазбаны теруге болады';
-
-  @override
-  String get voiceDictate => 'Жазбаны айтып жаздыру';
-
-  @override
-  String get voiceStop => 'Жазуды тоқтату';
 
   @override
   String get quickFeedHint => 'омырау не бөтелке';

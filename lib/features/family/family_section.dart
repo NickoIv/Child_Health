@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,10 +8,42 @@ import '../../core/family/invite_mail.dart';
 import '../../core/family/phone.dart';
 import '../../core/theme/app_snack.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/web/open_url.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/family_member.dart';
 import '../../providers.dart';
 import '../shared/widgets.dart';
+
+/// An invitation that exists, and the ways it can still reach the person.
+///
+/// Kept in the widget's state rather than announced in a snackbar. «Просто
+/// тишина и никакой обратной связи»: a strip that slides away after three
+/// seconds is indistinguishable from nothing having happened, and this is the
+/// one screen in the app where what happened has to survive being looked away
+/// from — she reads it, picks up the other phone, and comes back.
+class _Handoff {
+  const _Handoff({
+    required this.childName,
+    required this.email,
+    required this.phone,
+    required this.result,
+  });
+
+  final String childName;
+  final String email;
+
+  /// Digits only, or empty. Kept because the fields are cleared once the
+  /// invitation exists and the WhatsApp link still needs a recipient.
+  final String phone;
+
+  final InviteMailResult result;
+
+  /// Whether anything actually left the building. False is the ordinary case
+  /// for this build — there is no mail key — and it is why the handoff row
+  /// below is not a fallback but the main path.
+  bool get delivered =>
+      result == InviteMailResult.sent || result == InviteMailResult.sentWhatsApp;
+}
 
 /// Who else can see this child, and the one field that adds someone.
 ///
@@ -31,6 +65,10 @@ class _FamilySectionState extends ConsumerState<FamilySection> {
   String? _error;
   String? _phoneError;
   bool _sending = false;
+
+  /// The last invitation created on this screen, and what became of it.
+  /// Stays until the next one replaces it.
+  _Handoff? _handoff;
 
   @override
   void dispose() {
@@ -87,6 +125,20 @@ class _FamilySectionState extends ConsumerState<FamilySection> {
               onCopy: member.isAccepted || readOnly
                   ? null
                   : () => _copyInvite(child.name, member.email),
+              // And the same handoff a week later, when the panel below is
+              // long gone and he still has not been sent anything. No number
+              // is stored, so this opens WhatsApp on the chat list with the
+              // message written out and she picks him.
+              onWhatsApp: member.isAccepted || readOnly
+                  ? null
+                  : () => _openWhatsApp(
+                      _Handoff(
+                        childName: child.name,
+                        email: member.email,
+                        phone: '',
+                        result: InviteMailResult.notConfigured,
+                      ),
+                    ),
               onRemove: readOnly
                   ? null
                   : () => ref.read(familyRepositoryProvider).revoke(
@@ -164,13 +216,58 @@ class _FamilySectionState extends ConsumerState<FamilySection> {
               alignment: Alignment.centerLeft,
               child: FilledButton.tonalIcon(
                 onPressed: _sending ? null : () => _invite(child.id, child.name),
-                icon: const Icon(Icons.person_add_alt),
-                label: Text(l.familyInvite),
+                // A press that is doing something has to look like it. The
+                // button used to grey out and say nothing else, which for the
+                // seconds a slow write takes is the same picture as a button
+                // that ignored the tap.
+                icon: _sending
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.person_add_alt),
+                label: Text(_sending ? l.familyInviteSending : l.familyInvite),
               ),
             ),
+            if (_handoff case final handoff?) ...[
+              const SizedBox(height: 14),
+              _HandoffPanel(
+                handoff: handoff,
+                onCopy: () => _copyInvite(handoff.childName, handoff.email),
+                onWhatsApp: () => _openWhatsApp(handoff),
+              ),
+            ],
           ],
         ],
       ),
+    );
+  }
+
+  /// Opens WhatsApp with the invitation already written out.
+  ///
+  /// The delivery that does not depend on anything staying configured — see
+  /// [whatsAppLink]. She presses send in her own WhatsApp, on her own account,
+  /// and can see for herself that it arrived.
+  Future<void> _openWhatsApp(_Handoff handoff) async {
+    final l = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+
+    final opened = await openUrl(
+      whatsAppLink(
+        phone: handoff.phone,
+        message: l.familyInviteMessage(
+          handoff.childName,
+          handoff.email,
+          appLink(),
+        ),
+      ),
+    );
+    if (!mounted || opened) return;
+    // Blocked, or no browser to open it in. The copy button is right beside
+    // this one and always works.
+    messenger.showAppSnack(
+      appSnack(l.familyWhatsAppNotOpened, kind: SnackKind.info),
     );
   }
 
@@ -198,9 +295,18 @@ class _FamilySectionState extends ConsumerState<FamilySection> {
     );
   }
 
+  /// How long the invitation may take to be acknowledged before the screen
+  /// stops waiting for it.
+  ///
+  /// A Firestore write on the web completes when the *server* has it, and the
+  /// document is in the local cache long before that. Offline — or on the edge
+  /// of a signal, which is most of a lift and some of a clinic — the future
+  /// simply never completes, and everything after it, including every word the
+  /// screen was going to say, never happens either.
+  static const _writeBudget = Duration(seconds: 12);
+
   Future<void> _invite(String childId, String childName) async {
     final l = AppLocalizations.of(context);
-    final messenger = ScaffoldMessenger.of(context);
     final email = normalizeEmail(_email.text);
 
     if (!looksLikeEmail(email)) {
@@ -230,62 +336,162 @@ class _FamilySectionState extends ConsumerState<FamilySection> {
       _sending = true;
       _error = null;
       _phoneError = null;
+      _handoff = null;
     });
 
     try {
-      await ref.read(familyRepositoryProvider).invite(
-        childId: childId,
-        ownerUid: ref.read(currentUidProvider),
-        email: email,
-      );
-      if (!mounted) return;
-      _email.clear();
-      _phone.clear();
-
-      // The access exists the moment the document does. The letter is only
-      // how he finds out, so it is attempted after — and its failure never
-      // takes the invitation with it.
-      final mailed = await sendInviteMail(
-        idToken: await ref.read(idTokenReaderProvider)(),
-        childId: childId,
-        childName: childName,
-        email: email,
-        link: appLink(),
-        fromName: ref.read(userProfileProvider).value?.displayName ?? '',
-        phone: phone,
-      );
-      if (!mounted) return;
-
-      // Three different truths, and the screen tells them apart. Saying
-      // «отправлено» when nothing was sent is what sent him to an inbox that
-      // was never going to have anything in it.
-      messenger.showAppSnack(
-        appSnack(
-          switch (mailed) {
-            InviteMailResult.sentWhatsApp => l.familyInviteWhatsApp,
-            InviteMailResult.sent => l.familyInviteMailed(email),
-            InviteMailResult.notConfigured => l.familyInviteCreated,
-            InviteMailResult.failed => l.familyInviteMailFailed,
-          },
-          kind: mailed == InviteMailResult.failed ||
-                  mailed == InviteMailResult.notConfigured
-              ? SnackKind.info
-              : SnackKind.done,
-          action: mailed == InviteMailResult.failed ||
-                  mailed == InviteMailResult.notConfigured
-              ? SnackBarAction(
-                  label: l.familyCopyInvite,
-                  onPressed: () => _copyInvite(childName, email),
-                )
-              : null,
-        ),
-      );
+      await ref
+          .read(familyRepositoryProvider)
+          .invite(
+            childId: childId,
+            ownerUid: ref.read(currentUidProvider),
+            email: email,
+          )
+          .timeout(_writeBudget);
+    } on TimeoutException {
+      // Written locally and on its way. Nothing waits for the server: the
+      // invitation text is already correct, and handing it over is what she
+      // opened this card to do.
     } catch (e) {
       if (!mounted) return;
-      setState(() => _error = friendlyError(l, e));
-    } finally {
-      if (mounted) setState(() => _sending = false);
+      setState(() {
+        _error = friendlyError(l, e);
+        _sending = false;
+      });
+      return;
     }
+    if (!mounted) return;
+
+    // The access exists the moment the document does. Everything below is only
+    // how he finds out, so none of it can take the invitation with it.
+    final token = await ref
+        .read(idTokenReaderProvider)()
+        // Bounded for the same reason as the write above: this reaches out to
+        // Firebase, and without a network it reaches out for ever.
+        .timeout(const Duration(seconds: 8), onTimeout: () => '');
+
+    final mailed = await sendInviteMail(
+      idToken: token,
+      childId: childId,
+      childName: childName,
+      email: email,
+      link: appLink(),
+      fromName: ref.read(userProfileProvider).value?.displayName ?? '',
+      phone: phone,
+    );
+    if (!mounted) return;
+
+    setState(() {
+      _sending = false;
+      _email.clear();
+      _phone.clear();
+      // The answer, on the screen, staying there. What became of the letter is
+      // one line of it; the two buttons under that line are the part that
+      // actually delivers.
+      _handoff = _Handoff(
+        childName: childName,
+        email: email,
+        phone: phone,
+        result: mailed,
+      );
+    });
+  }
+}
+
+/// What happened to the invitation, and the two ways to hand it over.
+///
+/// Both buttons are always here, including after a successful automatic send.
+/// The automatic one goes through an API account that can lapse and report a
+/// delivery anyway — which is what «не отправляется, просто тишина» looked
+/// like from the other end. A parent who can see the message text and press
+/// send herself does not have to trust any of that.
+class _HandoffPanel extends StatelessWidget {
+  const _HandoffPanel({
+    required this.handoff,
+    required this.onCopy,
+    required this.onWhatsApp,
+  });
+
+  final _Handoff handoff;
+  final VoidCallback onCopy;
+  final VoidCallback onWhatsApp;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final tone = handoff.delivered ? SoftTone.mint : SoftTone.sand;
+    final ink = tone.ink(theme.brightness);
+
+    // Three different truths, and the panel tells them apart. Saying
+    // «отправлено» when nothing was sent is what sent a father to an inbox
+    // that was never going to have anything in it.
+    final headline = switch (handoff.result) {
+      InviteMailResult.sentWhatsApp => l.familyInviteWhatsApp,
+      InviteMailResult.sent => l.familyInviteMailed(handoff.email),
+      InviteMailResult.notConfigured => l.familyInviteCreated,
+      InviteMailResult.failed => l.familyInviteMailFailed,
+    };
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: tone.fill(theme.brightness),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                handoff.delivered
+                    ? Icons.check_circle_outline
+                    : Icons.info_outline,
+                size: 18,
+                color: ink,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  headline,
+                  style: theme.textTheme.titleSmall?.copyWith(color: ink),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            l.familyInviteHandoff,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 10),
+          // Wrapped rather than in a Row: «Скопировать приглашение» and
+          // «Открыть WhatsApp» side by side overflow a 360-pixel phone in
+          // Russian, and in Kazakh they overflow it in every language.
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              FilledButton.icon(
+                onPressed: onWhatsApp,
+                icon: const Icon(Icons.chat_bubble_outline, size: 18),
+                label: Text(l.familyOpenWhatsApp),
+              ),
+              OutlinedButton.icon(
+                onPressed: onCopy,
+                icon: const Icon(Icons.copy_outlined, size: 18),
+                label: Text(l.familyCopyInvite),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -296,6 +502,7 @@ class _MemberRow extends StatelessWidget {
     required this.status,
     this.accepted = false,
     this.onCopy,
+    this.onWhatsApp,
     this.onRemove,
   });
 
@@ -305,8 +512,9 @@ class _MemberRow extends StatelessWidget {
   final bool accepted;
 
   /// Offered while an invitation is still waiting: nothing was emailed, so
-  /// this is how it actually reaches the other person.
+  /// these are how it actually reaches the other person.
   final VoidCallback? onCopy;
+  final VoidCallback? onWhatsApp;
   final VoidCallback? onRemove;
 
   @override
@@ -360,6 +568,13 @@ class _MemberRow extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
               ),
+            ),
+          if (onWhatsApp != null)
+            IconButton(
+              tooltip: l.familyOpenWhatsApp,
+              onPressed: onWhatsApp,
+              visualDensity: VisualDensity.compact,
+              icon: const Icon(Icons.chat_bubble_outline, size: 18),
             ),
           if (onCopy != null)
             IconButton(

@@ -12,7 +12,6 @@ import 'core/storage/persist.dart';
 import 'core/l10n/app_locale.dart';
 import 'core/notifications/notification_service.dart';
 import 'core/theme/theme_mode.dart';
-import 'core/voice/dictation.dart';
 import 'firebase/firebase_auth_repository.dart';
 import 'firebase/firebase_options.dart';
 import 'firebase/firestore_repositories.dart';
@@ -61,9 +60,6 @@ Future<void> main() async {
         localeProvider.overrideWith(() => LocaleChoice(locale)),
         themePreferenceProvider.overrideWith(() => ThemeChoice(theme)),
         notificationServiceProvider.overrideWithValue(notifications),
-        // The device's own recogniser. Constructed lazily, so a build that
-        // nobody ever dictates into never touches the microphone at all.
-        dictationProvider.overrideWith((ref) => PlatformDictation()),
         authRepositoryProvider.overrideWithValue(FirebaseAuthRepository()),
         // Reads, never prompts — see [pushTokenSyncProvider].
         pushTokenReaderProvider.overrideWithValue(currentPushToken),

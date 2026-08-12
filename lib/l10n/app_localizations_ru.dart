@@ -1543,7 +1543,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get homeQuickLog => 'Быстрая запись';
 
   @override
-  String get homeSpeak => 'Сказать голосом';
+  String get homeSpeak => 'Написать или продиктовать';
 
   @override
   String get homeRepeat => 'Как в прошлый раз';
@@ -1587,7 +1587,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get familyInvitePhoneHint =>
-      'Куда отправить приглашение. Без телефона его придётся передать самому — приложение сразу предложит скопировать';
+      'Необязательно. Номер подставится в WhatsApp, чтобы не искать его в списке';
 
   @override
   String get familyPhoneInvalid => 'Проверьте номер';
@@ -1609,8 +1609,22 @@ class AppLocalizationsRu extends AppLocalizations {
       'Доступ уже открыт — осталось передать приглашение';
 
   @override
+  String get familyInviteSending => 'Отправляю…';
+
+  @override
+  String get familyInviteHandoff =>
+      'Передайте приглашение сами — так вы увидите, что оно дошло:';
+
+  @override
+  String get familyOpenWhatsApp => 'Открыть WhatsApp';
+
+  @override
+  String get familyWhatsAppNotOpened =>
+      'WhatsApp не открылся — скопируйте приглашение';
+
+  @override
   String get familyInviteExplain =>
-      'Письма приложение не отправляет. Укажите телефон — приглашение придёт в WhatsApp; иначе скопируйте его и передайте сами.';
+      'Письма приложение не отправляет. Приглашение появится здесь же — его можно сразу открыть в WhatsApp или скопировать.';
 
   @override
   String get familyCopyInvite => 'Скопировать приглашение';
@@ -1674,24 +1688,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get familySelfInvite => 'Это ваш собственный адрес';
-
-  @override
-  String get voiceListening => 'Слушаю…';
-
-  @override
-  String get voiceSpeakNow => 'Говорите';
-
-  @override
-  String get voiceFailed => 'Не удалось распознать речь';
-
-  @override
-  String get voiceUnavailable => 'Микрофон недоступен — заметку можно написать';
-
-  @override
-  String get voiceDictate => 'Продиктовать заметку';
-
-  @override
-  String get voiceStop => 'Остановить запись';
 
   @override
   String get quickFeedHint => 'грудь или бутылочка';

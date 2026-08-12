@@ -14,7 +14,6 @@ import '../../core/theme/motion.dart';
 import '../../core/voice/voice_commands.dart';
 import '../../core/weather/weather.dart';
 import '../../core/weather/weather_service.dart';
-import '../dashboard/voice_note_button.dart';
 import '../../knowledge/article.dart';
 import '../../models/development_log.dart';
 import '../../providers.dart';
@@ -500,11 +499,12 @@ class _Thinking extends StatelessWidget {
 
 /// The field, and the button that sends it. Nothing else.
 ///
-/// There was a microphone here for one deploy, sitting next to the keyboard's
-/// own: «возле клавиатуры значок микрофона, он не нужен там». It was not —
-/// the keyboard already carries the recogniser worth using, it is the one
-/// Apple and Google tuned for these languages, and it is where a thumb already
-/// goes. The app's job is to open the keyboard, which it now does on arrival.
+/// There was a microphone here twice, and both times it came back out:
+/// «возле клавиатуры значок микрофона, он не нужен там», and then «микрофон
+/// не работает». The keyboard already carries the recogniser worth using, it
+/// is the one Apple and Google tuned for these languages, and it is where a
+/// thumb already goes. The app's job is to open the keyboard, which it does
+/// on arrival.
 class _Ask extends ConsumerStatefulWidget {
   const _Ask({
     required this.controller,
@@ -540,40 +540,34 @@ class _AskState extends ConsumerState<_Ask> {
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Expanded(
-            // The microphone belongs here more than anywhere else in the app,
-            // and until now this was the one field that did not have one.
+            // No microphone of ours beside it, and this is the second time
+            // that decision has been made — «микрофон не работает». The one
+            // that was here spoke to the Web Speech API, which on the phone
+            // this app is actually used on is late, single-use, and missing
+            // altogether from a home-screen PWA on iOS.
             //
-            // Everything else was already in place: this field both writes a
-            // feed down and answers a question — see [recordIn] — and the
-            // assistant can open a screen or create a reminder from what it
-            // reads. All of it needed a keyboard, which is the one thing a
-            // mother holding a baby at four in the morning does not have a
-            // hand for. Dictation existed and reached exactly one note field
-            // in a sheet.
-            //
-            // The same [VoiceNoteButton] as that note field, deliberately: it
-            // appends rather than replaces, it opens the microphone inside
-            // the tap — which is the only way iOS Safari allows it at all —
-            // and it says so quietly and gets out of the way when refused.
-            // Nothing is sent by speaking; the words land in the field and
-            // she still presses send.
-            child: VoiceNoteButton(
+            // The keyboard that opens under this field has a microphone key
+            // of its own, wired to the recogniser Apple and Google tuned for
+            // Russian and Kazakh. It dictates into the field exactly the way
+            // ours meant to, and it works. So the app raises the keyboard and
+            // stays out of the way: everything this field could already do —
+            // write a feed down (see [recordIn]), answer a question, open a
+            // screen, set a reminder — it does from dictated text without
+            // knowing the text was dictated.
+            child: TextField(
               controller: widget.controller,
-              field: TextField(
-                controller: widget.controller,
-                focusNode: widget.focus,
-                autofocus: true,
-                maxLines: 5,
-                minLines: 1,
-                textInputAction: TextInputAction.send,
-                onSubmitted: (_) => widget.onSend(),
-                decoration: InputDecoration(
-                  hintText: widget.hint,
-                  isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
+              focusNode: widget.focus,
+              autofocus: true,
+              maxLines: 5,
+              minLines: 1,
+              textInputAction: TextInputAction.send,
+              onSubmitted: (_) => widget.onSend(),
+              decoration: InputDecoration(
+                hintText: widget.hint,
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
                 ),
               ),
             ),

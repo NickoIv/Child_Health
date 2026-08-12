@@ -15,7 +15,6 @@ import '../../l10n/app_localizations.dart';
 import '../../models/development_log.dart';
 import '../../providers.dart';
 import '../shared/widgets.dart';
-import 'voice_note_button.dart';
 
 /// The four things a parent records without thinking, all through one sheet.
 ///
@@ -270,21 +269,18 @@ class _QuickLogSheetState extends ConsumerState<_QuickLogSheet> {
         onChanged: (v) => setState(() => _at = v),
       ),
       const SizedBox(height: 12),
-      // The note and the microphone that fills it in, side by side. The
-      // microphone is beside the field rather than inside it because what it
-      // does is dictate into the field, and a control that lives in the
-      // decoration reads as something that clears or searches it.
-      VoiceNoteButton(
+      // A plain field. The microphone that used to sit beside it spoke to the
+      // Web Speech API and did not work on the phone this is used on; the
+      // keyboard that opens over this sheet has one that does. See the note
+      // in `features/dashboard/ask_button.dart`.
+      TextField(
         controller: _note,
-        field: TextField(
-          controller: _note,
-          maxLines: 2,
-          minLines: 1,
-          textCapitalization: TextCapitalization.sentences,
-          decoration: InputDecoration(
-            labelText: l.quickNoteOptional,
-            prefixIcon: const Icon(Icons.edit_note_outlined),
-          ),
+        maxLines: 2,
+        minLines: 1,
+        textCapitalization: TextCapitalization.sentences,
+        decoration: InputDecoration(
+          labelText: l.quickNoteOptional,
+          prefixIcon: const Icon(Icons.edit_note_outlined),
         ),
       ),
       const SizedBox(height: 18),

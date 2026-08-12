@@ -1533,7 +1533,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeQuickLog => 'Quick log';
 
   @override
-  String get homeSpeak => 'Say it out loud';
+  String get homeSpeak => 'Type it or dictate it';
 
   @override
   String get homeRepeat => 'Same as last time';
@@ -1577,7 +1577,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get familyInvitePhoneHint =>
-      'Where the invitation is sent. Without it you pass the invitation on yourself, and the app offers to copy it straight away';
+      'Optional. The number is filled in for you in WhatsApp, so you do not have to find the chat';
 
   @override
   String get familyPhoneInvalid => 'Check the number';
@@ -1599,8 +1599,22 @@ class AppLocalizationsEn extends AppLocalizations {
       'The access is already granted — the invitation is yours to pass on';
 
   @override
+  String get familyInviteSending => 'Sending…';
+
+  @override
+  String get familyInviteHandoff =>
+      'Pass the invitation on yourself — that way you can see it arrived:';
+
+  @override
+  String get familyOpenWhatsApp => 'Open WhatsApp';
+
+  @override
+  String get familyWhatsAppNotOpened =>
+      'WhatsApp did not open — copy the invitation';
+
+  @override
   String get familyInviteExplain =>
-      'The app does not send email. Give a phone number and the invitation goes to WhatsApp; otherwise copy it and pass it on yourself.';
+      'The app does not send email. The invitation appears here — open it in WhatsApp or copy it, whichever suits.';
 
   @override
   String get familyCopyInvite => 'Copy the invitation';
@@ -1666,25 +1680,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get familySelfInvite => 'That is your own address';
-
-  @override
-  String get voiceListening => 'Listening…';
-
-  @override
-  String get voiceSpeakNow => 'Speak now';
-
-  @override
-  String get voiceFailed => 'Could not recognize speech';
-
-  @override
-  String get voiceUnavailable =>
-      'The microphone is unavailable — you can type the note';
-
-  @override
-  String get voiceDictate => 'Dictate the note';
-
-  @override
-  String get voiceStop => 'Stop recording';
 
   @override
   String get quickFeedHint => 'breast or bottle';
