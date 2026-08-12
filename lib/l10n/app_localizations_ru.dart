@@ -1513,6 +1513,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get homeQuickLog => 'Быстрая запись';
 
   @override
+  String get homeSpeak => 'Сказать голосом';
+
+  @override
+  String get homeRepeat => 'Как в прошлый раз';
+
+  @override
   String get homeRecent => 'Последние события';
 
   @override

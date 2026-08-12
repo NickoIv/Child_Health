@@ -1495,6 +1495,12 @@ class AppLocalizationsKk extends AppLocalizations {
   String get homeQuickLog => 'Жылдам жазба';
 
   @override
+  String get homeSpeak => 'Дауыспен айту';
+
+  @override
+  String get homeRepeat => 'Өткендегідей';
+
+  @override
   String get homeRecent => 'Соңғы оқиғалар';
 
   @override

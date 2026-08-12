@@ -1503,6 +1503,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeQuickLog => 'Quick log';
 
   @override
+  String get homeSpeak => 'Say it out loud';
+
+  @override
+  String get homeRepeat => 'Same as last time';
+
+  @override
   String get homeRecent => 'Recent events';
 
   @override

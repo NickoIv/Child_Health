@@ -1,6 +1,7 @@
 import 'package:child_health_tracker/app.dart';
 import 'package:child_health_tracker/core/l10n/app_locale.dart';
 import 'package:child_health_tracker/core/voice/dictation.dart';
+import 'package:child_health_tracker/features/dashboard/voice_note_button.dart';
 import 'package:child_health_tracker/l10n/app_localizations.dart';
 import 'package:child_health_tracker/models/development_log.dart';
 import 'package:child_health_tracker/providers.dart';
@@ -14,6 +15,14 @@ import 'package:intl/date_symbol_data_local.dart';
 /// What is tested here is mostly what the button refuses to do: save on its
 /// own, overwrite what was already typed, keep listening for ever, or leave
 /// the parent stuck when the microphone is refused.
+/// The microphone inside a given widget, so the home screen's own one — added
+/// when speaking became the fast way in — cannot be matched by accident.
+Finder micIn(Finder of) =>
+    find.descendant(of: of, matching: find.byIcon(Icons.mic_none));
+
+Finder stopIn(Finder of) =>
+    find.descendant(of: of, matching: find.byIcon(Icons.stop_rounded));
+
 void main() {
   setUpAll(initializeDateFormatting);
 
@@ -42,6 +51,10 @@ void main() {
 
     // The note field lives on the "choose a time" branch of the quick sheet,
     // which is the only place in the app that has one.
+    //
+    // Every finder below is scoped to the sheet: the home screen has a
+    // microphone of its own now — the one-tap way into the assistant — and a
+    // bare `micIn(find.byType(VoiceNoteButton))` matches both.
     await tester.tap(find.widgetWithText(InkWell, l.quickFeed));
     await tester.pumpAndSettle();
     await tester.tap(find.text(l.quickTimeChoose));
@@ -54,7 +67,7 @@ void main() {
     final l = await AppLocalizations.delegate.load(defaultLocale);
 
     expect(find.text(l.quickNoteOptional), findsOneWidget);
-    expect(find.byIcon(Icons.mic_none), findsOneWidget);
+    expect(micIn(find.byType(VoiceNoteButton)), findsOneWidget);
     // Nothing is announced until it is asked for.
     expect(find.text(l.voiceListening), findsNothing);
   });
@@ -66,7 +79,7 @@ void main() {
     await openNoteStep(tester, dictation: fake);
     final l = await AppLocalizations.delegate.load(defaultLocale);
 
-    await tester.tap(find.byIcon(Icons.mic_none));
+    await tester.tap(micIn(find.byType(VoiceNoteButton)));
     await tester.pump();
     await tester.pump();
 
@@ -77,12 +90,12 @@ void main() {
 
     // The mic turned into a stop control, and the halo is animating: pumping
     // a fixed span rather than settling, because a pulse never settles.
-    expect(find.byIcon(Icons.stop_rounded), findsOneWidget);
+    expect(stopIn(find.byType(VoiceNoteButton)), findsOneWidget);
     await tester.pump(const Duration(milliseconds: 450));
     await tester.pump(const Duration(milliseconds: 450));
 
     // Wound down by hand so the test does not end mid-animation.
-    await tester.tap(find.byIcon(Icons.stop_rounded));
+    await tester.tap(stopIn(find.byType(VoiceNoteButton)));
     await tester.pumpAndSettle();
   });
 
@@ -93,7 +106,7 @@ void main() {
     await openNoteStep(tester, dictation: fake);
     final l = await AppLocalizations.delegate.load(defaultLocale);
 
-    await tester.tap(find.byIcon(Icons.mic_none));
+    await tester.tap(micIn(find.byType(VoiceNoteButton)));
     await tester.pump();
     await tester.pump();
 
@@ -104,7 +117,7 @@ void main() {
     // buttons are still untouched, and no entry exists yet.
     expect(find.text('Съел половину бутылочки'), findsOneWidget);
     expect(find.text(l.quickNoteOptional), findsOneWidget);
-    expect(find.byIcon(Icons.mic_none), findsOneWidget);
+    expect(micIn(find.byType(VoiceNoteButton)), findsOneWidget);
 
     final container = ProviderScope.containerOf(
       tester.element(find.byType(TextField).first),
@@ -126,7 +139,7 @@ void main() {
     await tester.enterText(find.byType(TextField).first, 'Ночью');
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byIcon(Icons.mic_none));
+    await tester.tap(micIn(find.byType(VoiceNoteButton)));
     await tester.pump();
     await tester.pump();
     fake.say('плакал');
@@ -140,12 +153,12 @@ void main() {
     await openNoteStep(tester, dictation: fake);
     final l = await AppLocalizations.delegate.load(defaultLocale);
 
-    await tester.tap(find.byIcon(Icons.mic_none));
+    await tester.tap(micIn(find.byType(VoiceNoteButton)));
     await tester.pump();
     await tester.pump();
     expect(fake.listening, isTrue);
 
-    await tester.tap(find.byIcon(Icons.stop_rounded));
+    await tester.tap(stopIn(find.byType(VoiceNoteButton)));
     await tester.pumpAndSettle();
 
     expect(fake.listening, isFalse);
@@ -153,7 +166,7 @@ void main() {
     // Stopping on purpose is not a failure, so nothing is complained about.
     expect(find.text(l.voiceListening), findsNothing);
     expect(find.text(l.voiceFailed), findsNothing);
-    expect(find.byIcon(Icons.mic_none), findsOneWidget);
+    expect(micIn(find.byType(VoiceNoteButton)), findsOneWidget);
   });
 
   testWidgets('it gives up on its own after thirty seconds', (tester) async {
@@ -161,7 +174,7 @@ void main() {
     await openNoteStep(tester, dictation: fake);
     final l = await AppLocalizations.delegate.load(defaultLocale);
 
-    await tester.tap(find.byIcon(Icons.mic_none));
+    await tester.tap(micIn(find.byType(VoiceNoteButton)));
     await tester.pump();
     await tester.pump();
 
@@ -178,7 +191,7 @@ void main() {
     await openNoteStep(tester, dictation: fake);
     final l = await AppLocalizations.delegate.load(defaultLocale);
 
-    await tester.tap(find.byIcon(Icons.mic_none));
+    await tester.tap(micIn(find.byType(VoiceNoteButton)));
     await tester.pump();
     await tester.pump();
 
@@ -186,7 +199,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(l.voiceFailed), findsOneWidget);
-    expect(find.byIcon(Icons.mic_none), findsOneWidget);
+    expect(micIn(find.byType(VoiceNoteButton)), findsOneWidget);
   });
 
   testWidgets('a refused microphone leaves the keyboard working', (
@@ -196,7 +209,7 @@ void main() {
     await openNoteStep(tester, dictation: fake);
     final l = await AppLocalizations.delegate.load(defaultLocale);
 
-    await tester.tap(find.byIcon(Icons.mic_none));
+    await tester.tap(micIn(find.byType(VoiceNoteButton)));
     await tester.pumpAndSettle();
 
     // Soft, once, and no dead end: the field is still there and still takes

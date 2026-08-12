@@ -17,6 +17,9 @@ import 'dashboard_config.dart';
 import 'focus_home.dart';
 import 'now_card.dart';
 import 'smart_card.dart';
+import 'quick_log_sheet.dart';
+import 'repeat_last_feed.dart';
+import 'speak_button.dart';
 import 'timer_card.dart';
 import '../family/digest_card.dart';
 import '../family/invite_banner.dart';
@@ -35,11 +38,53 @@ import '../family/moments_card.dart';
 /// holding a baby in one arm can write down that she fed him, and every card
 /// between her and those four buttons was costing her seconds she was paying
 /// for at three in the morning.
-class DashboardScreen extends ConsumerWidget {
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+  /// So a shortcut opens its sheet once and not again on every rebuild.
+  bool _shortcutHandled = false;
+
+  /// What a long press on the app icon asked for.
+  ///
+  /// The shortest path to a record there is: the sheet is open before the app
+  /// has finished deciding what else to draw, and she never sees the home
+  /// screen at all. `web/manifest.json` holds the entries; this is the half
+  /// that makes them mean something.
+  ///
+  /// Unknown values are ignored rather than defaulted — a URL somebody typed
+  /// should not open a feeding sheet.
+  static const _shortcuts = <String, QuickLogAction>{
+    'feeding': QuickLogAction.feeding,
+    'nappy': QuickLogAction.nappy,
+    'sleep': QuickLogAction.sleep,
+    'temperature': QuickLogAction.temperature,
+  };
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_shortcutHandled) return;
+
+    final asked = GoRouterState.of(context).uri.queryParameters['log'];
+    final action = _shortcuts[asked];
+    if (action == null) return;
+
+    _shortcutHandled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final child = ref.read(selectedChildProvider);
+      if (child == null) return;
+      showQuickLogSheet(context, action: action, childId: child.id);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final child = ref.watch(selectedChildProvider);
     if (child == null) return const NoChildPlaceholder();
 
@@ -58,6 +103,11 @@ class DashboardScreen extends ConsumerWidget {
         RunningTimerCard(childId: child.id),
         SectionLabel(text: AppLocalizations.of(context).homeQuickLog),
         PrimaryActions(child: child),
+        // Under the four cards, not over them: it is the faster way in for
+        // the sentence that has two things in it, and the slower one for
+        // «покормила» on its own.
+        const SpeakButton(),
+        RepeatLastFeed(child: child),
         NightSleepLink(childId: child.id),
         const SizedBox(height: 20),
         // At most one, picked by priority rather than stacked.

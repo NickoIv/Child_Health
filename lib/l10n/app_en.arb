@@ -473,6 +473,8 @@
   "voiceMl": "ml",
   "voiceAsNote": "Will be saved as a note",
   "homeQuickLog": "Quick log",
+  "homeSpeak": "Say it out loud",
+  "homeRepeat": "Same as last time",
   "homeRecent": "Recent events",
   "homeNothingYet": "Nothing recorded yet",
   "homeMore": "Everything else is in the Assistant tab",

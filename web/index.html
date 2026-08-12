@@ -30,6 +30,9 @@
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
+  <!-- The warm page, not Flutter's template blue: this is the colour the
+       browser paints its own chrome and the launch splash with. -->
+  <meta name="theme-color" content="#FAF7F4">
   <title>Календарь развития и здоровья ребёнка</title>
   <link rel="manifest" href="manifest.json">
 </head>
@@ -93,12 +96,19 @@
           })
         );
       }
-      // Cache storage, on the other hand, is Flutter's alone: the messaging
-      // worker keeps no caches, so there is nothing here to spare.
+      // Flutter's caches, and only Flutter's. This used to clear every cache
+      // on the origin, which was right while nothing else kept one — and is
+      // wrong now that sw.js holds the shell that makes the app open with no
+      // signal. Wiping it on every load would leave that worker with nothing
+      // to serve, which is the same blank page by a longer route.
       if (window.caches && caches.keys) {
         work.push(
           caches.keys().then(function (keys) {
-            return Promise.all(keys.map(function (k) { return caches.delete(k); }));
+            return Promise.all(
+              keys
+                .filter(function (k) { return k.indexOf('flutter-') === 0; })
+                .map(function (k) { return caches.delete(k); })
+            );
           })
         );
       }
@@ -112,6 +122,16 @@
         })
         .catch(function () {})
         .then(start, start);
+
+      // Our own worker, registered after the app is on its way rather than
+      // before it: it exists for the second visit, and nothing about the
+      // first one should wait on it. Network-first — see web/sw.js — so it
+      // can never serve a stale build the way Flutter's cache-first one did.
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('sw.js').catch(function () {});
+        });
+      }
     })();
   </script>
 </body>

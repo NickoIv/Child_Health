@@ -2704,6 +2704,18 @@ abstract class AppLocalizations {
   /// **'Быстрая запись'**
   String get homeQuickLog;
 
+  /// No description provided for @homeSpeak.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сказать голосом'**
+  String get homeSpeak;
+
+  /// No description provided for @homeRepeat.
+  ///
+  /// In ru, this message translates to:
+  /// **'Как в прошлый раз'**
+  String get homeRepeat;
+
   /// No description provided for @homeRecent.
   ///
   /// In ru, this message translates to:

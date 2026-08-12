@@ -95,6 +95,16 @@ if (Test-Path build\web\flutter_service_worker.js) {
   Remove-Item build\web\flutter_service_worker.js -Force
 }
 
+# Ours, on the other hand, has to be there. A build that lost it would ship an
+# index.html registering a worker that 404s, and the app would be offline-blind
+# again without anything looking wrong. web/sw.js is the opposite strategy to
+# Flutter's - network first, cache only as a fallback - so it cannot hide a
+# deploy the way the cache-first one did.
+if (-not (Test-Path build\web\sw.js)) {
+  throw 'build/web/sw.js is missing - the offline shell would not be served'
+}
+
+
 # Rules and indexes first, and from now on every time.
 #
 # They were a manual step documented in the README, so they drifted: the
