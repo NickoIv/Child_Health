@@ -62,6 +62,14 @@ class FamilySection extends ConsumerStatefulWidget {
 class _FamilySectionState extends ConsumerState<FamilySection> {
   final _email = TextEditingController();
   final _phone = TextEditingController();
+
+  /// So a missing address can put the cursor where it is missing from.
+  ///
+  /// «В ватсап просто пишет проверьте адрес»: he filled in the WhatsApp
+  /// number, left the email alone, and was answered about a field he had
+  /// deliberately not touched. A red line under a box he was not looking at
+  /// is not an explanation.
+  final _emailFocus = FocusNode();
   String? _error;
   String? _phoneError;
   bool _sending = false;
@@ -82,6 +90,7 @@ class _FamilySectionState extends ConsumerState<FamilySection> {
   void dispose() {
     _email.dispose();
     _phone.dispose();
+    _emailFocus.dispose();
     super.dispose();
   }
 
@@ -192,13 +201,24 @@ class _FamilySectionState extends ConsumerState<FamilySection> {
             const SizedBox(height: 16),
             TextField(
               controller: _email,
+              focusNode: _emailFocus,
               keyboardType: TextInputType.emailAddress,
               autocorrect: false,
               decoration: InputDecoration(
                 labelText: l.familyInviteEmail,
+                // An example inside the box, so the field says what belongs
+                // in it before anyone has pressed anything. On the screen he
+                // sent, this box was empty, its label was a category and the
+                // only writing on it appeared after the mistake.
+                hintText: l.familyInviteEmailHint,
                 helperText: '${l.familyInviteHint}. ${l.familyInviteExplain}',
                 helperMaxLines: 4,
                 errorText: _error,
+                // Material swaps the helper out for the error, so whatever
+                // the error says is now the only explanation on the field —
+                // and it has to be allowed to be a sentence rather than a
+                // truncated one.
+                errorMaxLines: 4,
                 prefixIcon: const Icon(Icons.alternate_email),
               ),
               onSubmitted: (_) => _invite(child.id, child.name),
@@ -319,7 +339,14 @@ class _FamilySectionState extends ConsumerState<FamilySection> {
     final email = normalizeEmail(_email.text);
 
     if (!looksLikeEmail(email)) {
-      setState(() => _error = l.familyEmailInvalid);
+      // Empty and wrong are not the same mistake. A number in the WhatsApp
+      // box and nothing here means he thinks the number *is* the invitation,
+      // and «проверьте адрес» answers a question he did not ask — so this
+      // says what the address is for instead, and puts the cursor in it.
+      setState(
+        () => _error = email.isEmpty ? l.familyEmailRequired : l.familyEmailInvalid,
+      );
+      _emailFocus.requestFocus();
       return;
     }
     // Typed but unusable is worth saying; left alone is not.

@@ -1561,6 +1561,9 @@ class AppLocalizationsKk extends AppLocalizations {
   String get familyInviteEmail => 'Электрондық пошта';
 
   @override
+  String get familyInviteEmailHint => 'мысалы, papa@gmail.com';
+
+  @override
   String get familyInviteHint =>
       'Ол кіретін мекенжай — қолжетімділік соған ашылады';
 
@@ -1625,6 +1628,10 @@ class AppLocalizationsKk extends AppLocalizations {
 
   @override
   String get familyEmailInvalid => 'Мекенжайды тексеріңіз';
+
+  @override
+  String get familyEmailRequired =>
+      'Пошта қажет — тек телефон нөмірімен қолжетімділік ашуға болмайды. Ол кіретін мекенжайды жазыңыз';
 
   @override
   String get familyPending => 'Растауды күтуде';

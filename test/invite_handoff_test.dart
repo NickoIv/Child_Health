@@ -155,6 +155,31 @@ void main() {
     expect(find.text(l.familyPending), findsOneWidget);
   });
 
+  testWidgets('a number with no address explains what the address is for', (
+    tester,
+  ) async {
+    // The screen he sent: the WhatsApp number filled in, the email box empty,
+    // and «Проверьте адрес» in red underneath it. He had not mistyped an
+    // address — he thought the number was the invitation. Answering him about
+    // a field he deliberately left alone explains nothing.
+    final family = MemoryFamilyRepository();
+    addTearDown(family.dispose);
+    await pumpCard(tester, family: family);
+    final l = await AppLocalizations.delegate.load(defaultLocale);
+
+    await invite(tester, l, email: '', phone: '+7 701 908 88 10');
+    await tester.pumpAndSettle();
+
+    expect(find.text(l.familyEmailRequired), findsOneWidget);
+    expect(find.text(l.familyEmailInvalid), findsNothing);
+    // And the cursor is put where the missing thing goes.
+    expect(
+      FocusManager.instance.primaryFocus?.context
+          ?.findAncestorWidgetOfExactType<TextField>(),
+      isNotNull,
+    );
+  });
+
   testWidgets('a refused address produces no panel at all', (tester) async {
     final family = MemoryFamilyRepository();
     addTearDown(family.dispose);
@@ -176,6 +201,8 @@ void main() {
         l.familyInviteHandoff,
         l.familyOpenWhatsApp,
         l.familyWhatsAppNotOpened,
+        l.familyEmailRequired,
+        l.familyInviteEmailHint,
       ]) {
         expect(s.trim(), isNotEmpty, reason: locale.languageCode);
       }

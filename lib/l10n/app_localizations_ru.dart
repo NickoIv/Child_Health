@@ -1579,6 +1579,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get familyInviteEmail => 'Электронная почта';
 
   @override
+  String get familyInviteEmailHint => 'например, papa@gmail.com';
+
+  @override
   String get familyInviteHint =>
       'Адрес, которым он входит в приложение — по нему и открывается доступ';
 
@@ -1643,6 +1646,10 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get familyEmailInvalid => 'Проверьте адрес';
+
+  @override
+  String get familyEmailRequired =>
+      'Нужна почта — по одному телефону доступ открыть некому. Впишите адрес, которым он входит в приложение';
 
   @override
   String get familyPending => 'Ожидает подтверждения';

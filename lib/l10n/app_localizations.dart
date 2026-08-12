@@ -2824,6 +2824,12 @@ abstract class AppLocalizations {
   /// **'Электронная почта'**
   String get familyInviteEmail;
 
+  /// No description provided for @familyInviteEmailHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'например, papa@gmail.com'**
+  String get familyInviteEmailHint;
+
   /// No description provided for @familyInviteHint.
   ///
   /// In ru, this message translates to:
@@ -2931,6 +2937,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Проверьте адрес'**
   String get familyEmailInvalid;
+
+  /// No description provided for @familyEmailRequired.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нужна почта — по одному телефону доступ открыть некому. Впишите адрес, которым он входит в приложение'**
+  String get familyEmailRequired;
 
   /// No description provided for @familyPending.
   ///

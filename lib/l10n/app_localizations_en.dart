@@ -1569,6 +1569,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get familyInviteEmail => 'Email';
 
   @override
+  String get familyInviteEmailHint => 'for example, dad@gmail.com';
+
+  @override
   String get familyInviteHint =>
       'The address they sign in with — it is what the access is granted to';
 
@@ -1633,6 +1636,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get familyEmailInvalid => 'Check the address';
+
+  @override
+  String get familyEmailRequired =>
+      'An email is needed — a phone number alone has nobody to grant access to. Give the address they sign in with';
 
   @override
   String get familyPending => 'Pending';
