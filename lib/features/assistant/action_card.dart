@@ -204,10 +204,16 @@ class _AssistantActionCardState extends ConsumerState<AssistantActionCard> {
   }
 
   IconData _icon(AssistantAction action) => switch (action) {
+    // Every action that writes an entry shares one glyph: what the card has
+    // to say is «this will be written down», and eight different pictograms
+    // for eight kinds of entry would be eight things to learn.
     LogFeedingAction() ||
     LogSleepAction() ||
     LogNappyAction() ||
-    LogTemperatureAction() => Icons.edit_note_outlined,
+    LogTemperatureAction() ||
+    LogGrowthAction() ||
+    LogSolidAction() ||
+    LogPumpingAction() => Icons.edit_note_outlined,
     CreateReminderAction() => Icons.notifications_outlined,
     OpenScreenAction() || OpenArticleAction() => Icons.open_in_new,
     BuildReportAction() => Icons.picture_as_pdf_outlined,

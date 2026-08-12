@@ -219,6 +219,81 @@ void main() {
     });
   });
 
+  group('the three kinds it could not write before', () {
+    test('weight and height land on one measurement, not two', () {
+      // Two entries a second apart would draw two points on the growth chart
+      // for one moment on one set of scales.
+      final parsed = parseAssistantReply(
+        reply('log_growth', {'weight_kg': 5.2, 'height_cm': 58}),
+        now: now,
+      );
+      final action = parsed.action;
+      expect(action, isA<LogGrowthAction>());
+
+      final draft = assistantDraft(action!, childId: 'c1', at: now);
+      expect(draft?.type, LogType.measurement);
+      expect(draft?.metrics.weightKg, 5.2);
+      expect(draft?.metrics.heightCm, 58);
+    });
+
+    test('one of the two figures is enough', () {
+      final parsed = parseAssistantReply(
+        reply('log_growth', {'weight_kg': 5.2}),
+        now: now,
+      );
+      expect((parsed.action! as LogGrowthAction).heightCm, isNull);
+    });
+
+    test('but neither of them is not', () {
+      // Nothing said, nothing written. An empty measurement on the chart is a
+      // point at zero.
+      expect(
+        parseAssistantReply(reply('log_growth', {}), now: now).action,
+        isNull,
+      );
+      expect(
+        parseAssistantReply(
+          reply('log_growth', {'weight_kg': 400}),
+          now: now,
+        ).action,
+        isNull,
+      );
+    });
+
+    test('a solid keeps the name she said', () {
+      // The name is the whole point: the three-day watch and the allergen
+      // table in the medical card are built on it.
+      final parsed = parseAssistantReply(
+        reply('log_solid', {'food': 'кабачок'}),
+        now: now,
+      );
+      final draft = assistantDraft(parsed.action!, childId: 'c1', at: now);
+      expect(draft?.food, 'кабачок');
+      expect(draft?.feedingSide, FeedingSide.solid);
+      expect(draft?.type, LogType.feeding);
+    });
+
+    test('a solid with no name is not a solid', () {
+      expect(
+        parseAssistantReply(reply('log_solid', {'food': '  '}), now: now).action,
+        isNull,
+      );
+    });
+
+    test('pumping is a note and never a feed', () {
+      // Counting it in the day's tally would tell a mother checking herself
+      // against «8-12 кормлений» that she is doing better than she is.
+      final parsed = parseAssistantReply(
+        reply('log_pumping', {'milk_ml': 120}),
+        now: now,
+      );
+      final draft = assistantDraft(parsed.action!, childId: 'c1', at: now);
+      expect(draft?.type, LogType.note);
+      expect(draft?.milkMl, 120);
+      expect(draft?.isPumping, isTrue);
+    });
+  });
+
   group('the entry a confirmed action becomes', () {
     test('is the same shape the quick sheets write', () {
       final draft = assistantDraft(

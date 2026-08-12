@@ -12,6 +12,7 @@ import '../../core/theme/app_snack.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/motion.dart';
 import '../../core/voice/voice_commands.dart';
+import '../dashboard/voice_note_button.dart';
 import '../../knowledge/article.dart';
 import '../../models/development_log.dart';
 import '../../providers.dart';
@@ -496,20 +497,40 @@ class _AskState extends ConsumerState<_Ask> {
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Expanded(
-            child: TextField(
+            // The microphone belongs here more than anywhere else in the app,
+            // and until now this was the one field that did not have one.
+            //
+            // Everything else was already in place: this field both writes a
+            // feed down and answers a question — see [recordIn] — and the
+            // assistant can open a screen or create a reminder from what it
+            // reads. All of it needed a keyboard, which is the one thing a
+            // mother holding a baby at four in the morning does not have a
+            // hand for. Dictation existed and reached exactly one note field
+            // in a sheet.
+            //
+            // The same [VoiceNoteButton] as that note field, deliberately: it
+            // appends rather than replaces, it opens the microphone inside
+            // the tap — which is the only way iOS Safari allows it at all —
+            // and it says so quietly and gets out of the way when refused.
+            // Nothing is sent by speaking; the words land in the field and
+            // she still presses send.
+            child: VoiceNoteButton(
               controller: widget.controller,
-              focusNode: widget.focus,
-              autofocus: true,
-              maxLines: 5,
-              minLines: 1,
-              textInputAction: TextInputAction.send,
-              onSubmitted: (_) => widget.onSend(),
-              decoration: InputDecoration(
-                hintText: widget.hint,
-                isDense: true,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
+              field: TextField(
+                controller: widget.controller,
+                focusNode: widget.focus,
+                autofocus: true,
+                maxLines: 5,
+                minLines: 1,
+                textInputAction: TextInputAction.send,
+                onSubmitted: (_) => widget.onSend(),
+                decoration: InputDecoration(
+                  hintText: widget.hint,
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                 ),
               ),
             ),

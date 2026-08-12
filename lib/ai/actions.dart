@@ -84,6 +84,41 @@ class LogTemperatureAction extends AssistantAction {
   final double celsius;
 }
 
+/// Weight, height, or both.
+///
+/// The gap this closes was the widest of them: the app plots growth against
+/// the WHO standard on its own screen, and «записала вес 5 200» was the one
+/// sentence the assistant could not act on. A measurement is also the entry a
+/// parent is most likely to be holding a baby for.
+class LogGrowthAction extends AssistantAction {
+  const LogGrowthAction({this.weightKg, this.heightCm});
+
+  final double? weightKg;
+  final double? heightCm;
+
+  bool get isEmpty => weightKg == null && heightCm == null;
+}
+
+/// A spoonful of something, by name.
+///
+/// The name matters more than the fact: it is what the three-day watch and the
+/// allergen table in the medical card are built on, and what the assistant
+/// reads back when she asks «от чего его обсыпало».
+class LogSolidAction extends AssistantAction {
+  const LogSolidAction({required this.food, this.minutes});
+
+  final String food;
+  final int? minutes;
+}
+
+/// Milk expressed. A note, never a feed — counting it in the day's tally
+/// would flatter a mother checking herself against «8-12 кормлений».
+class LogPumpingAction extends AssistantAction {
+  const LogPumpingAction({required this.milkMl});
+
+  final int milkMl;
+}
+
 class CreateReminderAction extends AssistantAction {
   const CreateReminderAction({
     required this.title,
@@ -226,6 +261,24 @@ AssistantAction? _decode(String json, DateTime now) {
       final double celsius => LogTemperatureAction(celsius: celsius),
       _ => null,
     },
+    // Ranges wide enough for any child this app will meet and narrow enough
+    // that a misheard «пятьдесят два» cannot land as a plausible weight.
+    'log_growth' => switch (LogGrowthAction(
+      weightKg: _double(args['weight_kg'], 0.5, 60),
+      heightCm: _double(args['height_cm'], 20, 150),
+    )) {
+      final LogGrowthAction a when !a.isEmpty => a,
+      _ => null,
+    },
+    'log_solid' => switch ((args['food'] as String? ?? '').trim()) {
+      final String food when food.isNotEmpty && food.length <= 60 =>
+        LogSolidAction(food: food, minutes: _int(args['minutes'], 1, 240)),
+      _ => null,
+    },
+    'log_pumping' => switch (_int(args['milk_ml'], 1, 1000)) {
+      final int ml => LogPumpingAction(milkMl: ml),
+      _ => null,
+    },
     'create_reminder' => _reminder(args, now),
     'open_screen' => switch (args['path']) {
       final String path when allowedScreens.contains(path) => OpenScreenAction(
@@ -313,6 +366,8 @@ DevelopmentLog? assistantDraft(
     NappyKind? nappy,
     int? minutes,
     Severity? severity,
+    String? food,
+    int? milkMl,
   }) => DevelopmentLog(
     id: '',
     childId: childId,
@@ -327,6 +382,8 @@ DevelopmentLog? assistantDraft(
     nappyKind: nappy,
     durationMinutes: minutes,
     severity: severity,
+    food: food,
+    milkMl: milkMl,
   );
 
   return switch (action) {
@@ -358,6 +415,29 @@ DevelopmentLog? assistantDraft(
           : celsius >= 38.0
           ? Severity.moderate
           : null,
+    ),
+    // A measurement, which is what the growth chart reads. Both figures on one
+    // entry when both were said: two records dated a second apart would draw
+    // two points on a chart for one moment on a scale.
+    LogGrowthAction(:final weightKg, :final heightCm) => build(
+      LogType.measurement,
+      LogType.measurement.label,
+      metrics: Metrics(weightKg: weightKg, heightCm: heightCm),
+    ),
+    // A feed with a name on it — the same shape the «Прикорм» step writes, so
+    // the three-day watch and the allergen table pick it up without knowing
+    // it was spoken rather than tapped.
+    LogSolidAction(:final food, :final minutes) => build(
+      LogType.feeding,
+      LogType.feeding.label,
+      side: FeedingSide.solid,
+      minutes: minutes,
+      food: food,
+    ),
+    LogPumpingAction(:final milkMl) => build(
+      LogType.note,
+      LogTitles.pumping,
+      milkMl: milkMl,
     ),
     _ => null,
   };

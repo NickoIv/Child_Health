@@ -129,6 +129,11 @@ $actionMarker{"tool":"ИМЯ","args":{...}}
 - log_sleep — записать сон. args: minutes (1-1440, обязательно)
 - log_nappy — записать подгузник. args: kind ("wet" | "dirty" | "both")
 - log_temperature — записать температуру. args: celsius (34-43, обязательно)
+- log_growth — записать вес и рост. args: weight_kg (0.5-60, необяз.),
+  height_cm (20-150, необяз.) — хотя бы одно из двух
+- log_solid — записать прикорм. args: food (название продукта, обязательно),
+  minutes (1-240, необяз.)
+- log_pumping — записать сцеживание. args: milk_ml (1-1000, обязательно)
 - create_reminder — создать напоминание. args: title (текст),
   type ("medication" | "appointment"), in_days (через сколько дней, 0-730),
   time ("ЧЧ:ММ", необяз.)
