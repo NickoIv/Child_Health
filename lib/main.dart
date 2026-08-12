@@ -21,11 +21,14 @@ import 'providers.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Month and weekday names come from intl, not from the widget tree, so the
-  // date symbols have to be loaded before the first frame. All locales rather
-  // than one: the parent may have chosen English or Kazakh last time.
-  await initializeDateFormatting();
   final locale = await readSavedLocale();
+  // Month and weekday names come from intl, not from the widget tree, so the
+  // symbols have to be loaded before the first frame — but only for the
+  // language she is about to see. The bare call initialises every locale intl
+  // ships, which is a hundred and forty of them and none of the other
+  // hundred and thirty-seven can appear on this screen. The rest follow after
+  // the first frame, so switching language later still works.
+  await initializeDateFormatting(locale.languageCode);
   // Read before the first frame for the same reason as the language: drawing
   // the dark theme and then repainting light is worse than waiting a moment.
   final theme = await readSavedTheme();
@@ -40,14 +43,18 @@ Future<void> main() async {
     cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
   );
 
-  // Local reminders. Started before the first frame so a notification tapped
-  // from the lock screen has somewhere to arrive, and deliberately independent
-  // of Firebase Messaging above: push and local reminders run side by side.
+  // Local reminders, deliberately independent of Firebase Messaging: push and
+  // local reminders run side by side.
+  //
+  // Constructed here and started below, after `runApp`. Nothing on the first
+  // screen asks it anything, and a reminder that is scheduled a few hundred
+  // milliseconds into the session is scheduled for hours away — while a first
+  // frame that waits for the timezone database is a first frame she waits
+  // for.
   final notifications = NotificationService(
     null,
     lookupAppLocalizations(locale),
   );
-  await notifications.init();
 
   // Built here rather than by [ProviderScope] so the error log exists before
   // the first widget does: the errors most worth having are the ones thrown
@@ -130,4 +137,12 @@ Future<void> main() async {
       child: const ChildHealthApp(),
     ),
   );
+
+  // Everything that the first screen does not need, after the first screen.
+  //
+  // Both of these used to be awaited above, and between them they held the
+  // blank page open for the time it takes to load a timezone database and the
+  // date symbols of a hundred and forty languages.
+  unawaited(notifications.init());
+  unawaited(initializeDateFormatting());
 }
