@@ -813,10 +813,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get genderFemale => 'Девочка';
 
   @override
-  String get unitsMetric => 'Метрическая (см, кг)';
+  String get unitsMetric => 'Метрическая';
 
   @override
-  String get unitsImperial => 'Имперская (in, lb)';
+  String get unitsImperial => 'Имперская';
 
   @override
   String nightWakingsCount(int n) {
@@ -994,7 +994,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get feedbackAddressCopied => 'Адрес скопирован';
 
   @override
-  String get settingsLocation => 'Разработчик находится';
+  String get settingsLocation => 'Где сделано';
 
   @override
   String get logTitle => 'Журнал ошибок';
@@ -2380,7 +2380,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get settingsUnitsHint =>
-      'Измерения всегда хранятся в метрических единицах и пересчитываются только для показа — поэтому переключение ничего не портит в уже введённых данных.';
+      'Метрическая — сантиметры и килограммы, имперская — дюймы и фунты. Измерения всегда хранятся в метрических единицах и пересчитываются только для показа, поэтому переключение ничего не портит в уже введённых данных.';
 
   @override
   String get settingsTemperatureHint =>

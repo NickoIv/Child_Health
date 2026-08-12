@@ -1543,13 +1543,13 @@ abstract class AppLocalizations {
   /// No description provided for @unitsMetric.
   ///
   /// In ru, this message translates to:
-  /// **'Метрическая (см, кг)'**
+  /// **'Метрическая'**
   String get unitsMetric;
 
   /// No description provided for @unitsImperial.
   ///
   /// In ru, this message translates to:
-  /// **'Имперская (in, lb)'**
+  /// **'Имперская'**
   String get unitsImperial;
 
   /// No description provided for @nightWakingsCount.
@@ -1819,7 +1819,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsLocation.
   ///
   /// In ru, this message translates to:
-  /// **'Разработчик находится'**
+  /// **'Где сделано'**
   String get settingsLocation;
 
   /// No description provided for @logTitle.
@@ -4135,7 +4135,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsUnitsHint.
   ///
   /// In ru, this message translates to:
-  /// **'Измерения всегда хранятся в метрических единицах и пересчитываются только для показа — поэтому переключение ничего не портит в уже введённых данных.'**
+  /// **'Метрическая — сантиметры и килограммы, имперская — дюймы и фунты. Измерения всегда хранятся в метрических единицах и пересчитываются только для показа, поэтому переключение ничего не портит в уже введённых данных.'**
   String get settingsUnitsHint;
 
   /// No description provided for @settingsTemperatureHint.

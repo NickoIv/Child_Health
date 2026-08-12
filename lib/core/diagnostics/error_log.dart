@@ -23,6 +23,7 @@ class LoggedError {
     required this.at,
     required this.message,
     required this.where,
+    this.doing = '',
   });
 
   final DateTime at;
@@ -33,10 +34,22 @@ class LoggedError {
   /// web is minified into uselessness anyway.
   final String where;
 
+  /// What the framework was doing, in its own words — «building NowCard»,
+  /// «during layout».
+  ///
+  /// The one part of a web crash report that survives minification, and it
+  /// was being thrown away. A log that says only `Null check operator used on
+  /// a null value` and `main.dart.js:56208:147` cannot be acted on at all:
+  /// the line number belongs to a build that no longer exists by the time
+  /// anyone reads it, and the message is the most common exception in Dart.
+  /// The widget's name is not renamed by dart2js.
+  final String doing;
+
   Map<String, Object?> toJson() => {
     'at': at.toIso8601String(),
     'message': message,
     'where': where,
+    'doing': doing,
   };
 
   static LoggedError? fromJson(Map<String, Object?> map) {
@@ -46,6 +59,7 @@ class LoggedError {
       at: at,
       message: map['message'] as String? ?? '',
       where: map['where'] as String? ?? '',
+      doing: map['doing'] as String? ?? '',
     );
   }
 }
@@ -93,11 +107,12 @@ class ErrorLog extends Notifier<List<LoggedError>> {
   /// Writes one down. Never throws and never awaits at the call site: this
   /// runs inside an error handler, and an error handler that can fail is a
   /// crash on top of a crash.
-  void record(Object error, StackTrace? stack) {
+  void record(Object error, StackTrace? stack, {String doing = ''}) {
     final entry = LoggedError(
       at: DateTime.now(),
       message: _trim(scrubbed(error.toString())),
       where: _firstFrame(stack),
+      doing: _trim(scrubbed(doing)),
     );
 
     state = [entry, ...state].take(errorLogLimit).toList();
@@ -125,6 +140,9 @@ class ErrorLog extends Notifier<List<LoggedError>> {
       buffer
         ..writeln('— ${e.at.toIso8601String()}')
         ..writeln(e.message);
+      // Before the stack line, because it is the one of the two that is
+      // still readable a week and three builds later.
+      if (e.doing.isNotEmpty) buffer.writeln(e.doing);
       if (e.where.isNotEmpty) buffer.writeln(e.where);
       buffer.writeln();
     }
@@ -205,7 +223,15 @@ final errorLogProvider = NotifierProvider<ErrorLog, List<LoggedError>>(
 void installErrorLogging(ErrorLog log) {
   final previous = FlutterError.onError;
   FlutterError.onError = (details) {
-    log.record(details.exception, details.stack);
+    // `context` is the framework's own sentence about what it was doing —
+    // «building NowCard», «during layout» — and `library` names which part of
+    // it complained. Both are plain strings that dart2js does not rename,
+    // which makes them the only durable part of a crash report on the web.
+    final doing = [
+      details.context?.toDescription() ?? '',
+      details.library ?? '',
+    ].where((s) => s.isNotEmpty).join(' · ');
+    log.record(details.exception, details.stack, doing: doing);
     previous?.call(details);
   };
 

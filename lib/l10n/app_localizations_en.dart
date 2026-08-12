@@ -814,10 +814,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get genderFemale => 'Girl';
 
   @override
-  String get unitsMetric => 'Metric (cm, kg)';
+  String get unitsMetric => 'Metric';
 
   @override
-  String get unitsImperial => 'Imperial (in, lb)';
+  String get unitsImperial => 'Imperial';
 
   @override
   String nightWakingsCount(int n) {
@@ -989,7 +989,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get feedbackAddressCopied => 'Address copied';
 
   @override
-  String get settingsLocation => 'Developer is based in';
+  String get settingsLocation => 'Made in';
 
   @override
   String get logTitle => 'Error log';
@@ -2359,7 +2359,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsUnitsHint =>
-      'Measurements are always stored in metric and converted only for display, so switching never disturbs anything you have already entered.';
+      'Metric is centimetres and kilograms, imperial is inches and pounds. Measurements are always stored in metric and converted only for display, so switching never disturbs anything you have already entered.';
 
   @override
   String get settingsTemperatureHint =>

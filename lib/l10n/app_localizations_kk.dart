@@ -811,10 +811,10 @@ class AppLocalizationsKk extends AppLocalizations {
   String get genderFemale => 'Қыз';
 
   @override
-  String get unitsMetric => 'Метрлік (см, кг)';
+  String get unitsMetric => 'Метрлік';
 
   @override
-  String get unitsImperial => 'Империялық (in, lb)';
+  String get unitsImperial => 'Империялық';
 
   @override
   String nightWakingsCount(int n) {
@@ -983,7 +983,7 @@ class AppLocalizationsKk extends AppLocalizations {
   String get feedbackAddressCopied => 'Мекенжай көшірілді';
 
   @override
-  String get settingsLocation => 'Әзірлеуші орналасқан жері';
+  String get settingsLocation => 'Жасалған жері';
 
   @override
   String get logTitle => 'Қателер журналы';
@@ -2343,7 +2343,7 @@ class AppLocalizationsKk extends AppLocalizations {
 
   @override
   String get settingsUnitsHint =>
-      'Өлшемдер әрқашан метрлік бірліктерде сақталып, тек көрсету үшін қайта есептеледі — сондықтан ауыстыру енгізілген деректерге зиян тигізбейді.';
+      'Метрлік — сантиметр мен килограмм, империялық — дюйм мен фунт. Өлшемдер әрқашан метрлік бірліктерде сақталып, тек көрсету үшін қайта есептеледі — сондықтан ауыстыру енгізілген деректерге зиян тигізбейді.';
 
   @override
   String get settingsTemperatureHint =>

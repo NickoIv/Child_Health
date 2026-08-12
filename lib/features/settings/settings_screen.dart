@@ -62,20 +62,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     return PageBody(
       children: [
-        Row(
-          children: [
-            IconButton(
-              onPressed: () => context.go('/'),
-              icon: const Icon(Icons.arrow_back),
-              tooltip: l.commonBack,
-            ),
-            Expanded(
-              child: Text(l.settingsTitle,
-                  style: theme.textTheme.titleLarge),
-            ),
-          ],
+        // The way back, and no second title. The bar above this now names the
+        // screen — it used to say «Обзор» over the settings, which is why the
+        // page printed its own heading underneath it. One of the two had to
+        // go and it was not the one at the top of the window.
+        Align(
+          alignment: Alignment.centerLeft,
+          child: IconButton(
+            onPressed: () => context.go('/'),
+            icon: const Icon(Icons.arrow_back),
+            tooltip: l.commonBack,
+          ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 4),
 
         SectionCard(
           title: l.settingsParent,
@@ -125,7 +124,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   for (final u in UnitSystem.values)
                     ButtonSegment(
                       value: u,
-                      label: Text(u.localizedLabel(l)),
+                      // One line each. «Метрическая (см, кг)» wrapped inside
+                      // its half of the control and «Имперская (in, lb)» did
+                      // not, so the two halves of a toggle were different
+                      // heights — which reads as a fault rather than as a
+                      // choice. The units themselves are in the paragraph
+                      // under it, where there is room for them.
+                      label: Text(
+                        u.localizedLabel(l),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                 ],
                 selected: {settings.unitSystem},
@@ -747,33 +756,45 @@ class _AboutRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.baseline,
-      textBaseline: TextBaseline.alphabetic,
+    // Label above the value, not beside it.
+    //
+    // It was a 96-pixel column, and «РАЗРАБОТЧИК» in spaced capitals does not
+    // fit in 96 pixels — so it broke in the middle of the word and the card
+    // read «РАЗРАБОТЧИ / К». There is no width that fixes that: the label is
+    // one word in Russian and three in Kazakh, and a fixed column has to be
+    // wrong for one of them. Stacked, nothing can break mid-word and the
+    // values line up on the left where the eye is already going.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          width: 96,
-          child: Text(
-            label.toUpperCase(),
-            style: AppTheme.microLabel(theme.brightness),
-          ),
+        Text(
+          label.toUpperCase(),
+          style: AppTheme.microLabel(theme.brightness),
         ),
-        if (leading case final mark?) ...[
-          // Nudged down off the alphabetic baseline this Row aligns on: a
-          // rectangle sitting exactly on it reads as hanging above the text.
-          Padding(
-            padding: const EdgeInsets.only(right: 7, top: 1),
-            child: mark,
-          ),
-        ],
-        Expanded(
-          child: Text(
-            value,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: Warm.onCard(theme.brightness),
+        const SizedBox(height: 3),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            if (leading case final mark?) ...[
+              // Nudged down off the alphabetic baseline this Row aligns on: a
+              // rectangle sitting exactly on it reads as hanging above the
+              // text.
+              Padding(
+                padding: const EdgeInsets.only(right: 7, top: 1),
+                child: mark,
+              ),
+            ],
+            Expanded(
+              child: Text(
+                value,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: Warm.onCard(theme.brightness),
+                ),
+              ),
             ),
-          ),
+          ],
         ),
       ],
     );

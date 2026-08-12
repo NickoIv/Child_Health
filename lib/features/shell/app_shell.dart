@@ -52,6 +52,16 @@ class AppShell extends ConsumerWidget {
     return best;
   }
 
+  /// What the bar says you are looking at.
+  ///
+  /// Settings live inside the shell but are not a destination — they are
+  /// reached from the account menu — so [_index] fell back to zero for them
+  /// and the bar over «Профиль и настройки» read «Обзор». A heading that
+  /// names a different screen is worse than no heading.
+  String _title(AppLocalizations l) => location == settingsPath
+      ? l.settingsTitle
+      : appDestinations[_index].label(l);
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isWide = MediaQuery.sizeOf(context).width >= 900;
@@ -62,7 +72,7 @@ class AppShell extends ConsumerWidget {
       // nothing ends up permanently underneath it.
       extendBody: !isWide,
       appBar: AppBar(
-        title: Text(appDestinations[_index].label(AppLocalizations.of(context))),
+        title: Text(_title(AppLocalizations.of(context))),
         actions: const [
           RoleChip(),
           SizedBox(width: 8),
