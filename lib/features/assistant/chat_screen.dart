@@ -12,6 +12,8 @@ import '../../core/theme/app_snack.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/motion.dart';
 import '../../core/voice/voice_commands.dart';
+import '../../core/weather/weather.dart';
+import '../../core/weather/weather_service.dart';
 import '../dashboard/voice_note_button.dart';
 import '../../knowledge/article.dart';
 import '../../models/development_log.dart';
@@ -227,12 +229,29 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     _scrollToEnd();
 
     final child = ref.read(selectedChildProvider);
+
+    // The weather, and only when she asked about going outside. That gate is
+    // the privacy of the whole feature: a parent who never asks about a walk
+    // is never prompted for a location and her coordinates never leave the
+    // phone. Refusing costs the figures and nothing else — the answer still
+    // arrives, without them.
+    var context = ref.read(assistantChildContextProvider);
+    if (asksAboutWeather(question)) {
+      final weather = await ref.read(weatherServiceProvider).current();
+      if (weather != null) {
+        final line = weatherContext(weather);
+        context = context == null || context.isEmpty
+            ? line
+            : [context, line].join('\n');
+      }
+    }
+
     final reply = await ref
         .read(assistantServiceProvider)
         .ask(
           question: question,
           ageMonths: child?.ageInMonths,
-          childContext: ref.read(assistantChildContextProvider),
+          childContext: context,
           // Everything before the question just added, so a follow-up like
           // «а если не поможет?» is answered instead of misread.
           history: _history(),
