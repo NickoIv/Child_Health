@@ -587,11 +587,16 @@ class _ReplyView extends StatelessWidget {
   Widget build(BuildContext context) {
     return switch (reply) {
       AssistantEmergency(:final matched) => _EmergencyCard(matched: matched),
-      AssistantAnswer(:final text, :final sources, :final action, :final mode) =>
+      AssistantAnswer(
+        :final text,
+        :final sources,
+        :final actions,
+        :final mode,
+      ) =>
         _AnswerCard(
           text: text,
           sources: sources,
-          action: action,
+          actions: actions,
           mode: mode,
         ),
       AssistantUnavailable(:final reason, :final isConfigurationIssue) =>
@@ -680,12 +685,12 @@ class _AnswerCard extends StatelessWidget {
     required this.text,
     required this.sources,
     required this.mode,
-    this.action,
+    this.actions = const [],
   });
 
   final String text;
   final List<KbArticle> sources;
-  final AssistantAction? action;
+  final List<AssistantAction> actions;
 
   /// Where the answer came from.
   final AnswerMode mode;
@@ -732,7 +737,7 @@ class _AnswerCard extends StatelessWidget {
             ],
             // Under the answer, not instead of it: the parent decides with
             // the reasoning in front of her, and declining costs nothing.
-            if (action != null) AssistantActionCard(action: action!),
+            if (actions.isNotEmpty) AssistantActionCard(actions: actions),
             if (sources.isNotEmpty) ...[
               const SizedBox(height: 16),
               Text(

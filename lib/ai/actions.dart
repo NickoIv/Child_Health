@@ -26,6 +26,7 @@ library;
 
 import 'dart:convert';
 
+import '../core/care/active_timer.dart';
 import '../knowledge/knowledge_base.dart';
 import '../models/development_log.dart';
 import '../models/reminder.dart';
@@ -119,6 +120,52 @@ class LogPumpingAction extends AssistantAction {
   final int milkMl;
 }
 
+/// A night, with how many times it broke.
+///
+/// Separate from [LogSleepAction] because the app treats it separately: a
+/// night carries the wake-ups the check-in, the heavy-day rule and the digest
+/// all read, and a nap does not. Written against the evening it began, which
+/// is where the rest of the app looks for it.
+class LogNightSleepAction extends AssistantAction {
+  const LogNightSleepAction({
+    required this.minutes,
+    required this.wakings,
+    this.feeds,
+  });
+
+  final int minutes;
+  final int wakings;
+  final int? feeds;
+}
+
+/// Something to ask at the next appointment, in her words.
+///
+/// It goes on the same list the medical card collects and the doctor's PDF
+/// prints with a blank column beside it. Asked at four in the morning and
+/// remembered at ten the following week is the whole point of it.
+class AskDoctorAction extends AssistantAction {
+  const AskDoctorAction({required this.question});
+
+  final String question;
+}
+
+/// Start the running clock, or stop it and write down what it counted.
+///
+/// The one action that touches something outside the diary: the timer lives
+/// on her own phone and nowhere else. Stopping it is what produces the entry,
+/// exactly as the card on the home screen does.
+class TimerAction extends AssistantAction {
+  const TimerAction({required this.start, this.kind, this.side});
+
+  /// False means stop and write down.
+  final bool start;
+
+  /// What is being timed. Null on a stop, which ends whatever was running.
+  final TimerKind? kind;
+
+  final FeedingSide? side;
+}
+
 class CreateReminderAction extends AssistantAction {
   const CreateReminderAction({
     required this.title,
@@ -154,12 +201,26 @@ class BuildReportAction extends AssistantAction {
   const BuildReportAction();
 }
 
+/// How many actions one answer may carry.
+///
+/// Three, because «покормила левой пятнадцать минут и поменяла подгузник» is
+/// two and a sentence with four things in it is a sentence somebody is
+/// dictating from a list, not living through. A model that emits ten is a
+/// model that has lost the thread, and the eleventh would be written down
+/// with the same single tap as the first.
+const maxActionsPerReply = 3;
+
 /// The answer split into what the parent reads and what the app is asked to do.
 class ParsedReply {
-  const ParsedReply({required this.text, this.action});
+  const ParsedReply({required this.text, this.actions = const []});
 
   final String text;
-  final AssistantAction? action;
+
+  /// In the order the model proposed them, which is the order she said them.
+  final List<AssistantAction> actions;
+
+  /// The first, for the callers that only ever expect one.
+  AssistantAction? get action => actions.isEmpty ? null : actions.first;
 }
 
 /// Pulls the action line out of a raw model reply.
@@ -168,24 +229,46 @@ class ParsedReply {
 /// or not: a parent must never be shown the machinery. [now] is injectable so
 /// a reminder's date is testable without racing the clock.
 ParsedReply parseAssistantReply(String raw, {DateTime? now}) {
-  final start = raw.indexOf(actionMarker);
-  if (start < 0) return ParsedReply(text: raw.trim());
+  final moment = now ?? DateTime.now();
+  final actions = <AssistantAction>[];
 
-  final open = raw.indexOf('{', start);
-  final end = open < 0 ? -1 : _endOfObject(raw, open);
+  // Walked from the front rather than found once: one sentence can hold two
+  // things — «покормила и поменяла подгузник» — and writing only the first of
+  // them is worse than writing neither, because she has no way to see which
+  // one went missing.
+  final kept = StringBuffer();
+  var cursor = 0;
 
-  // Everything from the marker to the end of the object goes, and if the
-  // object never closed — a truncated reply — the rest of the line goes too.
-  final cut = end > 0 ? end : _endOfLine(raw, start);
-  final text = (raw.substring(0, start) + raw.substring(cut))
-      .replaceAll(actionMarker, '')
-      .trim();
+  while (true) {
+    final start = raw.indexOf(actionMarker, cursor);
+    if (start < 0) {
+      kept.write(raw.substring(cursor));
+      break;
+    }
 
-  if (end <= 0) return ParsedReply(text: text);
+    kept.write(raw.substring(cursor, start));
+
+    final open = raw.indexOf('{', start);
+    final end = open < 0 ? -1 : _endOfObject(raw, open);
+
+    // Everything from the marker to the end of the object goes, and if the
+    // object never closed — a truncated reply — the rest of the line goes
+    // too. A parent must never be shown the machinery, valid or not.
+    if (end <= 0) {
+      cursor = _endOfLine(raw, start);
+      continue;
+    }
+
+    if (actions.length < maxActionsPerReply) {
+      final action = _decode(raw.substring(open, end), moment);
+      if (action != null) actions.add(action);
+    }
+    cursor = end;
+  }
 
   return ParsedReply(
-    text: text,
-    action: _decode(raw.substring(open, end), now ?? DateTime.now()),
+    text: kept.toString().replaceAll(actionMarker, '').trim(),
+    actions: actions,
   );
 }
 
@@ -279,6 +362,26 @@ AssistantAction? _decode(String json, DateTime now) {
       final int ml => LogPumpingAction(milkMl: ml),
       _ => null,
     },
+    'log_night_sleep' => switch (_int(args['minutes'], 30, 900)) {
+      final int minutes => LogNightSleepAction(
+        minutes: minutes,
+        wakings: _int(args['wakings'], 0, 30) ?? 0,
+        feeds: _int(args['feeds'], 0, 30),
+      ),
+      _ => null,
+    },
+    'ask_doctor' => switch ((args['question'] as String? ?? '').trim()) {
+      final String q when q.isNotEmpty => AskDoctorAction(
+        question: q.length <= 200 ? q : '${q.substring(0, 199)}…',
+      ),
+      _ => null,
+    },
+    'start_timer' => TimerAction(
+      start: true,
+      kind: TimerKind.fromCode(args['kind'] as String?) ?? TimerKind.feeding,
+      side: FeedingSide.fromCode(args['side'] as String?),
+    ),
+    'stop_timer' => const TimerAction(start: false),
     'create_reminder' => _reminder(args, now),
     'open_screen' => switch (args['path']) {
       final String path when allowedScreens.contains(path) => OpenScreenAction(
@@ -368,6 +471,8 @@ DevelopmentLog? assistantDraft(
     Severity? severity,
     String? food,
     int? milkMl,
+    int? wakings,
+    int? feeds,
   }) => DevelopmentLog(
     id: '',
     childId: childId,
@@ -384,6 +489,8 @@ DevelopmentLog? assistantDraft(
     severity: severity,
     food: food,
     milkMl: milkMl,
+    nightWakings: wakings,
+    nightFeeds: feeds,
   );
 
   return switch (action) {
@@ -439,6 +546,14 @@ DevelopmentLog? assistantDraft(
       LogTitles.pumping,
       milkMl: milkMl,
     ),
+    LogNightSleepAction(:final minutes, :final wakings, :final feeds) => build(
+      LogType.sleep,
+      LogType.sleep.label,
+      minutes: minutes,
+      wakings: wakings,
+      feeds: feeds,
+    ),
+    AskDoctorAction(:final question) => build(LogType.question, question),
     _ => null,
   };
 }

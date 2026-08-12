@@ -1306,6 +1306,12 @@ abstract class AppLocalizations {
   /// **'Отсчёт пошёл'**
   String get timerStarted;
 
+  /// No description provided for @timerNothingRunning.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сейчас ничего не отсчитывается'**
+  String get timerNothingRunning;
+
   /// No description provided for @timerDiscard.
   ///
   /// In ru, this message translates to:
@@ -3873,6 +3879,18 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Собрать PDF-отчёт для врача'**
   String get actionBuildReport;
+
+  /// No description provided for @actionStartTimer.
+  ///
+  /// In ru, this message translates to:
+  /// **'Засечь время'**
+  String get actionStartTimer;
+
+  /// No description provided for @actionStopTimer.
+  ///
+  /// In ru, this message translates to:
+  /// **'Остановить таймер и записать'**
+  String get actionStopTimer;
 
   /// No description provided for @triageTitle.
   ///

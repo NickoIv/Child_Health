@@ -689,6 +689,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get timerStarted => 'The clock is running';
 
   @override
+  String get timerNothingRunning => 'Nothing is being timed right now';
+
+  @override
   String get timerDiscard => 'Discard';
 
   @override
@@ -2209,6 +2212,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get actionBuildReport => 'Build a PDF report for the doctor';
+
+  @override
+  String get actionStartTimer => 'Start timing';
+
+  @override
+  String get actionStopTimer => 'Stop the timer and write it down';
 
   @override
   String get triageTitle => 'Warning-sign check';

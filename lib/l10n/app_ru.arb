@@ -343,6 +343,7 @@
     }
   },
   "timerStarted": "Отсчёт пошёл",
+  "timerNothingRunning": "Сейчас ничего не отсчитывается",
   "timerDiscard": "Сбросить",
   "timerDiscarded": "Отсчёт сброшен",
   "timerForgotten": "Идёт очень долго — может, забыли остановить?",
@@ -1175,6 +1176,8 @@
     }
   },
   "actionBuildReport": "Собрать PDF-отчёт для врача",
+  "actionStartTimer": "Засечь время",
+  "actionStopTimer": "Остановить таймер и записать",
   "triageTitle": "Проверка тревожных признаков",
   "triageNeedChild": "Нужен профиль ребёнка",
   "triageNeedChildHint": "Возраст влияет на оценку — особенно до 3 месяцев",

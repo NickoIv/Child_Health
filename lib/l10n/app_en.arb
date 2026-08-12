@@ -201,6 +201,7 @@
   "timerSleep": "Sleeping now",
   "timerSince": "since {time}",
   "timerStarted": "The clock is running",
+  "timerNothingRunning": "Nothing is being timed right now",
   "timerDiscard": "Discard",
   "timerDiscarded": "Timer discarded",
   "timerForgotten": "This has been running a long time — left on by mistake?",
@@ -699,6 +700,8 @@
     }
   },
   "actionBuildReport": "Build a PDF report for the doctor",
+  "actionStartTimer": "Start timing",
+  "actionStopTimer": "Stop the timer and write it down",
   "triageTitle": "Warning-sign check",
   "triageNeedChild": "A child profile is needed",
   "triageNeedChildHint": "Age changes the assessment — especially under three months",

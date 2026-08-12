@@ -201,6 +201,7 @@
   "timerSleep": "Ұйықтап жатыр",
   "timerSince": "{time} бастап",
   "timerStarted": "Санақ басталды",
+  "timerNothingRunning": "Қазір ештеңе саналып жатқан жоқ",
   "timerDiscard": "Тастау",
   "timerDiscarded": "Санақ тасталды",
   "timerForgotten": "Тым ұзақ жүріп жатыр — тоқтатуды ұмытқан жоқсыз ба?",
@@ -699,6 +700,8 @@
     }
   },
   "actionBuildReport": "Дәрігерге арналған PDF есеп жасау",
+  "actionStartTimer": "Уақытты бастау",
+  "actionStopTimer": "Таймерді тоқтатып, жазу",
   "triageTitle": "Қауіпті белгілерді тексеру",
   "triageNeedChild": "Бала профилі қажет",
   "triageNeedChildHint": "Жас бағаға әсер етеді — әсіресе 3 айға дейін",

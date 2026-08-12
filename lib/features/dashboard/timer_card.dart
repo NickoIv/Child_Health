@@ -8,7 +8,6 @@ import '../../core/l10n/labels.dart';
 import '../../core/theme/app_snack.dart';
 import '../../core/theme/app_theme.dart';
 import '../../l10n/app_localizations.dart';
-import '../../models/development_log.dart';
 import '../../providers.dart';
 import '../shared/widgets.dart';
 
@@ -193,27 +192,13 @@ class _RunningTimerCardState extends ConsumerState<RunningTimerCard> {
   Future<void> _stop(ActiveTimer timer) async {
     final l = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
-    final minutes = timer.minutesAt(DateTime.now());
-
     setState(() => _saving = true);
     try {
-      await ref.read(logRepositoryProvider).add(
-            DevelopmentLog(
-              id: '',
-              childId: timer.childId,
-              date: timer.startedAt,
-              type: timer.kind == TimerKind.feeding
-                  ? LogType.feeding
-                  : LogType.sleep,
-              // The model's own wording, because it is what sits in Firestore.
-              title: (timer.kind == TimerKind.feeding
-                      ? LogType.feeding
-                      : LogType.sleep)
-                  .label,
-              feedingSide: timer.side,
-              durationMinutes: minutes,
-            ),
-          );
+      // The shape lives beside the timer now: the assistant can stop one too,
+      // and two copies of this would be two shapes of the same evening.
+      await ref
+          .read(logRepositoryProvider)
+          .add(timerDraft(timer, at: DateTime.now()));
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
@@ -236,7 +221,7 @@ class _RunningTimerCardState extends ConsumerState<RunningTimerCard> {
                 ? l.quickSheetFeeding.toLowerCase()
                 : l.quickSheetSleepShort.toLowerCase(),
             if (timer.side != null) timer.side!.localizedLabel(l).toLowerCase(),
-            localizedDuration(l, minutes),
+            localizedDuration(l, timer.minutesAt(DateTime.now())),
           ].join(', '),
         ),
         kind: SnackKind.done,

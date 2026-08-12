@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../ai/actions.dart';
+import '../../core/care/active_timer.dart';
 import '../../core/l10n/labels.dart';
 import '../../core/router/app_router.dart';
 import '../../core/theme/app_snack.dart';
@@ -23,9 +24,15 @@ import '../shared/widgets.dart';
 /// double-check: the repositories he holds are the read-only wrappers, and
 /// hiding the button only spares him a refusal he did not need to earn.
 class AssistantActionCard extends ConsumerStatefulWidget {
-  const AssistantActionCard({super.key, required this.action});
+  const AssistantActionCard({super.key, required this.actions});
 
-  final AssistantAction action;
+  /// One card for all of them, and one tap.
+  ///
+  /// «Покормила левой пятнадцать минут и поменяла подгузник» is two entries,
+  /// and asking her to confirm them one at a time would make speaking a
+  /// sentence slower than tapping two buttons — which is the whole of what
+  /// this feature is for.
+  final List<AssistantAction> actions;
 
   @override
   ConsumerState<AssistantActionCard> createState() =>
@@ -63,7 +70,7 @@ class _AssistantActionCardState extends ConsumerState<AssistantActionCard> {
             Row(
               children: [
                 Icon(
-                  _icon(widget.action),
+                  _icon(widget.actions.first),
                   size: 18,
                   color: theme.colorScheme.primary,
                 ),
@@ -77,13 +84,19 @@ class _AssistantActionCardState extends ConsumerState<AssistantActionCard> {
               ],
             ),
             const SizedBox(height: 8),
-            Text(
-              _describe(l, widget.action),
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w600,
+            // Every one of them spelled out, on its own line. A card that said
+            // «записать 2 записи» would be asking her to confirm a number.
+            for (final action in widget.actions)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(
+                  _describe(l, action),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             if (readOnly)
               Text(
                 l.actionReadOnly,
@@ -122,33 +135,76 @@ class _AssistantActionCardState extends ConsumerState<AssistantActionCard> {
     setState(() => _busy = true);
 
     try {
-      final action = widget.action;
-      final draft = assistantDraft(
-        action,
-        childId: child.id,
-        at: DateTime.now(),
-      );
+      // Written first, navigated last. An [OpenScreenAction] leaves this
+      // screen and takes the rest of the list with it, so anything that
+      // records something has to have happened by then — «покормила, и открой
+      // дневник» must not lose the feed on the way to the diary.
+      final written = <String>[];
+      AssistantAction? navigation;
 
-      if (draft != null) {
-        await ref.read(logRepositoryProvider).add(draft);
-        if (!mounted) return;
+      for (final action in widget.actions) {
+        final draft = assistantDraft(
+          action,
+          childId: child.id,
+          at: DateTime.now(),
+        );
+
+        if (draft != null) {
+          await ref.read(logRepositoryProvider).add(draft);
+          if (!mounted) return;
+          written.add(localizedLogTitle(l, draft));
+        } else if (action is CreateReminderAction) {
+          await ref
+              .read(reminderRepositoryProvider)
+              .add(assistantReminder(action, childId: child.id));
+          if (!mounted) return;
+          written.add(action.title);
+        } else if (action is TimerAction) {
+          final timers = ref.read(activeTimerProvider.notifier);
+          if (action.start) {
+            await timers.start(
+              kind: action.kind ?? TimerKind.feeding,
+              childId: child.id,
+              side: action.side,
+            );
+            if (!mounted) return;
+            messenger.showApp(l.timerStarted, kind: SnackKind.done);
+          } else {
+            // Stopping is what produces the entry, exactly as the card on the
+            // home screen does — so the clock and the assistant cannot write
+            // two different feeds for one evening.
+            final stopped = await timers.stop();
+            if (!mounted) return;
+            if (stopped == null) {
+              messenger.showApp(l.timerNothingRunning, kind: SnackKind.info);
+            } else {
+              final draft = timerDraft(stopped, at: DateTime.now());
+              await ref.read(logRepositoryProvider).add(draft);
+              if (!mounted) return;
+              written.add(localizedLogTitle(l, draft));
+            }
+          }
+        } else {
+          navigation = action;
+        }
+      }
+
+      // One strip for everything that was recorded, not one per entry: three
+      // in a row would queue and the last would be the only one she reads.
+      if (written.isNotEmpty) {
         messenger.showApp(
-          l.quickSaved(localizedLogTitle(l, draft)),
+          l.quickSaved(written.join(', ')),
           kind: SnackKind.done,
         );
-      } else if (action is CreateReminderAction) {
-        await ref
-            .read(reminderRepositoryProvider)
-            .add(assistantReminder(action, childId: child.id));
+      }
+
+      if (navigation is OpenScreenAction) {
         if (!mounted) return;
-        messenger.showApp(l.quickSaved(action.title), kind: SnackKind.done);
-      } else if (action is OpenScreenAction) {
+        context.go(navigation.path);
+      } else if (navigation is OpenArticleAction) {
         if (!mounted) return;
-        context.go(action.path);
-      } else if (action is OpenArticleAction) {
-        if (!mounted) return;
-        context.go('/assistant/article/${action.articleId}');
-      } else if (action is BuildReportAction) {
+        context.go('/assistant/article/${navigation.articleId}');
+      } else if (navigation is BuildReportAction) {
         if (!mounted) return;
         await showExportSheet(context, childId: child.id);
       }
@@ -188,6 +244,9 @@ class _AssistantActionCardState extends ConsumerState<AssistantActionCard> {
       OpenArticleAction(:final articleId) => l.actionOpenArticle(
         articleById(articleId)?.title ?? articleId,
       ),
+      TimerAction(:final start) => start
+          ? l.actionStartTimer
+          : l.actionStopTimer,
       BuildReportAction() => l.actionBuildReport,
       // Every log-writing action produced a draft above.
       _ => l.actionBuildReport,
@@ -213,7 +272,10 @@ class _AssistantActionCardState extends ConsumerState<AssistantActionCard> {
     LogTemperatureAction() ||
     LogGrowthAction() ||
     LogSolidAction() ||
-    LogPumpingAction() => Icons.edit_note_outlined,
+    LogPumpingAction() ||
+    LogNightSleepAction() ||
+    AskDoctorAction() => Icons.edit_note_outlined,
+    TimerAction() => Icons.timer_outlined,
     CreateReminderAction() => Icons.notifications_outlined,
     OpenScreenAction() || OpenArticleAction() => Icons.open_in_new,
     BuildReportAction() => Icons.picture_as_pdf_outlined,

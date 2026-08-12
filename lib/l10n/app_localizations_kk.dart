@@ -686,6 +686,9 @@ class AppLocalizationsKk extends AppLocalizations {
   String get timerStarted => 'Санақ басталды';
 
   @override
+  String get timerNothingRunning => 'Қазір ештеңе саналып жатқан жоқ';
+
+  @override
   String get timerDiscard => 'Тастау';
 
   @override
@@ -2193,6 +2196,12 @@ class AppLocalizationsKk extends AppLocalizations {
 
   @override
   String get actionBuildReport => 'Дәрігерге арналған PDF есеп жасау';
+
+  @override
+  String get actionStartTimer => 'Уақытты бастау';
+
+  @override
+  String get actionStopTimer => 'Таймерді тоқтатып, жазу';
 
   @override
   String get triageTitle => 'Қауіпті белгілерді тексеру';

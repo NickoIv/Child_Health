@@ -689,6 +689,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get timerStarted => 'Отсчёт пошёл';
 
   @override
+  String get timerNothingRunning => 'Сейчас ничего не отсчитывается';
+
+  @override
   String get timerDiscard => 'Сбросить';
 
   @override
@@ -2229,6 +2232,12 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get actionBuildReport => 'Собрать PDF-отчёт для врача';
+
+  @override
+  String get actionStartTimer => 'Засечь время';
+
+  @override
+  String get actionStopTimer => 'Остановить таймер и записать';
 
   @override
   String get triageTitle => 'Проверка тревожных признаков';

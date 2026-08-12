@@ -21,7 +21,7 @@ class AssistantAnswer extends AssistantReply {
   const AssistantAnswer({
     required this.text,
     required this.sources,
-    this.action,
+    this.actions = const [],
     this.mode = AnswerMode.general,
   });
 
@@ -36,7 +36,11 @@ class AssistantAnswer extends AssistantReply {
 
   /// What the model proposes the app should do about it, if anything. Nothing
   /// happens until the parent confirms — see `ai/actions.dart`.
-  final AssistantAction? action;
+  ///
+  /// A list because one sentence can hold two things: «покормила и поменяла
+  /// подгузник» is two entries, and they are confirmed together with one tap
+  /// rather than one at a time.
+  final List<AssistantAction> actions;
 }
 
 /// The question described a red flag. The model was never called: this is a
@@ -255,7 +259,7 @@ class GeminiAssistantService implements AssistantService {
       return AssistantAnswer(
         text: parsed.text,
         sources: context.articles,
-        action: parsed.action,
+        actions: parsed.actions,
         mode: mode,
       );
     } on Exception catch (e) {

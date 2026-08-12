@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:child_health_tracker/ai/actions.dart';
+import 'package:child_health_tracker/core/care/active_timer.dart';
 import 'package:child_health_tracker/ai/assistant_service.dart';
 import 'package:child_health_tracker/ai/prompt.dart';
 import 'package:child_health_tracker/core/l10n/app_locale.dart';
@@ -291,6 +292,115 @@ void main() {
       expect(draft?.type, LogType.note);
       expect(draft?.milkMl, 120);
       expect(draft?.isPumping, isTrue);
+    });
+  });
+
+  group('more than one thing in a sentence', () {
+    String two(String a, Map<String, Object?> argsA, String b,
+            Map<String, Object?> argsB) =>
+        'Записываю.\n'
+        '$actionMarker${jsonEncode({'tool': a, 'args': argsA})}\n'
+        '$actionMarker${jsonEncode({'tool': b, 'args': argsB})}';
+
+    test('both are kept, in the order she said them', () {
+      // «Покормила левой пятнадцать минут и поменяла подгузник». Writing only
+      // the first is worse than writing neither: she has no way to see which
+      // one went missing.
+      final parsed = parseAssistantReply(
+        two('log_feeding', {'minutes': 15, 'side': 'left'}, 'log_nappy',
+            {'kind': 'wet'}),
+        now: now,
+      );
+
+      expect(parsed.actions, hasLength(2));
+      expect(parsed.actions.first, isA<LogFeedingAction>());
+      expect(parsed.actions.last, isA<LogNappyAction>());
+      expect(parsed.text, 'Записываю.');
+    });
+
+    test('and the machinery still never reaches the parent', () {
+      final parsed = parseAssistantReply(
+        two('log_sleep', {'minutes': 40}, 'log_nappy', {'kind': 'dirty'}),
+        now: now,
+      );
+      expect(parsed.text, isNot(contains(actionMarker)));
+      expect(parsed.text, isNot(contains('log_sleep')));
+      expect(parsed.text, isNot(contains('{')));
+    });
+
+    test('a broken one does not take the good one down with it', () {
+      final parsed = parseAssistantReply(
+        'Готово.\n$actionMarker{"tool":"log_sleep","args":{minutes\n'
+        '$actionMarker${jsonEncode({
+              'tool': 'log_nappy',
+              'args': {'kind': 'wet'},
+            })}',
+        now: now,
+      );
+      expect(parsed.actions, hasLength(1));
+      expect(parsed.actions.single, isA<LogNappyAction>());
+      expect(parsed.text, 'Готово.');
+    });
+
+    test('never more than three', () {
+      // A model emitting ten has lost the thread, and the eleventh would be
+      // written down by the same single tap as the first.
+      final many = [
+        'Записываю.',
+        for (var i = 0; i < 8; i++)
+          '$actionMarker${jsonEncode({
+                'tool': 'log_nappy',
+                'args': {'kind': 'wet'},
+              })}',
+      ].join('\n');
+
+      expect(
+        parseAssistantReply(many, now: now).actions,
+        hasLength(maxActionsPerReply),
+      );
+    });
+  });
+
+  group('the night, the doctor and the clock', () {
+    test('a night carries its wake-ups', () {
+      // Which is the whole difference from a nap: the check-in, the heavy-day
+      // rule and the digest all read that number.
+      final parsed = parseAssistantReply(
+        reply('log_night_sleep', {'minutes': 430, 'wakings': 4, 'feeds': 2}),
+        now: now,
+      );
+      final draft = assistantDraft(parsed.action!, childId: 'c1', at: now);
+      expect(draft?.isNightSleep, isTrue);
+      expect(draft?.nightWakings, 4);
+      expect(draft?.nightFeeds, 2);
+      expect(draft?.durationMinutes, 430);
+    });
+
+    test('a question for the doctor is a question, not a note', () {
+      final parsed = parseAssistantReply(
+        reply('ask_doctor', {'question': 'Почему он срыгивает после смеси?'}),
+        now: now,
+      );
+      final draft = assistantDraft(parsed.action!, childId: 'c1', at: now);
+      expect(draft?.type, LogType.question);
+      expect(draft?.title, 'Почему он срыгивает после смеси?');
+    });
+
+    test('the timer writes nothing until it is stopped', () {
+      // Starting one produces no entry at all, which is why it cannot go
+      // through assistantDraft.
+      final start = parseAssistantReply(
+        reply('start_timer', {'kind': 'sleep'}),
+        now: now,
+      ).action;
+      expect(start, isA<TimerAction>());
+      expect((start! as TimerAction).start, isTrue);
+      expect((start as TimerAction).kind, TimerKind.sleep);
+      expect(assistantDraft(start, childId: 'c1', at: now), isNull);
+
+      final stop = parseAssistantReply(reply('stop_timer', {}), now: now)
+          .action;
+      expect((stop! as TimerAction).start, isFalse);
     });
   });
 

@@ -81,6 +81,33 @@ const _childKey = 'active_timer_child';
 /// is installed as a web app, a reload happens whenever the phone decides to
 /// reclaim memory, and a feed whose start time was lost cannot be recovered by
 /// remembering harder.
+/// The entry a stopped timer becomes.
+///
+/// Here rather than in the card that stops it, because two things stop a timer
+/// now — the card on the home screen and «останови таймер» said to the
+/// assistant — and two copies of this would be two shapes of the same evening
+/// on one timeline.
+///
+/// Dated to when the timer *started*, not to when it was stopped: the feed
+/// began at the moment she pressed the button, and a record dated to the end
+/// of it puts an hour's nap in the wrong hour of the day.
+DevelopmentLog timerDraft(ActiveTimer timer, {required DateTime at}) {
+  final type = timer.kind == TimerKind.feeding
+      ? LogType.feeding
+      : LogType.sleep;
+
+  return DevelopmentLog(
+    id: '',
+    childId: timer.childId,
+    date: timer.startedAt,
+    type: type,
+    // The model's own wording, because it is what sits in Firestore.
+    title: type.label,
+    feedingSide: timer.side,
+    durationMinutes: timer.minutesAt(at),
+  );
+}
+
 class ActiveTimerStore extends Notifier<ActiveTimer?> {
   @override
   ActiveTimer? build() {
