@@ -93,7 +93,11 @@ class AppShell extends ConsumerWidget {
                 Expanded(child: TabSwitch(index: _index, child: child)),
               ],
             )
-          : TabSwitch(index: _index, child: child),
+          : SwipeBetweenTabs(
+              index: _index,
+              onSwitch: (i) => context.go(appDestinations[i].path),
+              child: TabSwitch(index: _index, child: child),
+            ),
       // The tab bar, and nothing above it.
       //
       // A dictation card used to be pinned here on the home screen: a field,
@@ -119,6 +123,86 @@ class AppShell extends ConsumerWidget {
               ],
             ),
     );
+  }
+}
+
+/// A drag across the page moves to the next tab.
+///
+/// «Свайпа экрана не хватает влево и вправо.» A bottom bar is a set of
+/// targets to aim at; a swipe is the thing a thumb does without aiming, which
+/// on a phone held in one hand with a child in the other is the difference
+/// between using the app and putting it down.
+///
+/// Only between the four in the bar. The seven screens behind «Ещё» are
+/// reached deliberately, from a list, and swiping through eleven destinations
+/// would be a way to get lost rather than a way to move.
+///
+/// Nothing here fights the content. A horizontal drag that starts on
+/// something that scrolls sideways — the diary's filter chips, a chart —
+/// belongs to that thing: Flutter's gesture arena gives it to the inner
+/// recogniser, and this one never hears about it.
+class SwipeBetweenTabs extends StatefulWidget {
+  const SwipeBetweenTabs({
+    required this.index,
+    required this.onSwitch,
+    required this.child,
+    super.key,
+  });
+
+  final int index;
+  final ValueChanged<int> onSwitch;
+  final Widget child;
+
+  /// How far a slow drag has to travel, as a share of the screen.
+  ///
+  /// A quarter. Less and a page nudged sideways while reaching for something
+  /// changes tab; more and the gesture has to be a full sweep, which is not
+  /// what a thumb on a 6-inch phone can reach.
+  static const distanceShare = 0.25;
+
+  /// Or how fast a short one has to be flicked, in pixels per second.
+  static const flingVelocity = 320.0;
+
+  @override
+  State<SwipeBetweenTabs> createState() => _SwipeBetweenTabsState();
+}
+
+class _SwipeBetweenTabsState extends State<SwipeBetweenTabs> {
+  double _travelled = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    // Past the four in the bar is a screen from «Ещё», where there is no next
+    // tab to go to and a swipe should do nothing rather than something
+    // surprising.
+    if (widget.index >= AppShell._primaryCount) return widget.child;
+
+    return GestureDetector(
+      // Only the drag is claimed. Taps, long presses and vertical scrolling
+      // all pass through untouched.
+      onHorizontalDragStart: (_) => _travelled = 0,
+      onHorizontalDragUpdate: (d) => _travelled += d.delta.dx,
+      onHorizontalDragEnd: _end,
+      child: widget.child,
+    );
+  }
+
+  void _end(DragEndDetails details) {
+    final width = MediaQuery.sizeOf(context).width;
+    final velocity = details.primaryVelocity ?? 0;
+    final far = _travelled.abs() > width * SwipeBetweenTabs.distanceShare;
+    final fast = velocity.abs() > SwipeBetweenTabs.flingVelocity;
+    if (!far && !fast) return;
+
+    // Which way the finger actually went. Velocity when it was a flick,
+    // because a fling can end travelling back a little; distance otherwise.
+    final left = fast ? velocity < 0 : _travelled < 0;
+    final next = widget.index + (left ? 1 : -1);
+    // No wrapping. Running out of tabs at either end is how a person learns
+    // where the ends are; arriving back at the first one from the last is how
+    // they learn nothing.
+    if (next < 0 || next >= AppShell._primaryCount) return;
+    widget.onSwitch(next);
   }
 }
 

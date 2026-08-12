@@ -354,11 +354,22 @@ abstract final class AppTheme {
           textStyle: const TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
+      // The same deep orange as [filledButtonTheme] above, and for the same
+      // reason: this and the assistant's disc are the two loudest controls on
+      // the diary screen, they sit within a thumb's width of each other, and
+      // they were different colours. A violet capsule beside an orange one
+      // reads as two applications rather than as one.
+      //
+      // Only this. Reseeding the whole scheme warm was tried and rendered:
+      // every card's icon disc turns beige, the app goes monotone, and the
+      // red circle on «Проверить тревожные признаки» ends up among relatives
+      // instead of standing alone — which is exactly what the seed being far
+      // from red in hue is for, and what a test in palette_test enforces.
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         elevation: 2,
         highlightElevation: 4,
-        backgroundColor: scheme.primary,
-        foregroundColor: scheme.onPrimary,
+        backgroundColor: isDark ? scheme.primary : Warm.accentInk,
+        foregroundColor: isDark ? scheme.onPrimary : Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(18),
         ),

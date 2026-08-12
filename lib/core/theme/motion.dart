@@ -364,14 +364,43 @@ class NavIcon extends StatelessWidget {
 /// Nothing slides the full width. A phone that pushes whole screens sideways
 /// on a tab bar is imitating navigation that did not happen: the tabs are
 /// siblings, not a stack.
-class TabSwitch extends StatelessWidget {
+class TabSwitch extends StatefulWidget {
   const TabSwitch({required this.index, required this.child, super.key});
 
   final int index;
   final Widget child;
 
   @override
+  State<TabSwitch> createState() => _TabSwitchState();
+}
+
+class _TabSwitchState extends State<TabSwitch> {
+  /// Which way the last change went, so the new screen arrives from the side
+  /// it came from.
+  ///
+  /// Once the tabs can be swiped between, a screen that fades in place
+  /// contradicts the finger that just pushed it: the hand says the next tab
+  /// is to the right and the animation says it appeared where it was. This
+  /// reads the direction off the indices, so a tap on the bar gets the same
+  /// treatment as a drag and neither has to be told which it was.
+  int _previous = 0;
+
+  @override
+  void didUpdateWidget(TabSwitch old) {
+    super.didUpdateWidget(old);
+    if (old.index != widget.index) _previous = old.index;
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final forward = widget.index >= _previous;
+    // Small on purpose. The outgoing screen is gone the instant the new one is
+    // asked for — see the layout builder — so a full-width slide would be a
+    // screen sliding across bare background. This is the length of a nudge:
+    // enough to say which direction, not enough to look like a page turn that
+    // is not happening.
+    final begin = Offset(forward ? 0.06 : -0.06, 0);
+
     return AnimatedSwitcher(
       duration: Motion.normal,
       switchInCurve: Motion.curve,
@@ -385,14 +414,11 @@ class TabSwitch extends StatelessWidget {
       transitionBuilder: (child, animation) => FadeTransition(
         opacity: animation,
         child: SlideTransition(
-          position: Tween(
-            begin: const Offset(0, 0.012),
-            end: Offset.zero,
-          ).animate(animation),
+          position: Tween(begin: begin, end: Offset.zero).animate(animation),
           child: child,
         ),
       ),
-      child: KeyedSubtree(key: ValueKey(index), child: child),
+      child: KeyedSubtree(key: ValueKey(widget.index), child: widget.child),
     );
   }
 }

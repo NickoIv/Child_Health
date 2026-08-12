@@ -123,6 +123,23 @@ void main() {
     });
   });
 
+  group('the two loudest controls agree', () {
+    test('the action button is the app\'s own orange, not the seed', () {
+      // The diary's «Добавить запись» and the assistant's disc sit within a
+      // thumb's width of each other at the bottom of the screen, and one was
+      // violet and the other orange — two applications rather than one.
+      //
+      // The scheme itself stays violet: reseeding it warm turns every card's
+      // icon disc beige and puts the alert red among relatives. This is the
+      // one control that had to change, so this is the one that did.
+      final fab = AppTheme.light().floatingActionButtonTheme;
+      expect(fab.backgroundColor, Warm.accentInk);
+      final filled = AppTheme.light().filledButtonTheme.style?.backgroundColor
+          ?.resolve(const <WidgetState>{});
+      expect(filled, fab.backgroundColor, reason: 'one loud colour, not two');
+    });
+  });
+
   group('the alert colour stays unmistakable', () {
     test('the app seed is far from red in hue', () {
       // The primary was chosen violet partly so that a red element on screen
