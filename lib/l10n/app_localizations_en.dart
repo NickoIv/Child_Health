@@ -1014,6 +1014,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get logTitle => 'Error log';
 
   @override
+  String get backupTitle => 'My data';
+
+  @override
+  String get backupExplain =>
+      'The diary is kept both on this device and on the server. The file below is your own copy: it opens without the app and outlives anything.';
+
+  @override
+  String get backupSave => 'Save a copy';
+
+  @override
+  String backupSaved(String file) {
+    return 'Copy saved: $file';
+  }
+
+  @override
+  String get backupFailed => 'The file could not be saved';
+
+  @override
+  String get backupNoPhotos =>
+      'Photographs are not in the file — they live separately, and the entries keep their links.';
+
+  @override
+  String get backupStorageSafe =>
+      'The browser has promised not to clear this app\'s data.';
+
+  @override
+  String get backupStorageEvictable =>
+      'The browser may clear the data on this device when space runs short. It stays on the server.';
+
+  @override
   String get logEmpty => 'Nothing has broken yet.';
 
   @override

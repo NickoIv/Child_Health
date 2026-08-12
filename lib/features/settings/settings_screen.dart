@@ -21,6 +21,7 @@ import '../../firebase/push_messaging.dart';
 import '../../models/app_user.dart';
 import '../../providers.dart';
 import '../shared/kazakhstan_flag.dart';
+import 'backup_card.dart';
 import '../shared/widgets.dart';
 import 'import_screen.dart';
 
@@ -387,6 +388,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         // Last card on the last screen, which is where a credit belongs: it
         // is the answer to "who made this", asked once, by someone who has
         // already gone looking for it.
+        const BackupCard(),
         const _FeedbackCard(),
         const _ErrorLogCard(),
         SectionCard(

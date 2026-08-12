@@ -294,6 +294,19 @@
   "feedbackAddressCopied": "Address copied",
   "settingsLocation": "Developer is based in",
   "logTitle": "Error log",
+  "backupTitle": "My data",
+  "backupExplain": "The diary is kept both on this device and on the server. The file below is your own copy: it opens without the app and outlives anything.",
+  "backupSave": "Save a copy",
+  "backupSaved": "Copy saved: {file}",
+  "@backupSaved": {
+    "placeholders": {
+      "file": { "type": "String" }
+    }
+  },
+  "backupFailed": "The file could not be saved",
+  "backupNoPhotos": "Photographs are not in the file — they live separately, and the entries keep their links.",
+  "backupStorageSafe": "The browser has promised not to clear this app's data.",
+  "backupStorageEvictable": "The browser may clear the data on this device when space runs short. It stays on the server.",
   "logEmpty": "Nothing has broken yet.",
   "logExplain": "Kept on this phone only and never sent anywhere. If the app froze or closed itself, copy this and send it to the developer.",
   "logCopy": "Copy",

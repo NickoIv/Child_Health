@@ -1019,6 +1019,36 @@ class AppLocalizationsRu extends AppLocalizations {
   String get logTitle => 'Журнал ошибок';
 
   @override
+  String get backupTitle => 'Мои данные';
+
+  @override
+  String get backupExplain =>
+      'Дневник хранится и на устройстве, и на сервере. Файл ниже — ваша собственная копия: он открывается без приложения и переживёт что угодно.';
+
+  @override
+  String get backupSave => 'Сохранить копию';
+
+  @override
+  String backupSaved(String file) {
+    return 'Копия сохранена: $file';
+  }
+
+  @override
+  String get backupFailed => 'Не удалось сохранить файл';
+
+  @override
+  String get backupNoPhotos =>
+      'Фотографии в файл не входят — они лежат отдельно, а записи о них сохраняют ссылки.';
+
+  @override
+  String get backupStorageSafe =>
+      'Браузер обещал не удалять данные этого приложения.';
+
+  @override
+  String get backupStorageEvictable =>
+      'Браузер может очистить данные на устройстве при нехватке места. На сервере они останутся.';
+
+  @override
   String get logEmpty => 'Пока ничего не сломалось.';
 
   @override

@@ -1008,6 +1008,36 @@ class AppLocalizationsKk extends AppLocalizations {
   String get logTitle => 'Қателер журналы';
 
   @override
+  String get backupTitle => 'Менің деректерім';
+
+  @override
+  String get backupExplain =>
+      'Күнделік құрылғыда да, серверде де сақталады. Төмендегі файл — сіздің жеке көшірмеңіз: ол қолданбасыз ашылады.';
+
+  @override
+  String get backupSave => 'Көшірмені сақтау';
+
+  @override
+  String backupSaved(String file) {
+    return 'Көшірме сақталды: $file';
+  }
+
+  @override
+  String get backupFailed => 'Файлды сақтау мүмкін болмады';
+
+  @override
+  String get backupNoPhotos =>
+      'Фотосуреттер файлға кірмейді — олар бөлек сақталады, жазбалардағы сілтемелер қалады.';
+
+  @override
+  String get backupStorageSafe =>
+      'Браузер осы қолданбаның деректерін өшірмеуге уәде берді.';
+
+  @override
+  String get backupStorageEvictable =>
+      'Орын жетпегенде браузер құрылғыдағы деректерді тазалауы мүмкін. Серверде олар қалады.';
+
+  @override
   String get logEmpty => 'Әзірге ештеңе бұзылған жоқ.';
 
   @override

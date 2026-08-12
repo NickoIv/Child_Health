@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +8,7 @@ import 'package:intl/date_symbol_data_local.dart';
 
 import 'app.dart';
 import 'core/diagnostics/error_log.dart';
+import 'core/storage/persist.dart';
 import 'core/l10n/app_locale.dart';
 import 'core/notifications/notification_service.dart';
 import 'core/theme/theme_mode.dart';
@@ -115,6 +118,15 @@ Future<void> main() async {
   // else. Nothing is uploaded: the settings screen shows the log in full and
   // she copies it herself if she chooses to.
   installErrorLogging(container.read(errorLogProvider.notifier));
+
+  // Asked once, never insisted on, and nothing waits for the answer.
+  //
+  // The offline copy of the diary lives in IndexedDB, and browser storage is
+  // evictable by default — under pressure for space the browser may clear it
+  // and is entitled to. For a shop that costs a session; here it would cost
+  // the copy that makes the app work in a lift. Refusal changes nothing that
+  // was working.
+  unawaited(requestPersistentStorage());
 
   runApp(
     UncontrolledProviderScope(

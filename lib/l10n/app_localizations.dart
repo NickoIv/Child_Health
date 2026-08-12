@@ -1864,6 +1864,54 @@ abstract class AppLocalizations {
   /// **'Журнал ошибок'**
   String get logTitle;
 
+  /// No description provided for @backupTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мои данные'**
+  String get backupTitle;
+
+  /// No description provided for @backupExplain.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дневник хранится и на устройстве, и на сервере. Файл ниже — ваша собственная копия: он открывается без приложения и переживёт что угодно.'**
+  String get backupExplain;
+
+  /// No description provided for @backupSave.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохранить копию'**
+  String get backupSave;
+
+  /// No description provided for @backupSaved.
+  ///
+  /// In ru, this message translates to:
+  /// **'Копия сохранена: {file}'**
+  String backupSaved(String file);
+
+  /// No description provided for @backupFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось сохранить файл'**
+  String get backupFailed;
+
+  /// No description provided for @backupNoPhotos.
+  ///
+  /// In ru, this message translates to:
+  /// **'Фотографии в файл не входят — они лежат отдельно, а записи о них сохраняют ссылки.'**
+  String get backupNoPhotos;
+
+  /// No description provided for @backupStorageSafe.
+  ///
+  /// In ru, this message translates to:
+  /// **'Браузер обещал не удалять данные этого приложения.'**
+  String get backupStorageSafe;
+
+  /// No description provided for @backupStorageEvictable.
+  ///
+  /// In ru, this message translates to:
+  /// **'Браузер может очистить данные на устройстве при нехватке места. На сервере они останутся.'**
+  String get backupStorageEvictable;
+
   /// No description provided for @logEmpty.
   ///
   /// In ru, this message translates to:
