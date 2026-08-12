@@ -340,7 +340,14 @@ abstract final class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(Warm.buttonRadius),
           ),
+          // The family, spelled out. A ButtonStyle textStyle replaces the
+          // label's style rather than merging into it, so a TextStyle without
+          // a family here put every button label in the app back on Roboto —
+          // Nunito everywhere else and the default face on «Покормила»,
+          // «Сохранить» and «Пригласить». Caught by rendering with only
+          // Nunito loaded: those labels were the boxes.
           textStyle: const TextStyle(
+            fontFamily: fontFamily,
             fontSize: 15,
             fontWeight: FontWeight.w600,
           ),
@@ -351,7 +358,10 @@ abstract final class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          textStyle: const TextStyle(fontWeight: FontWeight.w600),
+          textStyle: const TextStyle(
+            fontFamily: fontFamily,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
       // The same deep orange as [filledButtonTheme] above, and for the same
