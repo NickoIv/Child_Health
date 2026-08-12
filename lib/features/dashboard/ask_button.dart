@@ -33,42 +33,84 @@ class AskButton extends ConsumerWidget {
     final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
 
+    // Shaped like the thing it leads to rather than like the row it sat in.
+    //
+    // «Для ввода текста не заметна» — and it was not, because it looked like
+    // every other soft row on the screen: same tint as the panel behind it,
+    // same height, a label among labels. What it actually is is the way into
+    // a field, so it is drawn as a field — a light box, an outline, a
+    // placeholder-grey line of text and something to press at the end of it.
+    // A shape a thumb recognises before the words are read.
+    //
+    // Louder colour was the other option and would have been wrong: the four
+    // cards above are the primary way in, and nothing here should out-shout
+    // them. This is legible instead of loud.
+    final radius = BorderRadius.circular(18);
+    final accent = Warm.accentOn(theme.brightness);
+
     return Padding(
-      padding: const EdgeInsets.only(top: 10),
+      padding: const EdgeInsets.only(top: 12),
       child: PressScale(
-        child: Material(
-          color: Warm.soft(theme.brightness),
-          borderRadius: BorderRadius.circular(Warm.chipRadius),
-          child: InkWell(
-            onTap: () {
-              // Asked for here, inside the tap, as well as on arrival: a
-              // browser only raises the on-screen keyboard from inside a real
-              // gesture, and the chat's own request happens a navigation
-              // later, by which time the gesture is over.
-              SystemChannels.textInput.invokeMethod<void>('TextInput.show');
-              context.go(chatPath);
-            },
-            borderRadius: BorderRadius.circular(Warm.chipRadius),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.keyboard_outlined,
-                    size: 20,
-                    color: Warm.accentOn(theme.brightness),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      l.homeSpeak,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: Warm.onCard(theme.brightness),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: Warm.card(theme.brightness),
+            borderRadius: radius,
+            border: Border.all(color: accent.withValues(alpha: 0.38), width: 1.4),
+            boxShadow: Warm.shadow(theme.brightness),
+          ),
+          child: Material(
+            type: MaterialType.transparency,
+            child: InkWell(
+              onTap: () {
+                // Asked for here, inside the tap, as well as on arrival: a
+                // browser only raises the on-screen keyboard from inside a
+                // real gesture, and the chat's own request happens a
+                // navigation later, by which time the gesture is over.
+                SystemChannels.textInput.invokeMethod<void>('TextInput.show');
+                context.go(chatPath);
+              },
+              borderRadius: radius,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 10, 12),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        l.homeSpeak,
+                        // Placeholder weight and placeholder colour: it reads
+                        // as an empty field waiting for her, which is what it
+                        // is, rather than as a button announcing itself.
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: Warm.onCardSoft(theme.brightness),
+                        ),
+                        // One line, always. A placeholder that wraps stops
+                        // reading as a placeholder and starts reading as a
+                        // paragraph — and Kazakh is a third longer than the
+                        // Russian this was measured against.
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 10),
+                    // The end of a field is where the thing that acts on it
+                    // lives, and a keyboard is what this opens — including
+                    // the microphone key on it, which is the recogniser that
+                    // actually works. See the note at the top of this file.
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: accent.withValues(alpha: 0.14),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.keyboard_outlined,
+                        size: 20,
+                        color: accent,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

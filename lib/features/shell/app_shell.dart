@@ -8,7 +8,6 @@ import '../../l10n/app_localizations.dart';
 import '../../core/theme/app_sheet.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/glass.dart';
-import '../../core/theme/night_mode.dart';
 import '../../core/theme/motion.dart';
 import '../../core/theme/theme_mode.dart';
 import '../../models/child.dart';
@@ -412,18 +411,6 @@ class _AccountMenu extends ConsumerWidget {
           context.go(settingsPath);
           return;
         }
-        if (value == 'night') {
-          // A switch, not a third state to choose: at four in the morning the
-          // menu is opened to turn the screen red and for no other reason.
-          // «Ночью автоматически» is a setting, and settings are chosen once,
-          // in daylight.
-          ref.read(nightPreferenceProvider.notifier).set(
-                ref.read(nightModeProvider)
-                    ? NightPreference.off
-                    : NightPreference.on,
-              );
-          return;
-        }
         final theme = ThemePreference.values.firstWhere(
           (t) => t.name == value,
           orElse: () => defaultTheme,
@@ -446,15 +433,6 @@ class _AccountMenu extends ConsumerWidget {
             leading: const Icon(Icons.settings_outlined),
             title: Text(AppLocalizations.of(context).settingsTitle),
           ),
-        ),
-        const PopupMenuDivider(),
-        // On every screen, two taps from anywhere. The settings card is where
-        // «ночью автоматически» is chosen; this is where a woman standing over
-        // a cot turns the screen red.
-        CheckedPopupMenuItem(
-          value: 'night',
-          checked: ref.watch(nightModeProvider),
-          child: Text(AppLocalizations.of(context).nightModeTitle),
         ),
         const PopupMenuDivider(),
         for (final t in ThemePreference.values)

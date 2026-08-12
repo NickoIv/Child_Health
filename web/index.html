@@ -49,10 +49,11 @@
     flash a different one on the way in.
   -->
   <style>
+    /* The app's own light page, and not the system's preference: this app
+       chooses its theme itself and defaults to light, so painting the boot
+       screen dark because the phone is dark would flash the wrong colour at
+       everyone who never changed the setting. */
     html, body { margin: 0; height: 100%; background: #FAF7F4; }
-    @media (prefers-color-scheme: dark) {
-      html, body { background: #17130F; }
-    }
     #boot {
       position: fixed; inset: 0;
       display: flex; align-items: center; justify-content: center;

@@ -7,7 +7,6 @@ import 'core/l10n/app_locale.dart';
 import 'core/router/app_router.dart';
 import 'l10n/app_localizations.dart';
 import 'core/theme/app_theme.dart';
-import 'core/theme/night_mode.dart';
 import 'core/theme/theme_mode.dart';
 import 'providers.dart';
 
@@ -28,23 +27,17 @@ class ChildHealthApp extends ConsumerWidget {
     // so that switching language reformats the dates already on screen.
     Intl.defaultLocale = locale.languageCode;
 
-    final night = ref.watch(nightModeProvider);
-
     return MaterialApp.router(
       // On web this also becomes the browser tab title. Generated rather than
       // fixed, so it follows the chosen language.
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       debugShowCheckedModeBanner: false,
-      // Everything the router draws, painted through the red filter when the
-      // night screen is on — sheets, dialogs and the full-screen photo viewer
-      // included, none of which had to be told about it.
-      builder: (context, child) =>
-          NightScreen(child: child ?? const SizedBox.shrink()),
       theme: AppTheme.light(),
+      // The dark theme stays. What is gone is the red filter that used to be
+      // painted over the whole app on top of it: «убери ночной режим, по
+      // отзывам он не нравится мамам… не нужно чтобы всё красным было».
       darkTheme: AppTheme.dark(),
-      // The red filter needs dark pixels under it: run it over the light
-      // theme and the screen is a red page rather than red type in the dark.
-      themeMode: night ? ThemeMode.dark : ref.watch(themeModeProvider),
+      themeMode: ref.watch(themeModeProvider),
       routerConfig: ref.watch(routerProvider),
       locale: ref.watch(localeProvider),
       supportedLocales: supportedLocales,

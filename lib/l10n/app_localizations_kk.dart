@@ -539,25 +539,6 @@ class AppLocalizationsKk extends AppLocalizations {
   String get quickSleep180 => 'Үш сағат';
 
   @override
-  String get nightModeTitle => 'Түнгі режим';
-
-  @override
-  String get nightModeHint =>
-      'Қою қызыл экран: баланы оятпайды және түнгі көруді бұзбайды';
-
-  @override
-  String get nightModeOff => 'Өшірулі';
-
-  @override
-  String get nightModeAuto => 'Түнде автоматты';
-
-  @override
-  String get nightModeOn => 'Қосулы';
-
-  @override
-  String get nightModeAutoHint => '21:00-ден 7:00-ге дейін';
-
-  @override
   String get pumpTitle => 'Сүт сауу';
 
   @override
@@ -1525,7 +1506,7 @@ class AppLocalizationsKk extends AppLocalizations {
   String get homeQuickLog => 'Жылдам жазба';
 
   @override
-  String get homeSpeak => 'Жазыңыз немесе айтып жаздырыңыз';
+  String get homeSpeak => 'Жазыңыз немесе айтып жаздырыңыз…';
 
   @override
   String get homeRepeat => 'Өткендегідей';
