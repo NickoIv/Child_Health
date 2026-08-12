@@ -3034,6 +3034,96 @@ abstract class AppLocalizations {
   /// **'Это ваш собственный адрес'**
   String get familySelfInvite;
 
+  /// No description provided for @familyInviteLink.
+  ///
+  /// In ru, this message translates to:
+  /// **'Создать приглашение'**
+  String get familyInviteLink;
+
+  /// No description provided for @familyInviteLinkExplain.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ничего вводить не нужно. Приложение создаст ссылку — отправьте её в WhatsApp, и человек войдёт своей почтой сам.'**
+  String get familyInviteLinkExplain;
+
+  /// No description provided for @familyLinkReady.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ссылка готова. Действует 7 дней и открывается один раз'**
+  String get familyLinkReady;
+
+  /// No description provided for @familyCopyLink.
+  ///
+  /// In ru, this message translates to:
+  /// **'Скопировать ссылку'**
+  String get familyCopyLink;
+
+  /// No description provided for @familyLinkCopied.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ссылка скопирована — вставьте в сообщение'**
+  String get familyLinkCopied;
+
+  /// No description provided for @familyLinkFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось создать ссылку. Попробуйте ещё раз'**
+  String get familyLinkFailed;
+
+  /// No description provided for @familyInviteLinkMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Открываю тебе доступ к дневнику ребёнка ({name}). Открой ссылку и войди своей почтой: {link}'**
+  String familyInviteLinkMessage(String name, String link);
+
+  /// No description provided for @joinTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Приглашение'**
+  String get joinTitle;
+
+  /// No description provided for @joinIntro.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вас приглашают в дневник ребёнка'**
+  String get joinIntro;
+
+  /// No description provided for @joinReadOnly.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вы будете видеть кормления, сон, рост и записи. Только смотреть — изменить или удалить ничего нельзя.'**
+  String get joinReadOnly;
+
+  /// No description provided for @joinAs.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вы вошли как {email}'**
+  String joinAs(String email);
+
+  /// No description provided for @joinAccept.
+  ///
+  /// In ru, this message translates to:
+  /// **'Принять приглашение'**
+  String get joinAccept;
+
+  /// No description provided for @joinDone.
+  ///
+  /// In ru, this message translates to:
+  /// **'Готово. Теперь вы видите дневник'**
+  String get joinDone;
+
+  /// No description provided for @joinOpenDiary.
+  ///
+  /// In ru, this message translates to:
+  /// **'Открыть дневник'**
+  String get joinOpenDiary;
+
+  /// No description provided for @joinSpent.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ссылка больше не действует — попросите новую'**
+  String get joinSpent;
+
   /// No description provided for @quickFeedHint.
   ///
   /// In ru, this message translates to:

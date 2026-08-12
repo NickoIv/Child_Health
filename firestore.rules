@@ -62,6 +62,53 @@ service cloud.firestore {
       return ownsExisting() || readsAsFamily(resource.data.parent_uid);
     }
 
+    // --- Invitation links --------------------------------------------------
+    //
+    // An invitation nobody has to type an address into: the owner mints a
+    // code, sends the link in WhatsApp, and whoever opens it and signs in has
+    // their own address read off their own token.
+    //
+    // The code is a bearer credential — holding the link is the authorisation
+    // — so the two properties that bound it are both here: `get` is allowed
+    // and `list` is not, so a code cannot be discovered, only presented; and
+    // a claim requires the code to be unspent and unexpired, so a message
+    // forwarded to a third person opens nothing.
+    match /invite_codes/{code} {
+      function ownsThisChild(childId) {
+        return signedIn()
+          && get(/databases/$(database)/documents/children/$(childId)).data.parent_uid == request.auth.uid;
+      }
+
+      // Deliberately `get` and not `read`: `read` would also permit `list`,
+      // and a client that could list this collection could invite itself to
+      // every family in the database.
+      allow get: if signedIn();
+      allow list: if false;
+
+      allow create: if signedIn()
+                    && request.resource.data.owner_uid == request.auth.uid
+                    && ownsThisChild(request.resource.data.child_id)
+                    && request.resource.data.claimed_by == ''
+                    && request.resource.data.expires_at_ms is int
+                    && request.resource.data.expires_at_ms > request.time.toMillis();
+
+      // Two ways to update. The owner may withdraw a link by claiming it
+      // shut; anybody else may only spend an unspent one on themselves, and
+      // may not move it to another child or another owner while doing so.
+      allow update: if (signedIn() && resource.data.owner_uid == request.auth.uid)
+                    || (
+                      signedIn()
+                      && resource.data.claimed_by == ''
+                      && resource.data.expires_at_ms > request.time.toMillis()
+                      && request.resource.data.claimed_by == request.auth.uid
+                      && request.resource.data.child_id == resource.data.child_id
+                      && request.resource.data.owner_uid == resource.data.owner_uid
+                      && request.resource.data.expires_at_ms == resource.data.expires_at_ms
+                    );
+
+      allow delete: if signedIn() && resource.data.owner_uid == request.auth.uid;
+    }
+
     match /children/{childId}/family_members/{memberEmail} {
       // The owner manages the list. Nobody else can add themselves to it,
       // which is the hinge the whole feature turns on.
@@ -70,13 +117,41 @@ service cloud.firestore {
           && get(/databases/$(database)/documents/children/$(childId)).data.parent_uid == request.auth.uid;
       }
 
+      // ...unless they are holding a link the owner minted and have already
+      // spent it on themselves. The code document is the owner's signature:
+      // only she could have created it, it names this child, and it now names
+      // this caller because the update above let it.
+      function spentCodeFor(code, ownerUid) {
+        return code is string
+          && code != ''
+          && exists(/databases/$(database)/documents/invite_codes/$(code))
+          && get(/databases/$(database)/documents/invite_codes/$(code)).data.claimed_by == request.auth.uid
+          && get(/databases/$(database)/documents/invite_codes/$(code)).data.child_id == childId
+          && get(/databases/$(database)/documents/invite_codes/$(code)).data.owner_uid == ownerUid;
+      }
+
       // The invited person reads their own invitation and no one else's.
       // This also authorises the collection-group query the app runs on
       // sign-in, because it filters on exactly this field.
       allow read: if ownsThisChild()
                   || (callerEmail() != '' && resource.data.email == callerEmail());
 
-      allow create, delete: if ownsThisChild();
+      allow create: if ownsThisChild()
+                    || (
+                      callerEmail() != ''
+                      && memberEmail == callerEmail()
+                      && request.resource.data.email == callerEmail()
+                      && request.resource.data.child_id == childId
+                      && request.resource.data.role == 'viewer'
+                      && request.resource.data.status == 'accepted'
+                      && request.resource.data.viewer_uid == request.auth.uid
+                      && spentCodeFor(
+                           request.resource.data.via_code,
+                           request.resource.data.owner_uid,
+                         )
+                    );
+
+      allow delete: if ownsThisChild();
 
       // Two ways to update. The owner may change anything. The invited person
       // may only accept: the address, the role and the owner are pinned to

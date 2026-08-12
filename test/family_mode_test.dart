@@ -512,7 +512,9 @@ void main() {
       await pumpFrames(tester);
     }
 
-    testWidgets('the mother invites and sees it pending', (tester) async {
+    testWidgets('the mother makes a link, and types nothing to do it', (
+      tester,
+    ) async {
       final family = MemoryFamilyRepository();
       addTearDown(family.dispose);
 
@@ -520,20 +522,18 @@ void main() {
       final l = await AppLocalizations.delegate.load(defaultLocale);
 
       expect(find.text(l.familyNobody), findsOneWidget);
+      // Not one box to fill in. «Может проще убрать почту и оставить ватсап,
+      // чтобы у пользователей не было трудностей» — the address is still what
+      // access is granted to, it is simply read off his own token when he
+      // opens the link rather than typed from memory by her.
+      expect(find.byType(TextField), findsNothing);
 
-      await tester.enterText(
-        find.widgetWithText(TextField, l.familyInviteEmail),
-        fatherEmail,
-      );
-      await tester.tap(find.widgetWithText(FilledButton, l.familyInvite));
+      await tester.tap(find.widgetWithText(FilledButton, l.familyInviteLink));
       await pumpFrames(tester);
 
-      // «Создано», not «отправлено»: no email leaves the app, and the strip
-      // that says so also offers the only way it actually reaches him.
-      expect(find.text(l.familyInviteCreated), findsOneWidget);
-      expect(find.text(l.familyCopyInvite), findsWidgets);
-      expect(find.text(fatherEmail), findsWidgets);
-      expect(find.text(l.familyPending), findsOneWidget);
+      expect(find.text(l.familyLinkReady), findsOneWidget);
+      expect(find.text(l.familyOpenWhatsApp), findsOneWidget);
+      expect(find.text(l.familyCopyLink), findsOneWidget);
     });
 
     testWidgets('and nothing in the wording promises an email', (tester) async {
@@ -544,78 +544,13 @@ void main() {
         final l = await AppLocalizations.delegate.load(locale);
         expect(l.familyInviteCreated.toLowerCase(), isNot(contains('отправ')));
         expect(l.familyInviteCreated.toLowerCase(), isNot(contains('sent')));
-        // And the field says up front what will and will not happen.
-        expect(l.familyInviteExplain.trim(), isNotEmpty);
-        // Including the channel that does work. This line spent a release
-        // saying no message is ever sent, months after WhatsApp started
-        // sending them — the wording outlived the thing it described.
-        expect(l.familyInviteExplain, contains('WhatsApp'));
+        // And the card says up front what happens instead, naming the channel
+        // that does work. This line spent a release saying no message is ever
+        // sent, months after WhatsApp started carrying them — the wording
+        // outlived the thing it described.
+        expect(l.familyInviteLinkExplain.trim(), isNotEmpty);
+        expect(l.familyInviteLinkExplain, contains('WhatsApp'));
       }
-    });
-
-    testWidgets('a typo is caught before an invitation is written', (
-      tester,
-    ) async {
-      final family = MemoryFamilyRepository();
-      addTearDown(family.dispose);
-
-      await pumpFamilyCard(tester, family: family);
-      final l = await AppLocalizations.delegate.load(defaultLocale);
-
-      await tester.enterText(
-        find.widgetWithText(TextField, l.familyInviteEmail),
-        'dad',
-      );
-      await tester.tap(find.widgetWithText(FilledButton, l.familyInvite));
-      await pumpFrames(tester);
-
-      expect(find.text(l.familyEmailInvalid), findsOneWidget);
-      // Nothing was written: the list still says there is nobody.
-      expect(find.text(l.familyNobody), findsOneWidget);
-      expect(find.text(l.familyPending), findsNothing);
-    });
-
-    testWidgets('inviting yourself is refused', (tester) async {
-      final family = MemoryFamilyRepository();
-      addTearDown(family.dispose);
-
-      await pumpFamilyCard(tester, family: family);
-      final l = await AppLocalizations.delegate.load(defaultLocale);
-
-      // Accepting her own invitation would make the owner a viewer of her own
-      // record and lock her out on the next launch.
-      await tester.enterText(
-        find.widgetWithText(TextField, l.familyInviteEmail),
-        motherEmail,
-      );
-      await tester.tap(find.widgetWithText(FilledButton, l.familyInvite));
-      await pumpFrames(tester);
-
-      expect(find.text(l.familySelfInvite), findsOneWidget);
-      expect(find.text(l.familyNobody), findsOneWidget);
-      expect(find.text(l.familyPending), findsNothing);
-    });
-
-    testWidgets('the same address cannot be invited twice', (tester) async {
-      final family = MemoryFamilyRepository();
-      addTearDown(family.dispose);
-      await family.invite(
-        childId: child.id,
-        ownerUid: child.parentUid,
-        email: fatherEmail,
-      );
-
-      await pumpFamilyCard(tester, family: family);
-      final l = await AppLocalizations.delegate.load(defaultLocale);
-
-      await tester.enterText(
-        find.widgetWithText(TextField, l.familyInviteEmail),
-        fatherEmail,
-      );
-      await tester.tap(find.widgetWithText(FilledButton, l.familyInvite));
-      await pumpFrames(tester);
-
-      expect(find.text(l.familyAlreadyMember), findsOneWidget);
     });
 
     testWidgets('a viewer cannot invite anyone else', (tester) async {
@@ -634,8 +569,10 @@ void main() {
       // He sees the family and cannot change it. Passing on access is the
       // owner's to give, not the guest's.
       expect(find.text(l.familyOwnerOnly), findsOneWidget);
-      expect(find.widgetWithText(FilledButton, l.familyInvite), findsNothing);
-      expect(find.widgetWithText(TextField, l.familyInviteEmail), findsNothing);
+      expect(
+        find.widgetWithText(FilledButton, l.familyInviteLink),
+        findsNothing,
+      );
       expect(find.text(l.familyAccepted), findsOneWidget);
     });
 

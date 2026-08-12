@@ -1,4 +1,5 @@
 import '../models/family_member.dart';
+import '../models/invite_code.dart';
 import 'memory_repository.dart';
 
 /// Who else can see this child.
@@ -33,6 +34,32 @@ abstract class FamilyRepository {
   /// Withdraws access. The owner's own membership is never removable — a
   /// record with nobody who can write to it is a record nobody can correct.
   Future<void> revoke({required String childId, required String email});
+
+  /// Mints a link nobody has to type an address into. See [InviteCode].
+  Future<InviteCode> createCode({
+    required String childId,
+    required String ownerUid,
+    required DateTime now,
+  });
+
+  /// The invitation behind a link, or null if there is no such code.
+  ///
+  /// Readable by anyone signed in who knows the code — that is what a link
+  /// invitation is. Enumerating them is not possible: the rule allows `get`
+  /// and denies `list`.
+  Future<InviteCode?> codeById(String code);
+
+  /// Takes the invitation, and writes the membership it authorises.
+  ///
+  /// Returns the membership so the caller can act on it without a second
+  /// round trip. Throws [StateError] if the link is spent or expired — a
+  /// forwarded message must not let a third person in.
+  Future<FamilyMember> claimCode({
+    required String code,
+    required String viewerUid,
+    required String viewerEmail,
+    required DateTime now,
+  });
 
   /// Records that the viewer said thank you on [day].
   ///
@@ -119,6 +146,66 @@ class MemoryFamilyRepository implements FamilyRepository {
             m.role != FamilyRole.owner,
       ),
     );
+  }
+
+  /// Codes live beside the memberships rather than in a [Store]: nothing
+  /// watches them, they are read once each by whoever was sent the link.
+  final _codes = <String, InviteCode>{};
+
+  @override
+  Future<InviteCode> createCode({
+    required String childId,
+    required String ownerUid,
+    required DateTime now,
+  }) async {
+    final code = InviteCode(
+      code: newInviteCode(),
+      childId: childId,
+      ownerUid: ownerUid,
+      createdAt: now,
+      expiresAt: now.add(inviteCodeLifetime),
+    );
+    _codes[code.code] = code;
+    return code;
+  }
+
+  @override
+  Future<InviteCode?> codeById(String code) async => _codes[code];
+
+  @override
+  Future<FamilyMember> claimCode({
+    required String code,
+    required String viewerUid,
+    required String viewerEmail,
+    required DateTime now,
+  }) async {
+    final invitation = _codes[code];
+    if (invitation == null || !invitation.isUsableAt(now)) {
+      throw StateError('invite code is not usable');
+    }
+    final email = normalizeEmail(viewerEmail);
+    _codes[code] = invitation.claim(viewerUid, email);
+
+    final member = FamilyMember(
+      email: email,
+      childId: invitation.childId,
+      ownerUid: invitation.ownerUid,
+      role: FamilyRole.viewer,
+      // Accepted, because claiming is the acceptance: the screen that leads
+      // here has already said what the invitation gives and which account it
+      // will be attached to, and pressing the button was the answer.
+      status: InviteStatus.accepted,
+      invitedAt: invitation.createdAt,
+      acceptedAt: now,
+      viewerUid: viewerUid,
+    );
+    _store.mutate((list) {
+      list.removeWhere(
+        (m) => m.childId == member.childId && m.email == member.email,
+      );
+      list.add(member);
+    });
+    return member;
   }
 
   @override

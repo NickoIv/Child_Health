@@ -11,6 +11,7 @@ import '../models/app_user.dart';
 import '../models/child.dart';
 import '../models/development_log.dart';
 import '../models/family_member.dart';
+import '../models/invite_code.dart';
 import '../models/medical_record.dart';
 import '../models/photo.dart';
 import '../models/reminder.dart';
@@ -34,6 +35,15 @@ abstract final class Collections {
   /// back to the child's subcollection to find out whether the reader is
   /// family. This is a single existence check on a known path instead.
   static const familyAccess = 'family_access';
+
+  /// One document per invitation link, id = the code itself.
+  ///
+  /// Top level rather than under the child, because whoever opens the link
+  /// does not yet know which child it is for — that is what the document
+  /// tells them. Readable by `get` and never by `list`: knowing the code is
+  /// the whole of the authorisation, so being able to enumerate them would be
+  /// being able to invite yourself.
+  static const inviteCodes = 'invite_codes';
 }
 
 /// Id of the grant that lets [viewerUid] read what [ownerUid] wrote.
@@ -349,6 +359,89 @@ class FirestoreFamilyRepository implements FamilyRepository {
     await _members(childId).doc(normalizeEmail(email)).update({
       'thanked_on': dayStamp(day),
     });
+  }
+
+  CollectionReference<Map<String, dynamic>> get _codes =>
+      db.collection(Collections.inviteCodes);
+
+  @override
+  Future<InviteCode> createCode({
+    required String childId,
+    required String ownerUid,
+    required DateTime now,
+  }) async {
+    final code = InviteCode(
+      code: newInviteCode(),
+      childId: childId,
+      ownerUid: ownerUid,
+      createdAt: now,
+      expiresAt: now.add(inviteCodeLifetime),
+    );
+    await _codes.doc(code.code).set(code.toMap());
+    return code;
+  }
+
+  @override
+  Future<InviteCode?> codeById(String code) async {
+    final doc = await _codes.doc(code).get();
+    final data = doc.data();
+    return data == null ? null : InviteCode.fromMap(doc.id, data);
+  }
+
+  @override
+  Future<FamilyMember> claimCode({
+    required String code,
+    required String viewerUid,
+    required String viewerEmail,
+    required DateTime now,
+  }) async {
+    final invitation = await codeById(code);
+    if (invitation == null || !invitation.isUsableAt(now)) {
+      throw StateError('invite code is not usable');
+    }
+    final email = normalizeEmail(viewerEmail);
+
+    // Three writes, in this order, and the order is the security.
+    //
+    // The code is spent first: the rule on the membership below looks the code
+    // up and requires it to name this caller, so nothing can be written until
+    // this has succeeded, and this can only succeed once. Then the membership,
+    // which is what the grant is checked against. Then the grant itself, which
+    // is what every other rule in the file reads.
+    await _codes.doc(code).update({
+      'claimed_by': viewerUid,
+      'claimed_email': email,
+    });
+
+    final member = FamilyMember(
+      email: email,
+      childId: invitation.childId,
+      ownerUid: invitation.ownerUid,
+      role: FamilyRole.viewer,
+      status: InviteStatus.accepted,
+      invitedAt: invitation.createdAt,
+      acceptedAt: now,
+      viewerUid: viewerUid,
+    );
+    await _members(invitation.childId).doc(email).set({
+      ...member.toMap(),
+      // Which link authorised this. The rule reads it to find the code
+      // document; it is not a secret to anyone who can already see this.
+      'via_code': code,
+    });
+
+    await db
+        .collection(Collections.familyAccess)
+        .doc(familyAccessId(invitation.ownerUid, viewerUid))
+        .set({
+          'owner_uid': invitation.ownerUid,
+          'viewer_uid': viewerUid,
+          'child_id': invitation.childId,
+          'email': email,
+          'granted_at': now.toIso8601String(),
+        });
+
+    return member;
   }
 }
 

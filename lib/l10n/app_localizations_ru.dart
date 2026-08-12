@@ -1697,6 +1697,59 @@ class AppLocalizationsRu extends AppLocalizations {
   String get familySelfInvite => 'Это ваш собственный адрес';
 
   @override
+  String get familyInviteLink => 'Создать приглашение';
+
+  @override
+  String get familyInviteLinkExplain =>
+      'Ничего вводить не нужно. Приложение создаст ссылку — отправьте её в WhatsApp, и человек войдёт своей почтой сам.';
+
+  @override
+  String get familyLinkReady =>
+      'Ссылка готова. Действует 7 дней и открывается один раз';
+
+  @override
+  String get familyCopyLink => 'Скопировать ссылку';
+
+  @override
+  String get familyLinkCopied => 'Ссылка скопирована — вставьте в сообщение';
+
+  @override
+  String get familyLinkFailed =>
+      'Не удалось создать ссылку. Попробуйте ещё раз';
+
+  @override
+  String familyInviteLinkMessage(String name, String link) {
+    return 'Открываю тебе доступ к дневнику ребёнка ($name). Открой ссылку и войди своей почтой: $link';
+  }
+
+  @override
+  String get joinTitle => 'Приглашение';
+
+  @override
+  String get joinIntro => 'Вас приглашают в дневник ребёнка';
+
+  @override
+  String get joinReadOnly =>
+      'Вы будете видеть кормления, сон, рост и записи. Только смотреть — изменить или удалить ничего нельзя.';
+
+  @override
+  String joinAs(String email) {
+    return 'Вы вошли как $email';
+  }
+
+  @override
+  String get joinAccept => 'Принять приглашение';
+
+  @override
+  String get joinDone => 'Готово. Теперь вы видите дневник';
+
+  @override
+  String get joinOpenDiary => 'Открыть дневник';
+
+  @override
+  String get joinSpent => 'Ссылка больше не действует — попросите новую';
+
+  @override
   String get quickFeedHint => 'грудь или бутылочка';
 
   @override

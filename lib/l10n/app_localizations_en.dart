@@ -1689,6 +1689,58 @@ class AppLocalizationsEn extends AppLocalizations {
   String get familySelfInvite => 'That is your own address';
 
   @override
+  String get familyInviteLink => 'Create an invitation';
+
+  @override
+  String get familyInviteLinkExplain =>
+      'Nothing to type. The app makes a link — send it on WhatsApp and they sign in with their own email.';
+
+  @override
+  String get familyLinkReady =>
+      'The link is ready. It lasts 7 days and opens once';
+
+  @override
+  String get familyCopyLink => 'Copy the link';
+
+  @override
+  String get familyLinkCopied => 'Link copied — paste it into a message';
+
+  @override
+  String get familyLinkFailed => 'The link could not be created. Try again';
+
+  @override
+  String familyInviteLinkMessage(String name, String link) {
+    return 'I am sharing $name’s diary with you. Open the link and sign in with your own email: $link';
+  }
+
+  @override
+  String get joinTitle => 'Invitation';
+
+  @override
+  String get joinIntro => 'You have been invited to a child’s diary';
+
+  @override
+  String get joinReadOnly =>
+      'You will see feeds, sleep, growth and notes. Looking only — nothing can be changed or deleted.';
+
+  @override
+  String joinAs(String email) {
+    return 'You are signed in as $email';
+  }
+
+  @override
+  String get joinAccept => 'Accept the invitation';
+
+  @override
+  String get joinDone => 'Done. You can see the diary now';
+
+  @override
+  String get joinOpenDiary => 'Open the diary';
+
+  @override
+  String get joinSpent => 'This link no longer works — ask for a new one';
+
+  @override
   String get quickFeedHint => 'breast or bottle';
 
   @override

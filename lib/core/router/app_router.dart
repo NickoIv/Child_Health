@@ -13,6 +13,7 @@ import '../../features/children/children_screen.dart';
 import '../../features/dashboard/dashboard_screen.dart';
 import '../../features/diary/diary_screen.dart';
 import '../../features/family/family_screen.dart';
+import '../../features/family/join_screen.dart';
 import '../../features/growth/growth_screen.dart';
 import '../../features/illness/illness_screen.dart';
 import '../../features/medical/medical_screen.dart';
@@ -175,6 +176,12 @@ final appDestinations = <AppDestination>[
 const loginPath = '/login';
 const settingsPath = '/settings';
 
+/// Where an invitation link lands: `/join/{code}`.
+///
+/// Outside the shell, like the chat, because whoever opens it has no tabs to
+/// go to yet — they are not in the family until they press the button.
+const joinPath = '/join';
+
 final _assistantRoutes = <RouteBase>[
   GoRoute(
     path: 'chat',
@@ -216,14 +223,31 @@ final routerProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final signedIn = auth.currentUser != null;
       final atLogin = state.matchedLocation == loginPath;
-      if (!signedIn) return atLogin ? null : loginPath;
-      return atLogin ? '/' : null;
+      if (!signedIn) {
+        if (atLogin) return null;
+        // Where he was going, carried through the sign-in. Without this an
+        // invitation link sent to somebody who has never opened the app puts
+        // him on the home screen of an empty account, with the code gone from
+        // the address bar and nothing to say what he was invited to.
+        final wanted = state.uri.toString();
+        return wanted == '/'
+            ? loginPath
+            : '$loginPath?next=${Uri.encodeQueryComponent(wanted)}';
+      }
+      if (atLogin) return _safeNext(state.uri.queryParameters['next']);
+      return null;
     },
     routes: [
       GoRoute(
         path: loginPath,
         pageBuilder: (context, state) =>
             const NoTransitionPage(child: LoginScreen()),
+      ),
+      GoRoute(
+        path: '$joinPath/:code',
+        pageBuilder: (context, state) => MaterialPage(
+          child: JoinScreen(code: state.pathParameters['code'] ?? ''),
+        ),
       ),
       // Above the shell, not inside it: no tab bar under a conversation.
       GoRoute(
@@ -259,6 +283,19 @@ final routerProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
+
+/// An address inside this app, or the home screen.
+///
+/// `next` comes off the URL, which is to say from whoever sent the link. A
+/// bare `startsWith('/')` is not enough: `//example.com` also starts with a
+/// slash and is a perfectly good address for somewhere else entirely, which
+/// would turn the sign-in screen into an open redirect.
+String _safeNext(String? next) {
+  if (next == null || !next.startsWith('/') || next.startsWith('//')) {
+    return '/';
+  }
+  return next;
+}
 
 /// Bridges the auth stream to the [Listenable] go_router expects, so a sign-in
 /// or sign-out re-runs the redirect.

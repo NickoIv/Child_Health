@@ -858,6 +858,27 @@
   "familyOwnerOnly": "Это может изменить только владелец профиля",
   "familyAlreadyMember": "У этого адреса уже есть доступ",
   "familySelfInvite": "Это ваш собственный адрес",
+  "familyInviteLink": "Создать приглашение",
+  "familyInviteLinkExplain": "Ничего вводить не нужно. Приложение создаст ссылку — отправьте её в WhatsApp, и человек войдёт своей почтой сам.",
+  "familyLinkReady": "Ссылка готова. Действует 7 дней и открывается один раз",
+  "familyCopyLink": "Скопировать ссылку",
+  "familyLinkCopied": "Ссылка скопирована — вставьте в сообщение",
+  "familyLinkFailed": "Не удалось создать ссылку. Попробуйте ещё раз",
+  "familyInviteLinkMessage": "Открываю тебе доступ к дневнику ребёнка ({name}). Открой ссылку и войди своей почтой: {link}",
+  "@familyInviteLinkMessage": {
+    "placeholders": { "name": { "type": "String" }, "link": { "type": "String" } }
+  },
+  "joinTitle": "Приглашение",
+  "joinIntro": "Вас приглашают в дневник ребёнка",
+  "joinReadOnly": "Вы будете видеть кормления, сон, рост и записи. Только смотреть — изменить или удалить ничего нельзя.",
+  "joinAs": "Вы вошли как {email}",
+  "@joinAs": {
+    "placeholders": { "email": { "type": "String" } }
+  },
+  "joinAccept": "Принять приглашение",
+  "joinDone": "Готово. Теперь вы видите дневник",
+  "joinOpenDiary": "Открыть дневник",
+  "joinSpent": "Ссылка больше не действует — попросите новую",
   "quickFeedHint": "грудь или бутылочка",
   "quickNappyHint": "мокрый или стул",
   "quickSleepHint": "дневной отдых",

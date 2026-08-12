@@ -1680,6 +1680,57 @@ class AppLocalizationsKk extends AppLocalizations {
   String get familySelfInvite => 'Бұл сіздің өз мекенжайыңыз';
 
   @override
+  String get familyInviteLink => 'Шақыру жасау';
+
+  @override
+  String get familyInviteLinkExplain =>
+      'Ештеңе теру қажет емес. Қолданба сілтеме жасайды — оны WhatsApp арқылы жіберіңіз, адам өз поштасымен кіреді.';
+
+  @override
+  String get familyLinkReady => 'Сілтеме дайын. 7 күн жарамды, бір рет ашылады';
+
+  @override
+  String get familyCopyLink => 'Сілтемені көшіру';
+
+  @override
+  String get familyLinkCopied => 'Сілтеме көшірілді — хабарламаға қойыңыз';
+
+  @override
+  String get familyLinkFailed => 'Сілтеме жасалмады. Қайталап көріңіз';
+
+  @override
+  String familyInviteLinkMessage(String name, String link) {
+    return '$name күнделігіне қолжетімділік ашып жатырмын. Сілтемені ашып, өз поштаңызбен кіріңіз: $link';
+  }
+
+  @override
+  String get joinTitle => 'Шақыру';
+
+  @override
+  String get joinIntro => 'Сізді бала күнделігіне шақырып отыр';
+
+  @override
+  String get joinReadOnly =>
+      'Сіз тамақтандыру, ұйқы, өсу және жазбаларды көресіз. Тек қарау — ештеңені өзгертуге не жоюға болмайды.';
+
+  @override
+  String joinAs(String email) {
+    return 'Сіз $email арқылы кірдіңіз';
+  }
+
+  @override
+  String get joinAccept => 'Шақыруды қабылдау';
+
+  @override
+  String get joinDone => 'Дайын. Енді күнделікті көресіз';
+
+  @override
+  String get joinOpenDiary => 'Күнделікті ашу';
+
+  @override
+  String get joinSpent => 'Сілтеме енді жарамсыз — жаңасын сұраңыз';
+
+  @override
   String get quickFeedHint => 'омырау не бөтелке';
 
   @override

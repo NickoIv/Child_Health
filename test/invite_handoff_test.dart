@@ -3,27 +3,27 @@ import 'dart:async';
 import 'package:child_health_tracker/core/l10n/app_locale.dart';
 import 'package:child_health_tracker/data/family_repository.dart';
 import 'package:child_health_tracker/features/family/family_section.dart';
+import 'package:child_health_tracker/features/family/join_screen.dart';
 import 'package:child_health_tracker/l10n/app_localizations.dart';
 import 'package:child_health_tracker/models/child.dart';
 import 'package:child_health_tracker/models/family_member.dart';
+import 'package:child_health_tracker/models/invite_code.dart';
 import 'package:child_health_tracker/providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
-/// «Отправка приглашения не отправляется. Просто тишина и никакой обратной
-/// связи.»
+/// An invitation nobody types anything into.
 ///
-/// Two separate faults wearing the same face. Nothing was ever emailed —
-/// there is no mail key on the Worker and there never was — and what the
-/// screen said about that was one strip at the bottom that slid away after
-/// three seconds. Anyone who looked up from the phone for a moment saw a
-/// button that had greyed out and nothing else.
+/// It started as «отправка приглашения не отправляется, просто тишина» and
+/// ended as «может проще убрать почту и оставить ватсап». The address could
+/// not simply be deleted — access is granted to the account somebody signs in
+/// with — so it is no longer typed instead: she makes a link, sends it in
+/// WhatsApp, and his own token supplies the address at the other end.
 ///
-/// So what is tested here is that pressing invite always ends in something
-/// that is still on the screen a minute later, and that it carries a way to
-/// actually deliver the invitation rather than a report about one.
+/// What is tested here is the shape of that, and the two limits that make a
+/// link safe to send in a chat: one use, and a week.
 void main() {
   setUpAll(initializeDateFormatting);
 
@@ -63,146 +63,290 @@ void main() {
         ),
       ),
     );
-    // Settling is not safe here: one of these tests deliberately leaves a
-    // write pending, and pumpAndSettle would wait for it for ever.
+    // Settling is not safe here: one test deliberately leaves a write
+    // pending, and pumpAndSettle would wait for it for ever.
     for (var i = 0; i < 6; i++) {
       await tester.pump(const Duration(milliseconds: 60));
     }
   }
 
-  Future<void> invite(
-    WidgetTester tester,
-    AppLocalizations l, {
+  Future<void> pumpJoin(
+    WidgetTester tester, {
+    required FamilyRepository family,
+    required String code,
     String email = fatherEmail,
-    String phone = '',
   }) async {
-    await tester.enterText(
-      find.widgetWithText(TextField, l.familyInviteEmail),
-      email,
+    tester.view.physicalSize = const Size(900, 1600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          familyRepositoryProvider.overrideWithValue(family),
+          currentEmailProvider.overrideWithValue(email),
+          childrenProvider.overrideWith((ref) => Stream.value([child])),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: supportedLocales,
+          locale: defaultLocale,
+          home: JoinScreen(code: code),
+        ),
+      ),
     );
-    if (phone.isNotEmpty) {
-      await tester.enterText(
-        find.widgetWithText(TextField, l.familyInvitePhone),
-        phone,
-      );
-    }
-    await tester.tap(find.widgetWithText(FilledButton, l.familyInvite));
+    await tester.pumpAndSettle();
   }
 
-  testWidgets('the answer stays on the screen instead of sliding away', (
-    tester,
-  ) async {
-    final family = MemoryFamilyRepository();
-    addTearDown(family.dispose);
-    await pumpCard(tester, family: family);
-    final l = await AppLocalizations.delegate.load(defaultLocale);
+  group('making one', () {
+    testWidgets('the answer stays on the screen instead of sliding away', (
+      tester,
+    ) async {
+      final family = MemoryFamilyRepository();
+      addTearDown(family.dispose);
+      await pumpCard(tester, family: family);
+      final l = await AppLocalizations.delegate.load(defaultLocale);
 
-    await invite(tester, l);
-    await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, l.familyInviteLink));
+      await tester.pumpAndSettle();
 
-    expect(find.text(l.familyInviteCreated), findsOneWidget);
+      expect(find.text(l.familyLinkReady), findsOneWidget);
 
-    // A snackbar is gone by now. This is not a snackbar: she put the phone
-    // down, picked up the other one, and came back.
-    await tester.pump(const Duration(seconds: 30));
-    await tester.pumpAndSettle();
-    expect(find.text(l.familyInviteCreated), findsOneWidget);
-    expect(find.text(l.familyOpenWhatsApp), findsOneWidget);
-    expect(find.widgetWithText(OutlinedButton, l.familyCopyInvite), findsOne);
+      // A snackbar is gone by now. This is not a snackbar: she put the phone
+      // down, picked up the other one, and came back.
+      await tester.pump(const Duration(seconds: 30));
+      await tester.pumpAndSettle();
+      expect(find.text(l.familyLinkReady), findsOneWidget);
+      expect(find.text(l.familyOpenWhatsApp), findsOneWidget);
+      expect(find.widgetWithText(OutlinedButton, l.familyCopyLink), findsOne);
+    });
+
+    testWidgets('the link is printed, not only hidden in a button', (
+      tester,
+    ) async {
+      // A link that exists only inside a button is one she cannot check,
+      // cannot read out and cannot see has been made at all.
+      final family = MemoryFamilyRepository();
+      addTearDown(family.dispose);
+      await pumpCard(tester, family: family);
+      final l = await AppLocalizations.delegate.load(defaultLocale);
+
+      await tester.tap(find.widgetWithText(FilledButton, l.familyInviteLink));
+      await tester.pumpAndSettle();
+
+      final printed = tester
+          .widgetList<SelectableText>(find.byType(SelectableText))
+          .map((t) => t.data ?? '')
+          .where((t) => t.contains('/join/'));
+      expect(printed, isNotEmpty, reason: 'the address is on the screen');
+      expect(printed.first, startsWith('https://'));
+    });
+
+    testWidgets('a write nobody answers still ends in an answer', (
+      tester,
+    ) async {
+      // The silence itself. A Firestore write on the web completes when the
+      // *server* acknowledges it, and with no signal it never completes — so
+      // the code after it, including every word the screen was going to say,
+      // never ran. The button greyed out and stayed grey.
+      final family = _StuckFamilyRepository();
+      await pumpCard(tester, family: family);
+      final l = await AppLocalizations.delegate.load(defaultLocale);
+
+      await tester.tap(find.widgetWithText(FilledButton, l.familyInviteLink));
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text(l.familyInviteSending), findsOneWidget);
+
+      await tester.pump(const Duration(seconds: 13));
+      await tester.pumpAndSettle();
+
+      expect(find.text(l.familyInviteSending), findsNothing);
+      expect(find.text(l.familyLinkFailed), findsOneWidget);
+    });
   });
 
-  testWidgets('a write nobody answers still ends in an answer', (tester) async {
-    // The silence itself. A Firestore write on the web completes when the
-    // *server* acknowledges it, and with no signal it never completes at all
-    // — so the code after it, including every word the screen was going to
-    // say, never ran. The button greyed out and stayed grey.
-    final family = _StuckFamilyRepository();
-    await pumpCard(tester, family: family);
-    final l = await AppLocalizations.delegate.load(defaultLocale);
+  group('the code', () {
+    final at = DateTime(2026, 8, 12, 22, 40);
 
-    await invite(tester, l);
-    await tester.pump();
-    await tester.pump();
+    test('is long enough not to be guessed and easy enough to read out', () {
+      final codes = {for (var i = 0; i < 200; i++) newInviteCode()};
+      expect(codes, hasLength(200), reason: 'no two the same');
+      for (final code in codes) {
+        expect(code, hasLength(16));
+        // No i, l, o, 0 or 1: the link is normally tapped, but it is
+        // sometimes read down a telephone, and those are the ones that come
+        // back wrong when it is.
+        expect(RegExp(r'^[a-hjkmnp-z2-9]+$').hasMatch(code), isTrue, reason: code);
+      }
+    });
 
-    // While it is in flight the button says so, rather than only dimming.
-    expect(find.text(l.familyInviteSending), findsOneWidget);
+    test('lasts a week, and not for ever', () async {
+      final family = MemoryFamilyRepository();
+      addTearDown(family.dispose);
+      final code = await family.createCode(
+        childId: child.id,
+        ownerUid: child.parentUid,
+        now: at,
+      );
 
-    await tester.pump(const Duration(seconds: 13));
-    await tester.pumpAndSettle();
+      expect(code.isUsableAt(at), isTrue);
+      expect(code.isUsableAt(at.add(const Duration(days: 6))), isTrue);
+      // A link left in a chat history is a key lying on a table.
+      expect(code.isUsableAt(at.add(const Duration(days: 8))), isFalse);
+    });
 
-    expect(find.text(l.familyInviteSending), findsNothing);
-    expect(find.text(l.familyOpenWhatsApp), findsOneWidget);
+    test('opens once, and never again', () async {
+      final family = MemoryFamilyRepository();
+      addTearDown(family.dispose);
+      final code = await family.createCode(
+        childId: child.id,
+        ownerUid: child.parentUid,
+        now: at,
+      );
+
+      final member = await family.claimCode(
+        code: code.code,
+        viewerUid: 'father-uid',
+        viewerEmail: fatherEmail,
+        now: at,
+      );
+      expect(member.email, fatherEmail);
+      expect(member.isAccepted, isTrue);
+      expect(member.role, FamilyRole.viewer);
+      expect(member.ownerUid, child.parentUid);
+
+      // Forwarded on to a third person, the message opens nothing.
+      await expectLater(
+        family.claimCode(
+          code: code.code,
+          viewerUid: 'someone-else',
+          viewerEmail: 'someone@example.com',
+          now: at,
+        ),
+        throwsA(isA<StateError>()),
+      );
+    });
+
+    test('and an invented one opens nothing at all', () async {
+      final family = MemoryFamilyRepository();
+      addTearDown(family.dispose);
+      expect(await family.codeById('nosuchcode'), isNull);
+      await expectLater(
+        family.claimCode(
+          code: 'nosuchcode',
+          viewerUid: 'father-uid',
+          viewerEmail: fatherEmail,
+          now: at,
+        ),
+        throwsA(isA<StateError>()),
+      );
+    });
   });
 
-  testWidgets('the way to deliver it is offered even when nothing was sent', (
-    tester,
-  ) async {
-    final family = MemoryFamilyRepository();
-    addTearDown(family.dispose);
-    await pumpCard(tester, family: family);
-    final l = await AppLocalizations.delegate.load(defaultLocale);
+  group('opening one', () {
+    testWidgets('says which account it is about to attach to', (tester) async {
+      // A phone signed into a second Google account is the ordinary case, not
+      // the strange one, and finding out afterwards means asking for a new
+      // link.
+      final family = MemoryFamilyRepository();
+      addTearDown(family.dispose);
+      final code = await family.createCode(
+        childId: child.id,
+        ownerUid: child.parentUid,
+        now: DateTime.now(),
+      );
 
-    // With a number typed, which is the case the Worker would have handled
-    // had its WhatsApp account still been authorised. It is offered anyway:
-    // an automatic send that reports success and delivers nothing is exactly
-    // the failure being fixed here, and she can see her own WhatsApp.
-    await invite(tester, l, phone: '+7 700 123 45 67');
-    await tester.pumpAndSettle();
+      await pumpJoin(tester, family: family, code: code.code);
+      final l = await AppLocalizations.delegate.load(defaultLocale);
 
-    expect(find.text(l.familyOpenWhatsApp), findsOneWidget);
-    expect(find.text(l.familyInviteHandoff), findsOneWidget);
-    // And the invitation itself exists regardless of what was delivered.
-    expect(find.text(l.familyPending), findsOneWidget);
-  });
+      expect(find.text(l.joinIntro), findsOneWidget);
+      expect(find.text(l.joinAs(fatherEmail)), findsOneWidget);
+      // And what it does not give, before the button rather than after it.
+      expect(find.text(l.joinReadOnly), findsOneWidget);
+    });
 
-  testWidgets('a number with no address explains what the address is for', (
-    tester,
-  ) async {
-    // The screen he sent: the WhatsApp number filled in, the email box empty,
-    // and «Проверьте адрес» in red underneath it. He had not mistyped an
-    // address — he thought the number was the invitation. Answering him about
-    // a field he deliberately left alone explains nothing.
-    final family = MemoryFamilyRepository();
-    addTearDown(family.dispose);
-    await pumpCard(tester, family: family);
-    final l = await AppLocalizations.delegate.load(defaultLocale);
+    testWidgets('accepting writes the membership and says so', (tester) async {
+      final family = MemoryFamilyRepository();
+      addTearDown(family.dispose);
+      final code = await family.createCode(
+        childId: child.id,
+        ownerUid: child.parentUid,
+        now: DateTime.now(),
+      );
 
-    await invite(tester, l, email: '', phone: '+7 701 908 88 10');
-    await tester.pumpAndSettle();
+      await pumpJoin(tester, family: family, code: code.code);
+      final l = await AppLocalizations.delegate.load(defaultLocale);
 
-    expect(find.text(l.familyEmailRequired), findsOneWidget);
-    expect(find.text(l.familyEmailInvalid), findsNothing);
-    // And the cursor is put where the missing thing goes.
-    expect(
-      FocusManager.instance.primaryFocus?.context
-          ?.findAncestorWidgetOfExactType<TextField>(),
-      isNotNull,
-    );
-  });
+      await tester.tap(find.widgetWithText(FilledButton, l.joinAccept));
+      await tester.pumpAndSettle();
 
-  testWidgets('a refused address produces no panel at all', (tester) async {
-    final family = MemoryFamilyRepository();
-    addTearDown(family.dispose);
-    await pumpCard(tester, family: family);
-    final l = await AppLocalizations.delegate.load(defaultLocale);
+      expect(find.text(l.joinDone), findsOneWidget);
 
-    await invite(tester, l, email: 'dad');
-    await tester.pumpAndSettle();
+      // `runAsync`, because a widget test runs in fake time and this waits on
+      // a stream: awaiting it directly hangs until the ten-minute test
+      // timeout, which is exactly what it did.
+      final members = await tester.runAsync(
+        () => family.watchMembers(child.id).first,
+      );
+      expect(members!.map((m) => m.email), contains(fatherEmail));
+    });
 
-    expect(find.text(l.familyEmailInvalid), findsOneWidget);
-    expect(find.text(l.familyOpenWhatsApp), findsNothing);
+    testWidgets('a spent link says so rather than failing on the button', (
+      tester,
+    ) async {
+      final family = MemoryFamilyRepository();
+      addTearDown(family.dispose);
+      final code = await family.createCode(
+        childId: child.id,
+        ownerUid: child.parentUid,
+        now: DateTime.now(),
+      );
+      await family.claimCode(
+        code: code.code,
+        viewerUid: 'first-arrival',
+        viewerEmail: 'first@example.com',
+        now: DateTime.now(),
+      );
+
+      await pumpJoin(tester, family: family, code: code.code);
+      final l = await AppLocalizations.delegate.load(defaultLocale);
+
+      expect(find.text(l.joinSpent), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, l.joinAccept), findsNothing);
+    });
+
+    testWidgets('and so does one that never existed', (tester) async {
+      final family = MemoryFamilyRepository();
+      addTearDown(family.dispose);
+
+      await pumpJoin(tester, family: family, code: 'nosuchcode');
+      final l = await AppLocalizations.delegate.load(defaultLocale);
+
+      expect(find.text(l.joinSpent), findsOneWidget);
+    });
   });
 
   test('every new string exists in all three languages', () async {
     for (final locale in supportedLocales) {
       final l = await AppLocalizations.delegate.load(locale);
       for (final s in [
-        l.familyInviteSending,
-        l.familyInviteHandoff,
+        l.familyInviteLink,
+        l.familyInviteLinkExplain,
+        l.familyLinkReady,
+        l.familyCopyLink,
+        l.familyLinkCopied,
+        l.familyLinkFailed,
         l.familyOpenWhatsApp,
         l.familyWhatsAppNotOpened,
-        l.familyEmailRequired,
-        l.familyInviteEmailHint,
+        l.joinTitle,
+        l.joinIntro,
+        l.joinReadOnly,
+        l.joinAccept,
+        l.joinDone,
+        l.joinOpenDiary,
+        l.joinSpent,
       ]) {
         expect(s.trim(), isNotEmpty, reason: locale.languageCode);
       }
@@ -213,6 +357,24 @@ void main() {
 /// A repository whose write is never acknowledged — the lift, the clinic
 /// basement, the moment the signal drops between the tap and the reply.
 class _StuckFamilyRepository implements FamilyRepository {
+  @override
+  Future<InviteCode> createCode({
+    required String childId,
+    required String ownerUid,
+    required DateTime now,
+  }) => Completer<InviteCode>().future;
+
+  @override
+  Future<InviteCode?> codeById(String code) async => null;
+
+  @override
+  Future<FamilyMember> claimCode({
+    required String code,
+    required String viewerUid,
+    required String viewerEmail,
+    required DateTime now,
+  }) => Completer<FamilyMember>().future;
+
   @override
   Future<FamilyMember> invite({
     required String childId,
