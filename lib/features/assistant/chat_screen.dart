@@ -197,6 +197,24 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   /// model turns would teach it to produce them.
   List<ChatTurn> _history() {
     final turns = <ChatTurn>[];
+
+    // What was said before this window was opened, up to a week back. She
+    // asks «он третью ночь плохо спит» on Tuesday and «а сейчас лучше?» on
+    // Thursday, and the second question used to arrive at something with no
+    // idea there had been a first.
+    //
+    // Only when this window is new: once there are turns on screen they are
+    // the conversation, and replaying an older one under them would answer a
+    // question twice.
+    if (_turns.length <= 1) {
+      for (final past in ref.read(conversationMemoryProvider)) {
+        if (past.answer.isEmpty) continue;
+        turns
+          ..add(ChatTurn.parent(past.question))
+          ..add(ChatTurn.assistant(past.answer));
+      }
+    }
+
     for (final turn in _turns) {
       if (turn.isQuestion) {
         turns.add(ChatTurn.parent(turn.text));
@@ -218,7 +236,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     // microphone went.
     if (await _write(question)) return;
 
-    // Only ever the latest one, and only on this phone.
+    // Written down before the request goes out: this is the point at which a
+    // phone gets put down, and a question she asked is worth keeping whether
+    // or not the reply came back.
     ref.read(conversationMemoryProvider.notifier).remember(question);
 
     setState(() {
@@ -256,6 +276,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           // «а если не поможет?» is answered instead of misread.
           history: _history(),
         );
+
+    if (reply case AssistantAnswer(:final text)) {
+      ref.read(conversationMemoryProvider.notifier).answered(text);
+    }
 
     if (!mounted) return;
     setState(() {

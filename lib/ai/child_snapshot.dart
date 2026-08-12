@@ -32,6 +32,20 @@ const snapshotWeekDays = 7;
 /// And how far back sick days are counted.
 const snapshotIllnessDays = 30;
 
+/// How many of the next vaccinations are named.
+///
+/// Four rather than two. «Что нас ждёт до года» is one of the questions this
+/// app exists for, and two doses is the next month — which the reminders
+/// screen already shows her.
+const snapshotVaccinationCount = 4;
+
+/// Days of entries a past week needs before it is worth comparing with.
+///
+/// Five out of seven. A week with two days in it is not a quieter month, it
+/// is a month nobody was writing in, and calling that a change would invent
+/// one out of a gap in the diary.
+const snapshotComparableDays = 5;
+
 /// How many recently introduced foods are named.
 ///
 /// Three. The question a parent asks about food is almost always about the
@@ -304,8 +318,61 @@ List<String> _weekLines(List<DevelopmentLog> logs, DateTime now) {
     if (nappies > 0) 'подгузников $nappies',
     if (bestNight > 0) 'самая длинная ночь ${_duration(bestNight)}',
   ];
-  return ['За $snapshotWeekDays дней (записей за $recorded дн.): '
-      '${parts.join('; ')}'];
+  return [
+    'За $snapshotWeekDays дней (записей за $recorded дн.): ${parts.join('; ')}',
+    ..._monthAgoLines(logs, now, feedings ~/ recorded, sleep ~/ recorded),
+  ];
+}
+
+/// The same week, a month earlier.
+///
+/// «Он стал есть меньше?» could not be answered before: the assistant saw
+/// this week and nothing behind it, so every question about a change was
+/// answered with a description of the present. This is the comparison a
+/// parent is actually making in her head, and she is making it against a
+/// memory rather than against a count.
+///
+/// Only when there is something to compare with — five days of entries in
+/// that week, out of seven. Fewer is not a quieter month, it is a month
+/// nobody was writing in, and calling that a drop would invent a change out
+/// of a gap in the diary.
+List<String> _monthAgoLines(
+  List<DevelopmentLog> logs,
+  DateTime now,
+  int feedingsNow,
+  int sleepNow,
+) {
+  final end = dateOnly(now).subtract(const Duration(days: 28));
+  final start = end.subtract(const Duration(days: snapshotWeekDays - 1));
+
+  var feedings = 0;
+  var sleep = 0;
+  final days = <DateTime>{};
+
+  for (final log in logs) {
+    final on = dateOnly(log.date);
+    if (on.isBefore(start) || on.isAfter(end)) continue;
+    days.add(on);
+    if (log.type == LogType.feeding) feedings++;
+    if (log.type == LogType.sleep) sleep += log.durationMinutes ?? 0;
+  }
+
+  if (days.length < snapshotComparableDays) return const [];
+
+  final was = <String>[
+    if (feedings > 0) 'кормлений ≈${feedings ~/ days.length} в день',
+    if (sleep > 0) 'сон ≈${_duration(sleep ~/ days.length)} в сутки',
+  ];
+  if (was.isEmpty) return const [];
+
+  // Stated as two figures side by side rather than as a verdict: «стало
+  // меньше» is a conclusion, and which way is good depends on the age, the
+  // week and the child.
+  return [
+    'Месяц назад за такую же неделю: ${was.join('; ')} '
+        '(сейчас ≈$feedingsNow кормлений в день, '
+        'сон ≈${_duration(sleepNow)} в сутки)',
+  ];
 }
 
 // --- Illness --------------------------------------------------------------
@@ -378,7 +445,11 @@ List<String> _solidsLines(List<DevelopmentLog> logs, DateTime now) {
 List<String> _reminderLines(List<Reminder> reminders, DateTime now) {
   final lines = <String>[];
 
-  final vaccinations = upcomingVaccinations(reminders, limit: 2, now: now);
+  final vaccinations = upcomingVaccinations(
+    reminders,
+    limit: snapshotVaccinationCount,
+    now: now,
+  );
   if (vaccinations.isNotEmpty) {
     lines.add(
       'Ближайшие прививки: '
