@@ -2363,6 +2363,13 @@ class AppLocalizationsKk extends AppLocalizations {
   String get settingsAbout => 'Қосымша туралы';
 
   @override
+  String get settingsTestingTitle => 'Сынақтан өтуде';
+
+  @override
+  String get settingsTestingBody =>
+      'Қазір бәрі ашық және тегін. Кейін кейбір мүмкіндіктер ақылы болады — қосымшаның ішінде алдын ала хабарлаймыз.';
+
+  @override
   String get settingsAuthor => 'Әзірлеуші';
 
   @override

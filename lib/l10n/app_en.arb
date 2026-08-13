@@ -753,6 +753,8 @@
   "settingsTemperatureHint": "Temperature stays in °C in both systems: every threshold in the app and in the guidance is given in Celsius.",
   "settingsAppearance": "Appearance",
   "settingsAbout": "About",
+  "settingsTestingTitle": "In testing",
+  "settingsTestingBody": "Everything is open and free right now. Some of it will become paid later — you will be told in advance, here in the app.",
   "settingsAuthor": "Developer",
   "settingsVersion": "Version",
   "settingsDeleteSection": "Deleting your account",

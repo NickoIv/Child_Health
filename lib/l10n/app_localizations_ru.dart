@@ -2400,6 +2400,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsAbout => 'О приложении';
 
   @override
+  String get settingsTestingTitle => 'Идёт тестирование';
+
+  @override
+  String get settingsTestingBody =>
+      'Сейчас открыто всё и бесплатно. Позже часть возможностей станет платной — предупредим заранее, внутри приложения.';
+
+  @override
   String get settingsAuthor => 'Разработчик';
 
   @override

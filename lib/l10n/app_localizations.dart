@@ -4168,6 +4168,18 @@ abstract class AppLocalizations {
   /// **'О приложении'**
   String get settingsAbout;
 
+  /// No description provided for @settingsTestingTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Идёт тестирование'**
+  String get settingsTestingTitle;
+
+  /// No description provided for @settingsTestingBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сейчас открыто всё и бесплатно. Позже часть возможностей станет платной — предупредим заранее, внутри приложения.'**
+  String get settingsTestingBody;
+
   /// No description provided for @settingsAuthor.
   ///
   /// In ru, this message translates to:

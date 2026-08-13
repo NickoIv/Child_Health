@@ -354,6 +354,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         const BackupCard(),
         const _FeedbackCard(),
         const _ErrorLogCard(),
+        // Said once, where somebody who wants to know goes looking, and
+        // deliberately promising nothing it cannot keep: not which features,
+        // not a price, not that testers keep anything for free. Only that
+        // this is a test, that it is open today, and that the change will be
+        // announced before it happens rather than discovered.
+        SectionCard(
+          title: l.settingsTestingTitle,
+          icon: Icons.science_outlined,
+          accentColor: SoftTone.sand.ink(theme.brightness),
+          child: Text(
+            l.settingsTestingBody,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+
         SectionCard(
           title: l.settingsAbout,
           icon: Icons.info_outline,

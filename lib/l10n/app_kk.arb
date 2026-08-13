@@ -753,6 +753,8 @@
   "settingsTemperatureHint": "Дене қызуы екі жүйеде де °C күйінде қалады: қосымшадағы және ұсынымдардағы барлық шектер Цельсий бойынша берілген.",
   "settingsAppearance": "Безендіру",
   "settingsAbout": "Қосымша туралы",
+  "settingsTestingTitle": "Сынақтан өтуде",
+  "settingsTestingBody": "Қазір бәрі ашық және тегін. Кейін кейбір мүмкіндіктер ақылы болады — қосымшаның ішінде алдын ала хабарлаймыз.",
   "settingsAuthor": "Әзірлеуші",
   "settingsVersion": "Нұсқасы",
   "settingsDeleteSection": "Тіркелгіні жою",

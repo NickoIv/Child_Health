@@ -2379,6 +2379,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAbout => 'About';
 
   @override
+  String get settingsTestingTitle => 'In testing';
+
+  @override
+  String get settingsTestingBody =>
+      'Everything is open and free right now. Some of it will become paid later — you will be told in advance, here in the app.';
+
+  @override
   String get settingsAuthor => 'Developer';
 
   @override
