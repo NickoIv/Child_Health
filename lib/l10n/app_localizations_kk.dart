@@ -999,6 +999,13 @@ class AppLocalizationsKk extends AppLocalizations {
   String get backupSave => 'Көшірмені сақтау';
 
   @override
+  String get backupRemindTitle => 'Күнделіктің көшірмесін сақтаңыз';
+
+  @override
+  String get backupRemindBody =>
+      'Барлық жазбасы бар бір файл — телефон жоғалған жағдайға. Көшірме сізде қалады, ешқайда жіберілмейді.';
+
+  @override
   String backupSaved(String file) {
     return 'Көшірме сақталды: $file';
   }

@@ -17,7 +17,10 @@ import '../../core/care/suggestions.dart';
 import '../../models/development_log.dart';
 import '../../models/family_member.dart';
 import '../../providers.dart';
+import '../../core/care/backup_reminder.dart';
+import '../../core/care/backup_store.dart';
 import '../family/appreciation_card.dart';
+import 'backup_reminder_card.dart';
 import 'check_in_card.dart';
 import 'pattern_card.dart';
 import 'reflection_card.dart';
@@ -37,6 +40,7 @@ enum SmartCardKind {
   appreciation,
   checkIn,
   sleepForecast,
+  backup,
   suggestion,
   reflection,
   pattern,
@@ -64,6 +68,7 @@ class SmartCard extends ConsumerWidget {
       SmartCardKind.appreciation => AppreciationCard(now: moment),
       SmartCardKind.checkIn => CheckInCard(now: moment),
       SmartCardKind.sleepForecast => SleepForecastCard(now: moment),
+      SmartCardKind.backup => BackupReminderCard(now: moment),
       SmartCardKind.suggestion => SuggestionCard(now: moment),
       SmartCardKind.reflection => ReflectionCard(now: moment),
       SmartCardKind.pattern => PatternCard(now: moment),
@@ -108,6 +113,23 @@ SmartCardKind? smartCardFor(WidgetRef ref, DateTime now) {
             asleep: ref.watch(activeTimerProvider)?.kind == TimerKind.sleep,
           );
     if (forecast != null) return SmartCardKind.sleepForecast;
+  }
+
+  // Above the three that are merely useful and below everything about the
+  // next hour. It fires at most once a month and then not again for another,
+  // so it can afford to wait behind a forecast — but a diary with no copy of
+  // it anywhere outranks a shortcut to a button already on the screen.
+  //
+  // A viewer is not asked: it is not his record to keep.
+  final backup = ref.watch(backupStoreProvider);
+  if (!readOnly &&
+      backupDue(
+        entries: logs.length,
+        now: now,
+        lastBackup: backup.lastSaved,
+        snoozedUntil: backup.snoozedUntil,
+      )) {
+    return SmartCardKind.backup;
   }
 
   final suggestion = suggestionFor(

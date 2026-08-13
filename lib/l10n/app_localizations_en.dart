@@ -1005,6 +1005,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get backupSave => 'Save a copy';
 
   @override
+  String get backupRemindTitle => 'Keep a copy of the diary';
+
+  @override
+  String get backupRemindBody =>
+      'One file with every entry, for the day a phone goes missing. The copy stays with you and is sent nowhere.';
+
+  @override
   String backupSaved(String file) {
     return 'Copy saved: $file';
   }

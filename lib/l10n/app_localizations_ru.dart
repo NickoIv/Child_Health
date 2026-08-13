@@ -1010,6 +1010,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get backupSave => 'Сохранить копию';
 
   @override
+  String get backupRemindTitle => 'Сохраните копию дневника';
+
+  @override
+  String get backupRemindBody =>
+      'Один файл со всеми записями — на случай потерянного телефона. Копия остаётся у вас, никуда не отправляется.';
+
+  @override
   String backupSaved(String file) {
     return 'Копия сохранена: $file';
   }

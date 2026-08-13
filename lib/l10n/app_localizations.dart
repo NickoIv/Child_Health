@@ -1846,6 +1846,18 @@ abstract class AppLocalizations {
   /// **'Сохранить копию'**
   String get backupSave;
 
+  /// No description provided for @backupRemindTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохраните копию дневника'**
+  String get backupRemindTitle;
+
+  /// No description provided for @backupRemindBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Один файл со всеми записями — на случай потерянного телефона. Копия остаётся у вас, никуда не отправляется.'**
+  String get backupRemindBody;
+
   /// No description provided for @backupSaved.
   ///
   /// In ru, this message translates to:

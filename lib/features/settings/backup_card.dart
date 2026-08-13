@@ -1,17 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/backup/backup.dart';
-import '../../core/backup/save_file.dart';
+import '../../core/backup/run_backup.dart';
 import '../../core/storage/persist.dart';
 import '../../core/theme/app_snack.dart';
 import '../../core/theme/app_theme.dart';
 import '../../l10n/app_localizations.dart';
-import '../../models/child.dart';
-import '../../models/development_log.dart';
-import '../../models/medical_record.dart';
-import '../../models/reminder.dart';
-import '../../providers.dart';
 import '../shared/widgets.dart';
 
 /// A copy she owns, and the truth about where the rest of it lives.
@@ -110,57 +104,17 @@ class _BackupCardState extends ConsumerState<BackupCard> {
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _busy = true);
 
-    try {
-      final children = ref.read(childrenProvider).value ?? const <Child>[];
-      final logs = <String, List<DevelopmentLog>>{};
-      final records = <String, List<MedicalRecord>>{};
-      final reminders = <String, List<Reminder>>{};
-
-      // Read per child rather than from the screen's own providers: those
-      // hold the selected child only, and a backup that quietly contains one
-      // of two children is worse than no backup at all.
-      for (final child in children) {
-        logs[child.id] =
-            await ref.read(logRepositoryProvider).watchLogs(child.id).first;
-        records[child.id] = await ref
-            .read(medicalRepositoryProvider)
-            .watchRecords(child.id)
-            .first;
-        reminders[child.id] = await ref
-            .read(reminderRepositoryProvider)
-            .watchReminders(child.id)
-            .first;
-      }
-
-      final at = DateTime.now();
-      final name = backupFilename(children, at);
-      final ok = await saveTextFile(
-        name,
-        encodeBackup(
-          buildBackup(
-            children: children,
-            logsByChild: logs,
-            recordsByChild: records,
-            remindersByChild: reminders,
-            at: at,
-          ),
-        ),
-      );
-
-      if (!mounted) return;
-      messenger.showAppSnack(
-        ok
-            ? appSnack(l.backupSaved(name), kind: SnackKind.done)
-            : appSnack(l.backupFailed, kind: SnackKind.problem),
-      );
-    } on Exception {
-      if (!mounted) return;
-      messenger.showAppSnack(
-        appSnack(l.backupFailed, kind: SnackKind.problem),
-      );
-    }
-
+    // The one implementation, shared with the reminder on the home screen —
+    // see [runBackup]. It also records that a copy exists, which is what
+    // stops that reminder asking again.
+    final name = await runBackup(ref);
     if (!mounted) return;
+
+    messenger.showAppSnack(
+      name != null
+          ? appSnack(l.backupSaved(name), kind: SnackKind.done)
+          : appSnack(l.backupFailed, kind: SnackKind.problem),
+    );
     setState(() => _busy = false);
   }
 }

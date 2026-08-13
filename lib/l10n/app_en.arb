@@ -291,6 +291,8 @@
   "backupTitle": "My data",
   "backupExplain": "The diary is kept both on this device and on the server. The file below is your own copy: it opens without the app and outlives anything.",
   "backupSave": "Save a copy",
+  "backupRemindTitle": "Keep a copy of the diary",
+  "backupRemindBody": "One file with every entry, for the day a phone goes missing. The copy stays with you and is sent nowhere.",
   "backupSaved": "Copy saved: {file}",
   "@backupSaved": {
     "placeholders": {
